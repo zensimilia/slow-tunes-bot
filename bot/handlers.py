@@ -24,9 +24,10 @@ async def proceed_audio(message: types.Message):
     file_obj = await message[message_type].get_file()
     file_dest = f'{config.DATA_DIR}{file_obj.file_path}'
     await message[message_type].download(destination_file=file_dest)
-    await types.ChatActions.upload_audio()
+    await types.ChatActions.record_audio()
     slowed_down = await audio.slow_down(file_dest, config.SPEED_RATIO)
     if slowed_down:
+        await types.ChatActions.upload_audio()
         await message.reply_audio(types.InputFile(slowed_down))
         return
     await types.ChatActions.typing()
