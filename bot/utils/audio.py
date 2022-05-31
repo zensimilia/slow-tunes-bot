@@ -50,10 +50,11 @@ def speed_change(sound: AudioSegment, speed: float):
 def update_tags(tags: dict) -> dict:
     """Updates media TAG by extra info."""
 
-    title = (tags.get('title', 'Unnamed'), '@slowtunesbot')
-    return {
-        **tags,
-        'artist': tags.get('artist', 'Unknown'),
-        'title': " ".join(title),
-        'comment': '@slowtunesbot',
-    }
+    extra_title = (tags.get('title', ''), '@slowtunesbot')
+
+    tags.update(
+        title=" ".join(extra_title),
+        comments="Slowed down 44/33 rpm by @slowtunesbot",
+    )
+
+    return tags
