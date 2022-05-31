@@ -1,6 +1,7 @@
 import os
 
 from aiogram import Dispatcher, types
+from aiogram.utils.exceptions import Throttled
 
 from bot import db
 from bot.config import AppConfig
@@ -23,17 +24,28 @@ def register_handlers(dp: Dispatcher):
 async def proceed_audio(message: types.Message):
     """Slow down uploaded audio track and send it to user."""
 
+    dp = Dispatcher.get_current()
+    # Execute throttling manager
+    try:
+        await dp.throttle('proceed_audio', rate=10)
+    except Throttled:
+        await message.answer('Too many requests! Calm bro!')
+        return
+
     # Check if audio is already slowed then return it from telegram servers
     from_db = await db.get_match(message.audio.file_unique_id)
     if from_db:
-        await message.reply_audio(from_db[2], caption="@slowtunesbot")
+        await message.answer("Delivery from past...")
+        await message.answer_audio(from_db[2], caption="@slowtunesbot")
         return
+
+    await message.answer("Start recording at 33 rpm for you...")
 
     temp_file = os.path.join(
         config.DATA_DIR, f'{message.audio.file_unique_id}.bin'
     )
-    await message.audio.download(destination_file=temp_file)
     await types.ChatActions.record_audio()
+    await message.audio.download(destination_file=temp_file)
     slowed_down = await audio.slow_down(temp_file, config.SPEED_RATIO)
     os.remove(temp_file)
 
@@ -42,14 +54,14 @@ async def proceed_audio(message: types.Message):
         new_file_name = (
             f'{os.path.splitext(message.audio.file_name)[0]} @slowtunesbot.mp3'
         )
-        reply = await message.reply_audio(
+        answer = await message.answer_audio(
             types.InputFile(slowed_down, filename=new_file_name),
             caption="@slowtunesbot",
         )
         os.remove(slowed_down)
         await db.insert_match(
             message.audio.file_unique_id,
-            reply.audio.file_id,
+            answer.audio.file_id,
         )
         return
 
