@@ -1,5 +1,8 @@
+import os
+
 from aiogram import Dispatcher, types
 
+from bot import db
 from bot.config import AppConfig
 from bot.utils import audio
 
@@ -12,44 +15,55 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(command_start, commands=["start", "help"])
     dp.register_message_handler(
         proceed_audio,
-        content_types=[types.ContentType.VOICE, types.ContentType.AUDIO],
+        content_types=[types.ContentType.AUDIO],
     )
-    dp.register_message_handler(debug_message)
+    dp.register_message_handler(answer_message)
 
 
 async def proceed_audio(message: types.Message):
-    """Slow down the audio track or voice message."""
+    """Slow down uploaded audio track and send it to user."""
 
-    message_type = message.content_type
-    file_obj = await message[message_type].get_file()
-    file_dest = f'{config.DATA_DIR}{file_obj.file_path}'
-    await message[message_type].download(destination_file=file_dest)
+    # Check if audio is already slowed then return it from telegram servers
+    from_db = await db.get_match(message.audio.file_unique_id)
+    if from_db:
+        await message.reply_audio(from_db[2], caption="@slowtunesbot")
+        return
+
+    temp_file = os.path.join(
+        config.DATA_DIR, f'{message.audio.file_unique_id}.bin'
+    )
+    await message.audio.download(destination_file=temp_file)
     await types.ChatActions.record_audio()
-    slowed_down = await audio.slow_down(file_dest, config.SPEED_RATIO)
+    slowed_down = await audio.slow_down(temp_file, config.SPEED_RATIO)
+    os.remove(temp_file)
+
     if slowed_down:
         await types.ChatActions.upload_audio()
-        await message.reply_audio(types.InputFile(slowed_down))
+        new_file_name = (
+            f'{os.path.splitext(message.audio.file_name)[0]} @slowtunesbot.mp3'
+        )
+        reply = await message.reply_audio(
+            types.InputFile(slowed_down, filename=new_file_name),
+            caption="@slowtunesbot",
+        )
+        os.remove(slowed_down)
+        await db.insert_match(
+            message.audio.file_unique_id,
+            reply.audio.file_id,
+        )
         return
+
     await types.ChatActions.typing()
-    await message.reply(file_obj)
+    await message.reply('Sorry!')
 
 
-async def debug_message(message: types.Message):
+async def answer_message(message: types.Message):
     """Handler for debug incoming messages."""
 
-    allowed_content_types = ("audio", "photo", "video", "text")
-
-    if message.content_type not in allowed_content_types:
-        return
+    await message.answer("Throw an audio. I'll catch!")
 
 
 async def command_start(message: types.Message):
     """Handler for `/start` command."""
 
-    await message.answer(
-        "Привет, дорогой друг! "
-        "Ты не найдешь тут ничего интересного. "
-        "Всё скрыто в чертогах цифрового разума. "
-        "Будь умницей. Не тупи. "
-        "Бип! Боп! 🤖"
-    )
+    await message.answer("Send me the audio track " "and i will...")

@@ -2,10 +2,13 @@ from aiogram import Dispatcher, executor
 
 from bot.dispatcher import create_dispatcher
 from bot.handlers import register_handlers
+from bot.db import init_sqlite
 
 
 async def on_startup(_dp: Dispatcher):
     """Execute function before Bot start polling."""
+
+    init_sqlite()
 
 
 async def on_shutdown(_dp: Dispatcher):
