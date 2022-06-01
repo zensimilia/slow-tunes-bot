@@ -10,6 +10,7 @@ class AppConfig(BaseSettings):
     that will take precedence.
     """
 
+    DEBUG: bool = False
     BOT_TOKEN: str = ""
     DATA_DIR: str = "./data/"
     SPEED_RATIO: float = 33 / 45
