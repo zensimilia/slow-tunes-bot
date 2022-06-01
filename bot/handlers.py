@@ -48,7 +48,10 @@ async def proceed_audio(message: types.Message):
             "Delivery from past...",
             disable_notification=True,
         )
-        await message.answer_audio(from_db[2], caption="@slowtunesbot")
+        await message.answer_audio(
+            from_db[2],
+            # caption="@slowtunesbot",
+        )
         return
 
     await message.answer(
@@ -64,14 +67,21 @@ async def proceed_audio(message: types.Message):
     slowed_down = await audio.slow_down(temp_file, config.SPEED_RATIO)
     os.remove(temp_file)
 
+    tags = {
+        'performer': message.audio.performer,
+        'title': " ".join([message.audio.title, "@slowtunesbot"]),
+        # 'thumb': types.InputFile(os.path.join(config.DATA_DIR, 'thumb.jpg')),
+    }
+
     if slowed_down:
         await types.ChatActions.upload_audio()
-        new_file_name = (
+        new_file_name = (  # TODO: refactor
             f'{os.path.splitext(message.audio.file_name)[0]} @slowtunesbot.mp3'
         )
         answer = await message.answer_audio(
             types.InputFile(slowed_down, filename=new_file_name),
-            caption="@slowtunesbot",
+            # caption="@slowtunesbot",
+            **tags,
         )
         os.remove(slowed_down)
         await db.insert_match(
