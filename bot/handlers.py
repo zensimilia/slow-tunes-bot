@@ -13,7 +13,8 @@ config = AppConfig()
 def register_handlers(dp: Dispatcher):
     """Register all the Bot's handlers."""
 
-    dp.register_message_handler(command_start, commands=["start", "help"])
+    dp.register_message_handler(command_start, commands=["start"])
+    dp.register_message_handler(command_random, commands=["random"])
     dp.register_message_handler(
         proceed_audio,
         content_types=[types.ContentType.AUDIO],
@@ -35,11 +36,17 @@ async def proceed_audio(message: types.Message):
     # Check if audio is already slowed then return it from telegram servers
     from_db = await db.get_match(message.audio.file_unique_id)
     if from_db:
-        await message.answer("Delivery from past...")
+        await message.answer(
+            "Delivery from past...",
+            disable_notification=True,
+        )
         await message.answer_audio(from_db[2], caption="@slowtunesbot")
         return
 
-    await message.answer("Start recording at 33 rpm for you...")
+    await message.answer(
+        "Start recording at 33 rpm for you...",
+        disable_notification=True,
+    )
 
     temp_file = os.path.join(
         config.DATA_DIR, f'{message.audio.file_unique_id}.bin'
@@ -73,6 +80,18 @@ async def answer_message(message: types.Message):
     """Handler for debug incoming messages."""
 
     await message.answer("Throw an audio. I'll catch!")
+
+
+async def command_random(message: types.Message):
+    """Handler for `/random` command. Returns random tune from database."""
+
+    random = await db.get_random_match()
+    if random:
+        await message.answer("Some slow tune for you...")
+        await message.answer_audio(random[0], caption="@slowtunesbot")
+        return
+
+    await message.answer("Sorry, but I don't have tunes yet.")
 
 
 async def command_start(message: types.Message):

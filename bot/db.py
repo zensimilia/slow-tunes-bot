@@ -26,7 +26,8 @@ def init_sqlite():
     with sqlite_connect(DATABASE) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            'CREATE TABLE IF NOT EXISTS match (id INTEGER PRIMARY KEY AUTOINCREMENT, original CHAR, slowed CHAR)'
+            'CREATE TABLE IF NOT EXISTS match '
+            '(id INTEGER PRIMARY KEY AUTOINCREMENT, original CHAR, slowed CHAR);'
         )
         conn.commit()
 
@@ -37,7 +38,7 @@ async def insert_match(original: str, slowed: str) -> int | None:
     with sqlite_connect(DATABASE) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            'INSERT INTO match (original, slowed) VALUES (?, ?)',
+            'INSERT INTO match (original, slowed) VALUES (?, ?);',
             (original, slowed),
         )
         conn.commit()
@@ -45,12 +46,21 @@ async def insert_match(original: str, slowed: str) -> int | None:
 
 
 async def get_match(original: str) -> tuple | None:
-    """Get row of pair original and slowe file ids."""
+    """Get row of pair original and slowed file ids."""
 
     with sqlite_connect(DATABASE) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            'SELECT * FROM match WHERE original=?',
+            'SELECT * FROM match WHERE original=?;',
             (original,),
         )
+        return cursor.fetchone()
+
+
+async def get_random_match() -> tuple | None:
+    """Get random row from match table."""
+
+    with sqlite_connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT slowed FROM match ORDER BY RANDOM() LIMIT 1;')
         return cursor.fetchone()
