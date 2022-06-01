@@ -6,13 +6,16 @@ from aiogram.utils.exceptions import Throttled
 from bot import db
 from bot.config import AppConfig
 from bot.utils import audio
+from bot.utils.logger import get_logger
 
+log = get_logger()
 config = AppConfig()
 
 
 def register_handlers(dp: Dispatcher):
     """Register all the Bot's handlers."""
 
+    log.info("Register Bot handlers...")
     dp.register_message_handler(command_start, commands=["start"])
     dp.register_message_handler(command_random, commands=["random"])
     dp.register_message_handler(
@@ -28,8 +31,13 @@ async def proceed_audio(message: types.Message):
     dp = Dispatcher.get_current()
     # Execute throttling manager
     try:
-        await dp.throttle('proceed_audio', rate=10)
+        await dp.throttle('proceed_audio', rate=15)
     except Throttled:
+        log.debug(
+            "Throttled by user %s with file_id=%s",
+            message.from_user.id,
+            message.audio.file_id,
+        )
         await message.answer('Too many requests! Calm bro!')
         return
 
@@ -91,10 +99,14 @@ async def command_random(message: types.Message):
         await message.answer_audio(random[0], caption="@slowtunesbot")
         return
 
+    log.info("No tunes in database for /random command")
     await message.answer("Sorry, but I don't have tunes yet.")
 
 
 async def command_start(message: types.Message):
     """Handler for `/start` command."""
 
+    log.info(
+        "User join: %s <%s>", message.from_user.id, message.from_user.username
+    )
     await message.answer("Send me the audio track " "and i will...")

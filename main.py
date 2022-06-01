@@ -4,7 +4,9 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from bot.config import AppConfig
 from bot.db import init_sqlite
 from bot.handlers import register_handlers
+from bot.utils.logger import get_logger
 
+log = get_logger(__name__)
 config = AppConfig()
 storage = MemoryStorage()
 
@@ -12,6 +14,7 @@ storage = MemoryStorage()
 async def on_startup(dp: Dispatcher):
     """Execute function before Bot start polling."""
 
+    log.info("Execute startup Bot functions...")
     init_sqlite()
     register_handlers(dp)
 
@@ -26,6 +29,8 @@ async def on_startup(dp: Dispatcher):
 
 async def on_shutdown(_dp: Dispatcher):
     """Execute function before Bot shut down polling."""
+
+    log.info("Execute shutdown Bot functions...")
 
 
 def main():
