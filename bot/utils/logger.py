@@ -1,4 +1,3 @@
-from distutils.debug import DEBUG
 import inspect
 import logging
 
