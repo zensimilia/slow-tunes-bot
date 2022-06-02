@@ -25,7 +25,18 @@ $ python main.py
 
 ## Requirements
 
-ffmpeg
+You must install **libav** or **ffmpeg** codec.
+
+### Linux
+
+```bash
+$ apt-get install ffmpeg libavcodec-extra
+```
+
+### Windows
+
+1. Download and extract libav from [Windows binaries provided here](http://builds.libav.org/windows/).
+2. Add the libav `/bin` folder to your PATH environment variable.
 
 ## Docker
 
