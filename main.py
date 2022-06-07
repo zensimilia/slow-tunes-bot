@@ -1,3 +1,4 @@
+import asyncio
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
@@ -5,12 +6,12 @@ from bot.config import AppConfig
 from bot.db import init_sqlite
 from bot.handlers import register_handlers
 from bot.utils.logger import get_logger
-from bot.utils.queue import BotQueue
+from bot.utils.queue import Queue
 
 log = get_logger(__name__)
 config = AppConfig()
 storage = MemoryStorage()
-queue = BotQueue()
+queue = Queue()
 
 
 async def on_startup(dp: Dispatcher):
@@ -28,23 +29,14 @@ async def on_startup(dp: Dispatcher):
     ]
     await dp.bot.set_my_commands(commands)
 
-    test1 = await queue.enqueue(test, "lol")
-    test2 = await queue.enqueue(test, "rolf")
-    print(test1)
-    print(test2)
+    # Starts loop worker for the queue
+    asyncio.create_task(queue.start())
 
 
 async def on_shutdown(_dp: Dispatcher):
     """Execute function before Bot shut down polling."""
 
     log.info("Execute shutdown Bot functions...")
-
-
-async def test(text):
-    for x in range(30000000):
-        y = x ^ x
-    print(f"test: {text}")
-    return f"return: {text}"
 
 
 def main():
@@ -59,7 +51,6 @@ def main():
         on_startup=on_startup,
         on_shutdown=on_shutdown,
     )
-    queue.start()
 
 
 if __name__ == '__main__':
