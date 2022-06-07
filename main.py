@@ -44,9 +44,11 @@ def main():
 
     bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
     dp = Dispatcher(bot, storage=storage)
+    loop = asyncio.get_event_loop()
 
     executor.start_polling(
         dp,
+        loop=loop,
         skip_updates=True,
         on_startup=on_startup,
         on_shutdown=on_shutdown,
