@@ -1,3 +1,5 @@
+import asyncio
+from asyncio import tasks
 import os
 
 from aiogram import Dispatcher, types
@@ -7,9 +9,11 @@ from bot import db
 from bot.config import AppConfig
 from bot.utils import audio
 from bot.utils.logger import get_logger
+from bot.utils.queue import Queue
 
 log = get_logger()
 config = AppConfig()
+queue = Queue()
 
 
 def register_handlers(dp: Dispatcher):
@@ -54,56 +58,26 @@ async def proceed_audio(message: types.Message):
         )
         return
 
+    task = await queue.enqueue(slowing_down_task, message)
+
+    text_message = "Start recording at 33 rpm for you..."
+    if task > 1:
+        text_message = (
+            f"Added your request to the queue! Your position: {task}."
+        )
+
     await message.answer(
-        "Start recording at 33 rpm for you...",
+        text_message,
         disable_notification=True,
     )
-
-    temp_file = os.path.join(
-        config.DATA_DIR, f'{message.audio.file_unique_id}.bin'
-    )
-    await types.ChatActions.record_audio()
-    # await message.audio.download(destination_file=temp_file)
-
-    downloaded = await message.audio.download(destination_dir=config.DATA_DIR)
-
-    try:
-        slowed_down = await audio.slow_down(downloaded.name, config.SPEED_RATIO)
-
-        tags = {
-            'performer': message.audio.to_python().get('performer'),
-            'title': " ".join([message.audio.title, "@slowtunesbot"]),
-            # 'thumb': types.InputFile(os.path.join(config.DATA_DIR, 'thumb.jpg')),
-        }
-
-        if slowed_down:
-            await types.ChatActions.upload_audio()
-            new_file_name = f'{os.path.splitext(message.audio.file_name)[0]} @slowtunesbot.mp3'  # TODO: refactor
-            answer = await message.answer_audio(
-                types.InputFile(slowed_down, filename=new_file_name),
-                # caption="@slowtunesbot",
-                **tags,
-            )
-            os.remove(slowed_down)
-            await db.insert_match(
-                message.audio.file_unique_id,
-                answer.audio.file_id,
-            )
-            return
-    except Exception as error:
-        log.error(error)
-    finally:
-        downloaded.close()
-        os.remove(downloaded.name)
-
-    await types.ChatActions.typing()
-    await message.reply('Sorry!')
 
 
 async def answer_message(message: types.Message):
     """Handler for debug incoming messages."""
 
-    await message.answer("Throw an audio. I'll catch!")
+    await message.answer(
+        "Throw an audio. I'll catch! \nSend /help for additional information."
+    )
 
 
 async def command_random(message: types.Message):
@@ -126,3 +100,48 @@ async def command_start(message: types.Message):
         "User join: %s <%s>", message.from_user.id, message.from_user.username
     )
     await message.answer("Send me the audio track " "and i will...")
+
+
+async def slowing_down_task(message: types.Message):
+    """Slowing down audio Task."""
+
+    # await types.ChatActions.record_audio()
+    await message.answer_chat_action(types.ChatActions.RECORD_AUDIO)
+
+    downloaded = await message.audio.download(destination_dir=config.DATA_DIR)
+
+    try:
+        slowed_down = await audio.slow_down(downloaded.name, config.SPEED_RATIO)
+
+        tags = {
+            'performer': message.audio.to_python().get('performer'),
+            'title': " ".join([message.audio.title, "@slowtunesbot"]),
+            # 'thumb': types.InputFile(os.path.join(config.DATA_DIR, 'thumb.jpg')),
+        }
+
+        if slowed_down:
+            # await types.ChatActions.upload_audio()
+            await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
+
+            new_file_name = f'{os.path.splitext(message.audio.file_name)[0]} @slowtunesbot.mp3'  # TODO: refactor
+            answer = await message.answer_audio(
+                types.InputFile(slowed_down, filename=new_file_name),
+                # caption="@slowtunesbot",
+                **tags,
+            )
+            os.remove(slowed_down)
+            await db.insert_match(
+                message.audio.file_unique_id,
+                answer.audio.file_id,
+            )
+            return
+    except Exception as error:
+        log.error(error)
+    finally:
+        downloaded.close()
+        os.remove(downloaded.name)
+
+    await message.answer_chat_action(types.ChatActions.TYPING)
+
+    # await types.ChatActions.typing()
+    await message.reply('Sorry!')
