@@ -16,6 +16,7 @@ class AppConfig(BaseSettings):
     SPEED_RATIO: float = 33 / 45
     PITCH_RATIO: float = -12 * math.log(1 / SPEED_RATIO, 2)
     FILE_POSTFIX: str = "_slowed_down.mp3"
+    THROTTLE_RATE: int = 15  # in seconds
 
     class Config:
         """Load variables from the dotenv file."""

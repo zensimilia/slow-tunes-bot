@@ -3,9 +3,10 @@ import os
 from concurrent.futures import ProcessPoolExecutor
 
 from aiogram import Dispatcher, types
-from aiogram.utils.exceptions import Throttled
+from aiogram.utils.exceptions import FileIsTooBig, Throttled
 
 from bot import db
+from bot import errors as eh
 from bot.config import AppConfig
 from bot.utils import audio
 from bot.utils.logger import get_logger
@@ -20,25 +21,41 @@ def register_handlers(dp: Dispatcher):
     """Register all the Bot's handlers."""
 
     log.info("Register Bot handlers...")
-    dp.register_message_handler(command_start, commands=["start"])
-    dp.register_message_handler(command_random, commands=["random"])
+
+    dp.register_errors_handler(
+        eh.file_is_too_big,
+        exception=FileIsTooBig,
+    )
+    dp.register_errors_handler(
+        eh.global_error_handler, exception=Exception
+    )  # Should be last among errors handlers
+
     dp.register_message_handler(
-        proceed_audio,
+        command_start,
+        commands=["start"],
+    )
+    dp.register_message_handler(
+        command_random,
+        commands=["random"],
+    )
+    dp.register_message_handler(
+        processing_audio,
         content_types=[types.ContentType.AUDIO],
     )
     dp.register_message_handler(answer_message)
 
 
-async def proceed_audio(message: types.Message):
+async def processing_audio(message: types.Message):
     """Slow down uploaded audio track and send it to user."""
 
     dp = Dispatcher.get_current()
+
     # Execute throttling manager
     try:
-        await dp.throttle('proceed_audio', rate=15)
+        await dp.throttle('processing_audio', rate=config.THROTTLE_RATE)
     except Throttled:
         log.debug(
-            "Throttled by user %s with file_id=%s",
+            "Throttled <user_id=%s file_id=%s>",
             message.from_user.id,
             message.audio.file_id,
         )
@@ -57,6 +74,10 @@ async def proceed_audio(message: types.Message):
             # caption="@slowtunesbot",
         )
         return
+
+    # Check file for size limit (20mb)
+    if message.audio.file_size >= (20 * 1024 * 1024):
+        raise FileIsTooBig("File is too big")
 
     task = await queue.enqueue(slowing_down_task, message)
 
@@ -105,11 +126,14 @@ async def command_start(message: types.Message):
 async def slowing_down_task(message: types.Message):
     """Slowing down audio Task."""
 
+    downloaded = None
     await message.answer_chat_action(types.ChatActions.RECORD_AUDIO)
 
-    downloaded = await message.audio.download(destination_dir=config.DATA_DIR)
-
     try:
+        downloaded = await message.audio.download(
+            destination_dir=config.DATA_DIR
+        )
+
         # Gets current loop and run slowing down func in other pool executor
         # to not block the Bot
         loop = asyncio.get_running_loop()
@@ -142,11 +166,12 @@ async def slowing_down_task(message: types.Message):
     except Exception as error:
         log.error(error)
     finally:
-        downloaded.close()
-        os.remove(downloaded.name)
+        if downloaded:
+            downloaded.close()
+            os.remove(downloaded.name)
 
     await message.answer_chat_action(types.ChatActions.TYPING)
 
-    await message.reply(
-        f"I'm Sorry {message.from_user.username}, I'm Afraid I Can't Do That"
+    await message.answer(
+        f"I'm Sorry {message.from_user.username}, I'm Afraid I Can't Do That."
     )
