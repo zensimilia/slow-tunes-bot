@@ -44,6 +44,7 @@ def main():
 
     bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
     dp = Dispatcher(bot, storage=storage)
+    dp.errors_handlers.once = True  # Fix errors rethrowing
 
     executor.start_polling(
         dp,
