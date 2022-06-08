@@ -3,7 +3,8 @@ import os
 from concurrent.futures import ProcessPoolExecutor
 
 from aiogram import Dispatcher, types
-from aiogram.utils.exceptions import FileIsTooBig, Throttled
+from aiogram.utils.exceptions import FileIsTooBig, Throttled, TelegramAPIError
+from pydub.exceptions import PydubException
 
 from bot import db
 from bot import errors as eh
@@ -123,7 +124,7 @@ async def command_start(message: types.Message):
     await message.answer("Send me the audio track " "and i will...")
 
 
-async def slowing_down_task(message: types.Message):
+async def slowing_down_task(message: types.Message) -> bool:
     """Slowing down audio Task."""
 
     downloaded = None
@@ -151,19 +152,19 @@ async def slowing_down_task(message: types.Message):
         if slowed_down:
             await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
 
-            new_file_name = f'{os.path.splitext(message.audio.file_name)[0]} @slowtunesbot.mp3'  # TODO: refactor
-            answer = await message.answer_audio(
-                types.InputFile(slowed_down, filename=new_file_name),
+            file_name = audio.brand_file_name(message.audio.file_name)
+            uploaded = await message.answer_audio(
+                types.InputFile(slowed_down, filename=file_name),
                 # caption="@slowtunesbot",
                 **tags,
             )
             os.remove(slowed_down)
             await db.insert_match(
                 message.audio.file_unique_id,
-                answer.audio.file_id,
+                uploaded.audio.file_id,
             )
-            return
-    except Exception as error:
+            return True
+    except (PydubException, TelegramAPIError) as error:
         log.error(error)
     finally:
         if downloaded:
@@ -175,3 +176,4 @@ async def slowing_down_task(message: types.Message):
     await message.answer(
         f"I'm Sorry {message.from_user.username}, I'm Afraid I Can't Do That."
     )
+    return False

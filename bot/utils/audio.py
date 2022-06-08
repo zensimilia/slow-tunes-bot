@@ -1,3 +1,5 @@
+import os
+
 from pydub import AudioSegment
 from pydub.exceptions import PydubException
 from pydub.utils import mediainfo
@@ -60,3 +62,10 @@ def update_tags(tags: dict) -> dict:
     )
 
     return tags
+
+
+def brand_file_name(full_path: str) -> str:
+    """Returns name of audio file with Bot name and extension."""
+
+    file_name = os.path.splitext(full_path)[0]
+    return f"{file_name} @slowtunesbot.mp3"
