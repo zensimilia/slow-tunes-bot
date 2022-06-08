@@ -3,11 +3,13 @@ from pydub.exceptions import PydubException
 from pydub.utils import mediainfo
 
 from bot.config import AppConfig
+from bot.utils.logger import get_logger
 
 config = AppConfig()
+log = get_logger()
 
 
-async def slow_down(file_path: str, speed: float = 33 / 45) -> str:
+def slow_down(file_path: str, speed: float = 33 / 45) -> str:
     """This function slow down audio file."""
 
     slowed_file = file_path[:-4] + config.FILE_POSTFIX
@@ -24,7 +26,7 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str:
             tags=tags,
         )
     except PydubException as error:
-        print(error)  # TODO: logger
+        log.error(error)
         slowed_file = ""
 
     return slowed_file

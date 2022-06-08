@@ -1,4 +1,6 @@
+import asyncio
 import os
+from concurrent.futures import ProcessPoolExecutor
 
 from aiogram import Dispatcher, types
 from aiogram.utils.exceptions import Throttled
@@ -103,13 +105,18 @@ async def command_start(message: types.Message):
 async def slowing_down_task(message: types.Message):
     """Slowing down audio Task."""
 
-    # await types.ChatActions.record_audio()
     await message.answer_chat_action(types.ChatActions.RECORD_AUDIO)
 
     downloaded = await message.audio.download(destination_dir=config.DATA_DIR)
 
     try:
-        slowed_down = await audio.slow_down(downloaded.name, config.SPEED_RATIO)
+        # Gets current loop and run slowing down func in other pool executor
+        # to not block the Bot
+        loop = asyncio.get_running_loop()
+        with ProcessPoolExecutor() as pool:
+            slowed_down = await loop.run_in_executor(
+                pool, audio.slow_down, downloaded.name, config.SPEED_RATIO
+            )
 
         tags = {
             'performer': message.audio.to_python().get('performer'),
@@ -118,7 +125,6 @@ async def slowing_down_task(message: types.Message):
         }
 
         if slowed_down:
-            # await types.ChatActions.upload_audio()
             await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
 
             new_file_name = f'{os.path.splitext(message.audio.file_name)[0]} @slowtunesbot.mp3'  # TODO: refactor
@@ -141,7 +147,6 @@ async def slowing_down_task(message: types.Message):
 
     await message.answer_chat_action(types.ChatActions.TYPING)
 
-    # await types.ChatActions.typing()
     await message.reply(
         f"I'm Sorry {message.from_user.username}, I'm Afraid I Can't Do That"
     )

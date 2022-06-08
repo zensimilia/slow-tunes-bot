@@ -20,6 +20,7 @@ class Queue:
         """Starts loop worker for the queue."""
 
         log.debug("Start the worker for main queue")
+
         while True:
             try:
                 task = await self._queue.get()
