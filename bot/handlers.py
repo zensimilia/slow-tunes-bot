@@ -1,14 +1,14 @@
 import asyncio
 import os
-from concurrent.futures import ProcessPoolExecutor
 
 from aiogram import Dispatcher, types
-from aiogram.utils.exceptions import FileIsTooBig, Throttled, TelegramAPIError
+from aiogram.utils.exceptions import FileIsTooBig, TelegramAPIError
 from pydub.exceptions import PydubException
 
 from bot import db
 from bot import errors as eh
 from bot.config import AppConfig
+from bot.throttle import is_throttled
 from bot.utils import audio
 from bot.utils.logger import get_logger
 from bot.utils.queue import Queue
@@ -26,6 +26,10 @@ def register_handlers(dp: Dispatcher):
     dp.register_errors_handler(
         eh.file_is_too_big,
         exception=FileIsTooBig,
+    )
+    dp.register_errors_handler(
+        eh.database_error,
+        exception=db.Error,
     )
     dp.register_errors_handler(
         eh.global_error_handler, exception=Exception
@@ -49,49 +53,34 @@ def register_handlers(dp: Dispatcher):
 async def processing_audio(message: types.Message):
     """Slow down uploaded audio track and send it to user."""
 
+    # Get dispatcher from context
     dp = Dispatcher.get_current()
 
     # Execute throttling manager
-    try:
-        await dp.throttle('processing_audio', rate=config.THROTTLE_RATE)
-    except Throttled:
-        log.debug(
-            "Throttled <user_id=%s file_id=%s>",
-            message.from_user.id,
-            message.audio.file_id,
-        )
-        await message.answer('Too many requests! Calm bro!')
-        return
+    if await is_throttled('processing_audio', dispatcher=dp, message=message):
+        return await message.answer('✋ Too many requests! Calm bro!')
 
-    # Check if audio is already slowed then return it from telegram servers
+    # Check if the audio has already slowed down
+    # then returns it from telegram servers directly
     from_db = await db.get_match(message.audio.file_unique_id)
     if from_db:
-        await message.answer(
-            "Delivery from past...",
-            disable_notification=True,
-        )
-        await message.answer_audio(
+        return await message.answer_audio(
             from_db[2],
             # caption="@slowtunesbot",
         )
-        return
 
     # Check file for size limit (20mb)
     if message.audio.file_size >= (20 * 1024 * 1024):
         raise FileIsTooBig("File is too big")
 
+    # Add slowing down audio task to the queue
     task = await queue.enqueue(slowing_down_task, message)
 
-    text_message = "Start recording at 33 rpm for you..."
     if task > 1:
-        text_message = (
-            f"Added your request to the queue! Your position: {task}."
+        await message.answer(
+            f"🕙 Added your request to the queue. Your position: {task}.",
+            disable_notification=True,
         )
-
-    await message.answer(
-        text_message,
-        disable_notification=True,
-    )
 
 
 async def answer_message(message: types.Message):
@@ -128,6 +117,11 @@ async def slowing_down_task(message: types.Message) -> bool:
     """Slowing down audio Task."""
 
     downloaded = None
+
+    await message.answer(
+        "💿 Start recording at 33 rpm for you...",
+        disable_notification=True,
+    )
     await message.answer_chat_action(types.ChatActions.RECORD_AUDIO)
 
     try:
@@ -135,17 +129,16 @@ async def slowing_down_task(message: types.Message) -> bool:
             destination_dir=config.DATA_DIR
         )
 
-        # Gets current loop and run slowing down func in other pool executor
-        # to not block the Bot
-        loop = asyncio.get_running_loop()
-        with ProcessPoolExecutor() as pool:
-            slowed_down = await loop.run_in_executor(
-                pool, audio.slow_down, downloaded.name, config.SPEED_RATIO
-            )
+        # Run func in separate thread for unblock stack
+        slowed_down = await asyncio.to_thread(
+            audio.slow_down, downloaded.name, config.SPEED_RATIO
+        )
 
         tags = {
-            'performer': message.audio.to_python().get('performer'),
-            'title': " ".join([message.audio.title, "@slowtunesbot"]),
+            'performer': message.audio.to_python().get("performer"),
+            'title': " ".join(
+                [message.audio.to_python().get("title", ""), "@slowtunesbot"]
+            ),
             # 'thumb': types.InputFile(os.path.join(config.DATA_DIR, 'thumb.jpg')),
         }
 
@@ -162,18 +155,18 @@ async def slowing_down_task(message: types.Message) -> bool:
             await db.insert_match(
                 message.audio.file_unique_id,
                 uploaded.audio.file_id,
+                message.from_user.id,
             )
             return True
     except (PydubException, TelegramAPIError) as error:
         log.error(error)
+        await message.answer(
+            f"I'm sorry {message.from_user.username}, I'm afraid I can't do that 🤷‍♂️"
+        )
+        return False
     finally:
         if downloaded:
             downloaded.close()
             os.remove(downloaded.name)
 
-    await message.answer_chat_action(types.ChatActions.TYPING)
-
-    await message.answer(
-        f"I'm Sorry {message.from_user.username}, I'm Afraid I Can't Do That."
-    )
     return False

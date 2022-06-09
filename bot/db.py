@@ -1,6 +1,4 @@
-import os
 import sqlite3
-from sqlite3 import Connection, Cursor, DatabaseError, OperationalError
 
 from bot.config import AppConfig
 from bot.utils.logger import get_logger
@@ -8,55 +6,61 @@ from bot.utils.logger import get_logger
 log = get_logger()
 config = AppConfig()
 
-DATABASE = os.path.join(config.DATA_DIR, "database.db")
+
+class Error(Exception):
+    """Custom exception class for database."""
 
 
-def sqlite_connect(db_file: str) -> Connection:
+def sqlite_connect(db_file: str) -> sqlite3.Connection:
     """Connect to the database file."""
     try:
         conn = sqlite3.connect(db_file, check_same_thread=False)
         conn.execute("pragma journal_mode=wal;")
         return conn
-    except (DatabaseError, OperationalError) as err:
-        log.error(err)
-        raise Exception("Database error!") from err
+    except sqlite3.Error as err:
+        log.critical("Can't connect to the database - %s", err)
+        raise Error from err
 
 
-def send_query(query: str, args: tuple | None = None) -> Cursor:
+def send_query(query: str, args: tuple | None = None) -> sqlite3.Cursor:  # type: ignore
     """Send query to database and return cursor object."""
 
     if not args:
         args = tuple()
 
-    try:
-        with sqlite_connect(DATABASE) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                query,
-                args,
-            )
+    with sqlite_connect(config.DB_FILE) as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute(query, args)
             conn.commit()
-            return cursor
-    except (DatabaseError, OperationalError) as err:
-        log.error(err)
-        raise Exception("Database error!") from err
+        except sqlite3.Error as err:
+            log.error("Can't send query to the database - %s", err)
+            raise Error from err
+        return cursor
 
 
 def init_sqlite():
     """Init sqlite database file and create tables."""
 
     send_query(
-        'CREATE TABLE IF NOT EXISTS match '
-        '(id INTEGER PRIMARY KEY AUTOINCREMENT, original CHAR, slowed CHAR);'
+        '''CREATE TABLE IF NOT EXISTS match (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        original CHAR,
+        slowed CHAR,
+        user_id INTEGER);'''
     )
 
 
-async def insert_match(original: str, slowed: str) -> int | None:
+async def insert_match(original: str, slowed: str, user_id: int) -> int | None:
     """Insert row with original and slowed file ids."""
 
     query = send_query(
-        'INSERT INTO match (original, slowed) VALUES (?, ?);',
-        (original, slowed),
+        'INSERT INTO match (original, slowed, user_id) VALUES (?, ?, ?);',
+        (
+            original,
+            slowed,
+            user_id,
+        ),
     )
     return query.lastrowid
 
