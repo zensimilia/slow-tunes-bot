@@ -15,10 +15,10 @@ def slow_down(file_path: str, speed: float = 33 / 45) -> str:
     """This function slow down audio file."""
 
     slowed_file_path = f'{file_path[:-4]}_slow.mp3'
-    media_info = mediainfo(file_path)
-    tags = fill_tags(media_info.get('TAG', {}))
-
     try:
+        media_info = mediainfo(file_path)
+        tags = fill_tags(media_info.get('TAG', {}))
+
         sound = AudioSegment.from_file(file_path)
         slowed = speed_change(sound, speed)
         slowed.export(
@@ -28,7 +28,7 @@ def slow_down(file_path: str, speed: float = 33 / 45) -> str:
             tags=tags,
         )
     except PydubException as error:
-        log.error(error)
+        log.warning(error)
         slowed_file_path = ""
 
     return slowed_file_path

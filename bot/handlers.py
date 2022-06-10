@@ -60,25 +60,16 @@ async def processing_audio(message: types.Message):
     if await is_throttled('processing_audio', dispatcher=dp, message=message):
         return await message.answer('✋ Too many requests! Calm bro!')
 
-    # Check if the audio has already slowed down
-    # then returns it from telegram servers directly
-    from_db = await db.get_match(message.audio.file_unique_id)
-    if from_db:
-        return await message.answer_audio(
-            from_db[2],
-            # caption="@slowtunesbot",
-        )
-
     # Check file for size limit (20mb)
     if message.audio.file_size >= (20 * 1024 * 1024):
         raise FileIsTooBig("File is too big")
 
     # Add slowing down audio task to the queue
-    task = await queue.enqueue(slowing_down_task, message)
+    await queue.enqueue(slowing_down_task, message)
 
-    if task > 1:
-        await message.answer(
-            f"🕙 Added your request to the queue. Your position: {task}.",
+    if queue.size > 1:
+        await message.reply(
+            f"🕙 Added your request to the queue. Your position: {queue.size}.",
             disable_notification=True,
         )
 
@@ -116,9 +107,19 @@ async def command_start(message: types.Message):
 async def slowing_down_task(message: types.Message) -> bool:
     """Slowing down audio Task."""
 
+    # Check if the audio has already slowed down
+    # then returns it from telegram servers directly
+    from_db = await db.get_match(message.audio.file_unique_id)
+    if from_db:
+        await message.answer_audio(
+            from_db[2],
+            # caption="@slowtunesbot",
+        )
+        return True
+
     downloaded = None
 
-    await message.answer(
+    await message.reply(
         "💿 Start recording at 33 rpm for you...",
         disable_notification=True,
     )
@@ -158,15 +159,17 @@ async def slowing_down_task(message: types.Message) -> bool:
                 message.from_user.id,
             )
             return True
-    except (PydubException, TelegramAPIError) as error:
+        await message.reply(
+            "⚠ I have some issues with decoding your audio file. Please try another..."
+        )
+        return False
+    except TelegramAPIError as error:
         log.error(error)
-        await message.answer(
-            f"I'm sorry {message.from_user.username}, I'm afraid I can't do that 🤷‍♂️"
+        await message.reply(
+            f"🤷‍♂️ I'm sorry {message.from_user.username}, I'm afraid I can't do that."
         )
         return False
     finally:
         if downloaded:
             downloaded.close()
             os.remove(downloaded.name)
-
-    return False
