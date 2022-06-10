@@ -34,3 +34,11 @@ async def database_error(update: types.Update, _error: Exception):
         "🚧 I have some issues with the database. Please come back later..."
     )
     return True
+
+
+async def throttled(update: types.Update, _error: Exception):
+    """Error handler for throttling."""
+
+    log.debug("Throttled <User user_id=%s>", update.message.from_user.id)
+    await update.message.reply("✋ Too many requests! Calm bro!")
+    return True

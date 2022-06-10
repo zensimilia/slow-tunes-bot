@@ -2,13 +2,11 @@ import asyncio
 import os
 
 from aiogram import Dispatcher, types
-from aiogram.utils.exceptions import FileIsTooBig, TelegramAPIError
-from pydub.exceptions import PydubException
+from aiogram.utils.exceptions import FileIsTooBig, TelegramAPIError, Throttled
 
 from bot import db
 from bot import errors as eh
 from bot.config import AppConfig
-from bot.throttle import is_throttled
 from bot.utils import audio
 from bot.utils.logger import get_logger
 from bot.utils.queue import Queue
@@ -30,6 +28,10 @@ def register_handlers(dp: Dispatcher):
     dp.register_errors_handler(
         eh.database_error,
         exception=db.Error,
+    )
+    dp.register_errors_handler(
+        eh.throttled,
+        exception=Throttled,
     )
     dp.register_errors_handler(
         eh.global_error_handler, exception=Exception
@@ -57,8 +59,7 @@ async def processing_audio(message: types.Message):
     dp = Dispatcher.get_current()
 
     # Execute throttling manager
-    if await is_throttled('processing_audio', dispatcher=dp, message=message):
-        return await message.answer('✋ Too many requests! Calm bro!')
+    await dp.throttle('processing_audio', rate=config.THROTTLE_RATE)
 
     # Check file for size limit (20mb)
     if message.audio.file_size >= (20 * 1024 * 1024):
