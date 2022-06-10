@@ -2,7 +2,7 @@ import asyncio
 import os
 
 from aiogram import Dispatcher, types
-from aiogram.utils.exceptions import FileIsTooBig, TelegramAPIError, Throttled
+from aiogram.utils.exceptions import FileIsTooBig, TelegramAPIError
 
 from bot import db
 from bot import errors as eh
@@ -30,10 +30,6 @@ def register_handlers(dp: Dispatcher):
         exception=db.Error,
     )
     dp.register_errors_handler(
-        eh.throttled,
-        exception=Throttled,
-    )
-    dp.register_errors_handler(
         eh.global_error_handler, exception=Exception
     )  # Should be last among errors handlers
 
@@ -54,12 +50,6 @@ def register_handlers(dp: Dispatcher):
 
 async def processing_audio(message: types.Message):
     """Slow down uploaded audio track and send it to user."""
-
-    # Get dispatcher from context
-    dp = Dispatcher.get_current()
-
-    # Execute throttling manager
-    await dp.throttle('processing_audio', rate=config.THROTTLE_RATE)
 
     # Check file for size limit (20mb)
     if message.audio.file_size >= (20 * 1024 * 1024):

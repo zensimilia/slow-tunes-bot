@@ -1,17 +1,24 @@
 import asyncio
+
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 from bot.config import AppConfig
 from bot.db import init_sqlite
 from bot.handlers import register_handlers
+from bot.middlewares.throttling import ThrottlingMiddleware
 from bot.utils.logger import get_logger
 from bot.utils.queue import Queue
 
-log = get_logger(__name__)
+log = get_logger()
 config = AppConfig()
 storage = MemoryStorage()
 queue = Queue()
+
+protected_handlers = ['answer_message']
+throttling_middleware = ThrottlingMiddleware(
+    protected_handlers, rate=config.THROTTLE_RATE
+)
 
 
 async def on_startup(dp: Dispatcher):
@@ -45,6 +52,7 @@ def main():
     bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
     dp = Dispatcher(bot, storage=storage)
     dp.errors_handlers.once = True  # Fix errors rethrowing
+    dp.middleware.setup(throttling_middleware)  # Throttling middleware
 
     executor.start_polling(
         dp,
