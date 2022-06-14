@@ -61,5 +61,5 @@ class ThrottlingMiddleware(BaseMiddleware):
                 f"✋ Too many requests! Calm bro! Wait for {delta:.0f} sec."
             )
 
-        # Sleep.
+        # Sleep
         await asyncio.sleep(delta)

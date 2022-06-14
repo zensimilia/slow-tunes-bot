@@ -17,9 +17,9 @@ def sqlite_connect(db_file: str) -> sqlite3.Connection:
         conn = sqlite3.connect(db_file, check_same_thread=False)
         conn.execute("pragma journal_mode=wal;")
         return conn
-    except sqlite3.Error as err:
-        log.critical("Can't connect to the database - %s", err)
-        raise Error from err
+    except sqlite3.Error as error:
+        log.critical("Can't connect to the database - %s", error)
+        raise error
 
 
 def send_query(query: str, args: tuple | None = None) -> sqlite3.Cursor:  # type: ignore
@@ -33,9 +33,9 @@ def send_query(query: str, args: tuple | None = None) -> sqlite3.Cursor:  # type
         try:
             cursor.execute(query, args)
             conn.commit()
-        except sqlite3.Error as err:
-            log.error("Can't send query to the database - %s", err)
-            raise Error from err
+        except sqlite3.Error as error:
+            log.error("Can't send query to the database - %s", error)
+            raise error
         return cursor
 
 
