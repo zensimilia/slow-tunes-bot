@@ -34,3 +34,9 @@ async def database_error(update: types.Update, _error: Exception):
         "🚧 I have some issues with the database. Please come back later..."
     )
     return True
+
+
+async def message_not_modified_error(_update: types.Update, _error: Exception):
+    """Error handler for MessageNotModified exception."""
+
+    return True

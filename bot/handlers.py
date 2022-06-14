@@ -2,10 +2,15 @@ import asyncio
 import os
 
 from aiogram import Dispatcher, types
-from aiogram.utils.exceptions import FileIsTooBig, TelegramAPIError
+from aiogram.utils.exceptions import (
+    FileIsTooBig,
+    TelegramAPIError,
+    MessageNotModified,
+)
 
 from bot import db
 from bot import errors as eh
+from bot import keyboards
 from bot.config import AppConfig
 from bot.utils import audio
 from bot.utils.logger import get_logger
@@ -30,6 +35,10 @@ def register_handlers(dp: Dispatcher):
         exception=db.Error,
     )
     dp.register_errors_handler(
+        eh.message_not_modified_error,
+        exception=MessageNotModified,
+    )
+    dp.register_errors_handler(
         eh.global_error_handler, exception=Exception
     )  # Should be last among errors handlers
 
@@ -44,6 +53,10 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(
         processing_audio,
         content_types=[types.ContentType.AUDIO],
+    )
+    dp.register_callback_query_handler(
+        confirm_share,
+        keyboards.share_cbd.filter(action="confirm"),
     )
     dp.register_message_handler(answer_message)
 
@@ -138,6 +151,9 @@ async def slowing_down_task(message: types.Message) -> bool:
             uploaded = await message.answer_audio(
                 types.InputFile(slowed_down, filename=file_name),
                 caption="Slowed by @slowtunesbot",
+                reply_markup=keyboards.share_button(
+                    message.audio.file_unique_id
+                ),
                 **tags,
             )
             os.remove(slowed_down)
@@ -161,3 +177,17 @@ async def slowing_down_task(message: types.Message) -> bool:
         if downloaded:
             downloaded.close()
             os.remove(downloaded.name)
+
+
+async def confirm_share(query: types.CallbackQuery, callback_data: dict):
+    """Display confirm share buttons."""
+
+    await query.message.edit_reply_markup(None)
+
+    await query.message.answer(
+        "Do you really wants to share this audio for other people? "
+        "They're can get it by /random command",
+        reply_markup=keyboards.share_confirm_buttons(callback_data["file_id"]),
+    )
+
+    await query.answer()
