@@ -1,5 +1,6 @@
 import os
 
+from mutagen import MutagenError, id3
 from pydub import AudioSegment
 from pydub.exceptions import PydubException
 from pydub.utils import mediainfo
@@ -27,6 +28,8 @@ def slow_down(file_path: str, speed: float = 33 / 45) -> str:
             bitrate=media_info['bit_rate'],
             tags=tags,
         )
+        # Add album art cover
+        add_album_art(slowed_file_path, config.ALBUM_ART)
     except PydubException as error:
         log.warning(error)
         slowed_file_path = ""
@@ -70,3 +73,31 @@ def brand_file_name(full_path: str) -> str:
 
     file_name = os.path.splitext(full_path)[0]
     return f"{file_name} @slowtunesbot.mp3"
+
+
+def add_album_art(audio_file: str, art_file: str) -> bool:
+    """Add album art to mp3 audio file."""
+
+    try:
+        with open(art_file, "rb") as raw:
+            data = raw.read()
+
+        tags = id3.ID3()
+        tags.add(
+            id3.APIC(
+                type=id3.PictureType.COVER_FRONT,
+                data=data,
+                mime='image/jpeg',
+                desc='Cover',
+            )
+        )
+        tags.save(audio_file)
+
+        log.debug("Album art %s added to file %s", art_file, audio_file)
+        return True
+    except IOError as error:
+        log.error("Can't read album art file - %s", error)
+        return False
+    except MutagenError as error:
+        log.error("Can't save album art to file - %s", error)
+        return False

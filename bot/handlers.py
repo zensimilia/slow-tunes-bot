@@ -126,21 +126,18 @@ async def slowing_down_task(message: types.Message) -> bool:
             audio.slow_down, downloaded.name, config.SPEED_RATIO
         )
 
-        tags = {
-            'performer': message.audio.to_python().get("performer"),
-            'title': " ".join(
-                [message.audio.to_python().get("title", ""), "@slowtunesbot"]
-            ),
-            # 'thumb': types.InputFile(os.path.join(config.DATA_DIR, 'thumb.jpg')),
-        }
-
         if slowed_down:
             await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
 
             file_name = audio.brand_file_name(message.audio.file_name)
+            tags = {
+                'performer': message.audio.to_python().get("performer"),
+                'title': message.audio.to_python().get("title"),
+                'thumb': types.InputFile(config.ALBUM_ART),
+            }
             uploaded = await message.answer_audio(
                 types.InputFile(slowed_down, filename=file_name),
-                # caption="@slowtunesbot",
+                caption="Slowed by @slowtunesbot",
                 **tags,
             )
             os.remove(slowed_down)

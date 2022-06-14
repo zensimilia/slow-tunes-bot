@@ -18,6 +18,7 @@ class AppConfig(BaseSettings):
     SPEED_RATIO: float = 33 / 45
     PITCH_RATIO: float = -12 * math.log(1 / SPEED_RATIO, 2)  # Not used yet
     THROTTLE_RATE: int = 15  # In seconds
+    ALBUM_ART: str = "./assets/thumb.jpg"
 
     class Config:
         """Load variables from the dotenv file."""
