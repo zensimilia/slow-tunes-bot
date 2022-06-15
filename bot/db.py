@@ -47,7 +47,8 @@ def init_sqlite():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         original CHAR,
         slowed CHAR,
-        user_id INTEGER);'''
+        user_id INTEGER,
+        private BOOLEAN DEFAULT 1 NOT NULL);'''
     )
 
 
@@ -55,12 +56,8 @@ async def insert_match(original: str, slowed: str, user_id: int) -> int | None:
     """Insert row with original and slowed file ids."""
 
     query = send_query(
-        'INSERT INTO match (original, slowed, user_id) VALUES (?, ?, ?);',
-        (
-            original,
-            slowed,
-            user_id,
-        ),
+        'INSERT INTO match (original, slowed, user_id, private) VALUES (?, ?, ?, ?);',
+        (original, slowed, user_id, True),
     )
     return query.lastrowid
 
@@ -78,5 +75,20 @@ async def get_match(original: str) -> tuple | None:
 async def get_random_match() -> tuple | None:
     """Get random row from match table."""
 
-    query = send_query('SELECT slowed FROM match ORDER BY RANDOM() LIMIT 1;')
+    query = send_query(
+        'SELECT slowed FROM match WHERE private = ? ORDER BY RANDOM() LIMIT 1;',
+        (False,),
+    )
     return query.fetchone()
+
+
+async def toggle_private(idc: int, is_private: bool = True) -> None:
+    """Toggle private status of slowed row."""
+
+    send_query(
+        'UPDATE match SET private = ? WHERE id = ?;',
+        (
+            is_private,
+            idc,
+        ),
+    )

@@ -1,11 +1,12 @@
 import asyncio
+import json
 import os
 
 from aiogram import Dispatcher, types
 from aiogram.utils.exceptions import (
     FileIsTooBig,
-    TelegramAPIError,
     MessageNotModified,
+    TelegramAPIError,
 )
 
 from bot import db
@@ -55,8 +56,16 @@ def register_handlers(dp: Dispatcher):
         content_types=[types.ContentType.AUDIO],
     )
     dp.register_callback_query_handler(
-        confirm_share,
+        confirmation,
         keyboards.share_cbd.filter(action="confirm"),
+    )
+    dp.register_callback_query_handler(
+        confiramtion_no,
+        keyboards.share_cbd.filter(action="no"),
+    )
+    dp.register_callback_query_handler(
+        confiramtion_yes,
+        keyboards.share_cbd.filter(action="yes"),
     )
     dp.register_message_handler(answer_message)
 
@@ -117,7 +126,7 @@ async def slowing_down_task(message: types.Message) -> bool:
     if from_db:
         await message.answer_audio(
             from_db[2],
-            # caption="@slowtunesbot",
+            caption="Slowed by @slowtunesbot",
         )
         return True
 
@@ -152,7 +161,8 @@ async def slowing_down_task(message: types.Message) -> bool:
                 types.InputFile(slowed_down, filename=file_name),
                 caption="Slowed by @slowtunesbot",
                 reply_markup=keyboards.share_button(
-                    message.audio.file_unique_id
+                    message.audio.file_unique_id,
+                    True,
                 ),
                 **tags,
             )
@@ -179,15 +189,58 @@ async def slowing_down_task(message: types.Message) -> bool:
             os.remove(downloaded.name)
 
 
-async def confirm_share(query: types.CallbackQuery, callback_data: dict):
+async def confirmation(query: types.CallbackQuery, callback_data: dict):
     """Display confirm share buttons."""
 
-    await query.message.edit_reply_markup(None)
-
-    await query.message.answer(
-        "Do you really wants to share this audio for other people? "
-        "They're can get it by /random command",
-        reply_markup=keyboards.share_confirm_buttons(callback_data["file_id"]),
+    is_private = json.loads(callback_data["is_private"].lower())
+    text = (
+        "Are you sure about making this audio public?"
+        if is_private
+        else "Are you sure about making this audio private?"
     )
 
+    await query.answer(text)
+
+    await query.message.edit_reply_markup(
+        keyboards.share_confirm_buttons(
+            callback_data["file_id"],
+            is_private,
+        )
+    )
+
+
+async def confiramtion_no(query: types.CallbackQuery, callback_data: dict):
+    """Handler for selection NO at share confiramtion."""
+
+    is_private = json.loads(callback_data["is_private"].lower())
+
+    await query.message.edit_reply_markup(
+        keyboards.share_button(
+            callback_data["file_id"],
+            is_private,
+        )
+    )
+
+    await query.answer("Canceled!")
+
+
+async def confiramtion_yes(query: types.CallbackQuery, callback_data: dict):
+    """Handler for selection YES at share confiramtion."""
+
+    is_private = json.loads(callback_data["is_private"].lower())
+
+    if row := await db.get_match(callback_data["file_id"]):
+        idc = row[0]
+        await db.toggle_private(idc, not is_private)
+        await query.message.edit_reply_markup(
+            keyboards.share_button(
+                callback_data["file_id"],
+                not is_private,
+            )
+        )
+
+        return await query.answer("Done!")
+
     await query.answer()
+
+    raise Exception(f"Can't find match with file_id={callback_data['file_id']}")

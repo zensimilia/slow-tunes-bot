@@ -9,6 +9,7 @@ async def global_error_handler(update: types.Update, error: Exception):
     """Global errors handler."""
 
     log.error(error)
+    # TODO: check if message exist else send from current bot
     await update.message.reply(
         "😱 Something wrong happened! Please try again or come back later..."
     )
@@ -36,7 +37,8 @@ async def database_error(update: types.Update, _error: Exception):
     return True
 
 
-async def message_not_modified_error(_update: types.Update, _error: Exception):
+async def message_not_modified_error(_update: types.Update, error: Exception):
     """Error handler for MessageNotModified exception."""
 
+    log.warning(error)
     return True
