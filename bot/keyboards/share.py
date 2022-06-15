@@ -5,7 +5,7 @@ share_cbd = CallbackData("share", "action", "file_id", "is_private")
 
 
 def share_button(file_id: str, is_private: bool = True) -> InlineKeyboardMarkup:
-    """Returns markup of Share button."""
+    """Returns markup for Share button."""
 
     text = "🤙 Share?" if is_private else "🔒 Make private?"
 
@@ -28,7 +28,7 @@ def share_button(file_id: str, is_private: bool = True) -> InlineKeyboardMarkup:
 def share_confirm_buttons(
     file_id: str, is_private: bool
 ) -> InlineKeyboardMarkup:
-    """Returns markup for confirmation sharing buttons."""
+    """Returns markup for sharing confirmation buttons."""
 
     return InlineKeyboardMarkup(
         inline_keyboard=[

@@ -9,7 +9,7 @@ async def global_error_handler(update: types.Update, error: Exception):
     """Global errors handler."""
 
     log.error(error)
-    # TODO: check if message exist else send from current bot
+    # TODO: check if message object exist else send from current bot
     await update.message.reply(
         "😱 Something wrong happened! Please try again or come back later..."
     )

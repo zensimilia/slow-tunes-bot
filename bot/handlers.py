@@ -55,18 +55,35 @@ def register_handlers(dp: Dispatcher):
         processing_audio,
         content_types=[types.ContentType.AUDIO],
     )
+
+    # Share callback handlers
     dp.register_callback_query_handler(
-        confirmation,
+        share_confirmation,
         keyboards.share_cbd.filter(action="confirm"),
     )
     dp.register_callback_query_handler(
-        confiramtion_no,
+        share_confiramtion_no,
         keyboards.share_cbd.filter(action="no"),
     )
     dp.register_callback_query_handler(
-        confiramtion_yes,
+        share_confiramtion_yes,
         keyboards.share_cbd.filter(action="yes"),
     )
+
+    # Report callback handlers
+    dp.register_callback_query_handler(
+        report_confirmation,
+        keyboards.report_cbd.filter(action="confirm"),
+    )
+    dp.register_callback_query_handler(
+        report_confiramtion_help,
+        keyboards.report_cbd.filter(action="help"),
+    )
+    dp.register_callback_query_handler(
+        report_confiramtion_no,
+        keyboards.report_cbd.filter(action="no"),
+    )
+
     dp.register_message_handler(answer_message)
 
 
@@ -98,14 +115,19 @@ async def answer_message(message: types.Message):
 async def command_random(message: types.Message):
     """Handler for `/random` command. Returns random tune from database."""
 
-    random = await db.get_random_match()
-    if random:
-        await message.answer("Some slow tune for you...")
-        await message.answer_audio(random[0], caption="@slowtunesbot")
+    await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
+
+    if random := await db.get_random_match():
+        (idc, _, file_id, *_) = random
+        await message.answer_audio(
+            file_id,
+            caption="Random shared audio slowed by @slowtunesbot",
+            reply_markup=keyboards.report_button(idc),
+        )
         return
 
     log.info("No tunes in database for /random command")
-    await message.answer("Sorry, but I don't have tunes yet.")
+    await message.answer("Sorry! I don't have shared tunes yet.")
 
 
 async def command_start(message: types.Message):
@@ -189,8 +211,8 @@ async def slowing_down_task(message: types.Message) -> bool:
             os.remove(downloaded.name)
 
 
-async def confirmation(query: types.CallbackQuery, callback_data: dict):
-    """Display confirm share buttons."""
+async def share_confirmation(query: types.CallbackQuery, callback_data: dict):
+    """Display confirm Share buttons."""
 
     is_private = json.loads(callback_data["is_private"].lower())
     text = (
@@ -209,8 +231,10 @@ async def confirmation(query: types.CallbackQuery, callback_data: dict):
     )
 
 
-async def confiramtion_no(query: types.CallbackQuery, callback_data: dict):
-    """Handler for selection NO at share confiramtion."""
+async def share_confiramtion_no(
+    query: types.CallbackQuery, callback_data: dict
+):
+    """Handler for selection NO at Share confiramtion."""
 
     is_private = json.loads(callback_data["is_private"].lower())
 
@@ -224,8 +248,10 @@ async def confiramtion_no(query: types.CallbackQuery, callback_data: dict):
     await query.answer("Canceled!")
 
 
-async def confiramtion_yes(query: types.CallbackQuery, callback_data: dict):
-    """Handler for selection YES at share confiramtion."""
+async def share_confiramtion_yes(
+    query: types.CallbackQuery, callback_data: dict
+):
+    """Handler for selection YES at Share confiramtion."""
 
     is_private = json.loads(callback_data["is_private"].lower())
 
@@ -244,3 +270,35 @@ async def confiramtion_yes(query: types.CallbackQuery, callback_data: dict):
     await query.answer()
 
     raise Exception(f"Can't find match with file_id={callback_data['file_id']}")
+
+
+async def report_confirmation(query: types.CallbackQuery, callback_data: dict):
+    """Display confirm Report buttons."""
+
+    await query.answer("Are you sure to report this audio?")
+
+    await query.message.edit_reply_markup(
+        keyboards.report_confirm_buttons(callback_data["idc"])
+    )
+
+
+async def report_confiramtion_help(
+    query: types.CallbackQuery, callback_data: dict
+):
+    """Handler for selection HELP at Report confiramtion."""
+
+    await query.answer(
+        "Help text there.", show_alert=True
+    )  # TODO: fill help text
+
+
+async def report_confiramtion_no(
+    query: types.CallbackQuery, callback_data: dict
+):
+    """Handler for selection NO at Report confiramtion."""
+
+    await query.message.edit_reply_markup(
+        keyboards.report_button(callback_data["idc"])
+    )
+
+    await query.answer("Canceled!")
