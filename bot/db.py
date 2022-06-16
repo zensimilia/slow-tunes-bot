@@ -42,26 +42,24 @@ def send_query(query: str, args: tuple | None = None) -> sqlite3.Cursor:  # type
 def init_sqlite():
     """Init sqlite database file and create tables."""
 
+    # match table
     send_query(
         '''CREATE TABLE IF NOT EXISTS match (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        original CHAR,
-        slowed CHAR,
-        user_id INTEGER,
+        original CHAR NOT NULL UNIQUE,
+        slowed CHAR NOT NULL,
+        user_id INTEGER NOT NULL,
         private BOOLEAN DEFAULT 1 NOT NULL,
         forbidden BOOLEAN DEFAULT 0 NOT NULL);'''
     )
 
+    # likes table
     send_query(
         '''CREATE TABLE IF NOT EXISTS likes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         match_id INEGER NOT NULL,
-        user_id INTEGER NOT NULL);'''
-    )
-
-    send_query(
-        '''CREATE UNIQUE INDEX IF NOT EXISTS
-        unique_idx ON likes(match_id, user_id);'''
+        user_id INTEGER NOT NULL,
+        UNIQUE (match_id, user_id));'''
     )
 
 
