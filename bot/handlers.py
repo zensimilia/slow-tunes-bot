@@ -73,15 +73,15 @@ def register_handlers(dp: Dispatcher):
     # Report callback handlers
     dp.register_callback_query_handler(
         report_confirmation,
-        keyboards.report_cbd.filter(action="confirm"),
+        keyboards.random_cbd.filter(action="confirm"),
     )
     dp.register_callback_query_handler(
         report_confiramtion_help,
-        keyboards.report_cbd.filter(action="help"),
+        keyboards.random_cbd.filter(action="help"),
     )
     dp.register_callback_query_handler(
         report_confiramtion_no,
-        keyboards.report_cbd.filter(action="no"),
+        keyboards.random_cbd.filter(action="no"),
     )
 
     dp.register_message_handler(answer_message)
@@ -122,7 +122,7 @@ async def command_random(message: types.Message):
         await message.answer_audio(
             file_id,
             caption="Random shared audio slowed by @slowtunesbot",
-            reply_markup=keyboards.report_button(idc),
+            reply_markup=keyboards.random_buttons(idc),
         )
         return
 
@@ -298,7 +298,7 @@ async def report_confiramtion_no(
     """Handler for selection NO at Report confiramtion."""
 
     await query.message.edit_reply_markup(
-        keyboards.report_button(callback_data["idc"])
+        keyboards.random_buttons(callback_data["idc"])
     )
 
     await query.answer("Canceled!")
