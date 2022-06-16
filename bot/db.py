@@ -52,6 +52,18 @@ def init_sqlite():
         forbidden BOOLEAN DEFAULT 0 NOT NULL);'''
     )
 
+    send_query(
+        '''CREATE TABLE IF NOT EXISTS likes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        match_id INEGER NOT NULL,
+        user_id INTEGER NOT NULL);'''
+    )
+
+    send_query(
+        '''CREATE UNIQUE INDEX IF NOT EXISTS
+        unique_idx ON likes(match_id, user_id);'''
+    )
+
 
 async def insert_match(original: str, slowed: str, user_id: int) -> int | None:
     """Insert row with original and slowed file ids."""
@@ -112,3 +124,38 @@ async def toggle_forbidden(idc: int, is_forbidden: bool = True) -> None:
             idc,
         ),
     )
+
+
+async def toggle_like(toggle: bool, match_id: int, user_id: int) -> None:
+    """Toggle likes for /random audio."""
+
+    if toggle:
+        send_query(
+            'INSERT OR IGNORE INTO likes (match_id, user_id) VALUES (?, ?);',
+            (
+                match_id,
+                user_id,
+            ),
+        )
+    else:
+        send_query(
+            'DELETE FROM likes WHERE match_id = ? AND user_id = ?;',
+            (
+                match_id,
+                user_id,
+            ),
+        )
+
+
+async def is_liked(match_id: int, user_id: int) -> bool:
+    """Check if audio is already liked."""
+
+    query = send_query(
+        'SELECT * FROM likes WHERE match_id = ? AND user_id = ?;',
+        (
+            match_id,
+            user_id,
+        ),
+    )
+
+    return bool(query.fetchone())

@@ -4,16 +4,16 @@ from aiogram.utils.callback_data import CallbackData
 random_cbd = CallbackData("report", "action", "idc")
 
 
-def random_buttons(idc: str) -> InlineKeyboardMarkup:
-    """Returns markup for Report button."""
+def random_buttons(idc: str, is_like: bool = False) -> InlineKeyboardMarkup:
+    """Returns markup for /random audio buttons."""
 
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    "❤ Like!",
+                    "💔 Dislike!" if is_like else "❤ Like!",
                     callback_data=random_cbd.new(
-                        action="like",
+                        action="toggle_like",
                         idc=idc,
                     ),
                 ),
@@ -36,7 +36,7 @@ def report_confirm_buttons(idc: str) -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    "?",
+                    "❓",
                     callback_data=random_cbd.new(action="help", idc=idc),
                 ),
                 InlineKeyboardButton(

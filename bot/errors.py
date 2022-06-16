@@ -8,7 +8,7 @@ log = get_logger()
 async def global_error_handler(update: types.Update, error: Exception):
     """Global errors handler."""
 
-    log.error(error)
+    log.error("(%s) %s", error.__class__.__name__, error)
     text = "😱 Something wrong happened! Please try again or come back later..."
 
     if update.message is not None:
@@ -33,9 +33,12 @@ async def file_is_too_big(update: types.Update, _error: Exception):
 async def database_error(update: types.Update, _error: Exception):
     """Error handler for database Error exception."""
 
-    await update.message.reply(
-        "🚧 I have some issues with the database. Please come back later..."
-    )
+    text = "🚧 I have some issues with the database. Please come back later..."
+
+    if update.message is not None:
+        await update.message.reply(text)
+    elif update.callback_query is not None:
+        await update.callback_query.answer(text, show_alert=True)
     return True
 
 

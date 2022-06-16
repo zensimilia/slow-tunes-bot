@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import sqlite3
 
 from aiogram import Dispatcher, types
 from aiogram.utils.exceptions import (
@@ -33,7 +34,7 @@ def register_handlers(dp: Dispatcher):
     )
     dp.register_errors_handler(
         eh.database_error,
-        exception=db.Error,
+        exception=sqlite3.Error,
     )
     dp.register_errors_handler(
         eh.message_not_modified_error,
@@ -70,7 +71,7 @@ def register_handlers(dp: Dispatcher):
         keyboards.share_cbd.filter(action="yes"),
     )
 
-    # Report callback handlers
+    # Report and Likes callback handlers
     dp.register_callback_query_handler(
         report_confirmation,
         keyboards.random_cbd.filter(action="confirm"),
@@ -82,6 +83,10 @@ def register_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(
         report_confiramtion_no,
         keyboards.random_cbd.filter(action="no"),
+    )
+    dp.register_callback_query_handler(
+        toggle_like,
+        keyboards.random_cbd.filter(action="toggle_like"),
     )
 
     dp.register_message_handler(answer_message)
@@ -119,10 +124,11 @@ async def command_random(message: types.Message):
 
     if random := await db.get_random_match():
         (idc, _, file_id, *_) = random
+        is_liked = await db.is_liked(idc, message.from_user.id)
         await message.answer_audio(
             file_id,
             caption="Random shared audio slowed by @slowtunesbot",
-            reply_markup=keyboards.random_buttons(idc),
+            reply_markup=keyboards.random_buttons(idc, is_liked),
         )
         return
 
@@ -288,8 +294,9 @@ async def report_confiramtion_help(
     """Handler for selection HELP at Report confiramtion."""
 
     await query.answer(
-        "Help text there.", show_alert=True
-    )  # TODO: fill help text
+        "Help text there.",
+        show_alert=True,
+    )
 
 
 async def report_confiramtion_no(
@@ -302,3 +309,17 @@ async def report_confiramtion_no(
     )
 
     await query.answer("Canceled!")
+
+
+async def toggle_like(query: types.CallbackQuery, callback_data: dict):
+    """Handler for toggle likes of /random audio."""
+
+    user_id = query.from_user.id
+    is_liked = await db.is_liked(callback_data["idc"], user_id)
+
+    await db.toggle_like(not is_liked, callback_data["idc"], user_id)
+    await query.message.edit_reply_markup(
+        keyboards.random_buttons(callback_data["idc"], not is_liked)
+    )
+
+    await query.answer("Thanks for like!" if not is_liked else "Audio disliked")
