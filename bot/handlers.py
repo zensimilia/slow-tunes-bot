@@ -226,9 +226,9 @@ async def share_confirmation(query: types.CallbackQuery, callback_data: dict):
 
     is_private = json.loads(callback_data["is_private"].lower())
     text = (
-        "Are you sure about making this audio public?"
+        "Are you sure to make this audio public?"
         if is_private
-        else "Are you sure about making this audio private?"
+        else "Are you sure to make this audio private?"
     )
 
     await query.answer(text)
@@ -274,10 +274,15 @@ async def share_confiramtion_yes(
 ):
     """Handler for selection YES at Share confiramtion."""
 
-    is_private = json.loads(callback_data["is_private"].lower())
-
     if row := await db.get_match(callback_data["file_id"]):
-        idc = row[0]
+        (idc, _, _, _, is_private, is_forbidden) = row
+
+        if is_forbidden:
+            return await query.answer(
+                "Sorry! Forbidden to share this audio.",
+                show_alert=True,
+            )
+
         await db.toggle_private(idc, not is_private)
         await query.message.edit_reply_markup(
             keyboards.share_button(
@@ -288,7 +293,7 @@ async def share_confiramtion_yes(
 
         return await query.answer("Done!")
 
-    await query.answer()
+    await query.answer("😱 Something went wrong!", show_alert=True)
 
     raise Exception(f"Can't find match with file_id={callback_data['file_id']}")
 

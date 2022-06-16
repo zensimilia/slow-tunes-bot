@@ -63,14 +63,26 @@ def init_sqlite():
     )
 
 
-async def insert_match(original: str, slowed: str, user_id: int) -> int | None:
+async def insert_match(
+    original: str,
+    slowed: str,
+    user_id: int,
+    private: bool = True,
+    forbidden: bool = False,
+) -> int | None:
     """Insert row with original and slowed file ids."""
 
     query = send_query(
         '''INSERT INTO
         match (original, slowed, user_id, private, forbidden)
         VALUES (?, ?, ?, ?, ?);''',
-        (original, slowed, user_id, True, False),
+        (
+            original,
+            slowed,
+            user_id,
+            private,
+            forbidden,
+        ),
     )
     return query.lastrowid
 
@@ -95,6 +107,19 @@ async def get_random_match() -> tuple | None:
         (
             False,
             False,
+        ),
+    )
+    return query.fetchone()
+
+
+async def get_by_pk(table: str, pk: int) -> tuple | None:
+    """Get the row by its id from a given table."""
+
+    query = send_query(
+        'SELECT * FROM ? WHERE id = ?;',
+        (
+            table,
+            pk,
         ),
     )
     return query.fetchone()
