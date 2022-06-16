@@ -9,10 +9,12 @@ async def global_error_handler(update: types.Update, error: Exception):
     """Global errors handler."""
 
     log.error(error)
-    # TODO: check if message object exist else send from current bot
-    await update.message.reply(
-        "😱 Something wrong happened! Please try again or come back later..."
-    )
+    text = "😱 Something wrong happened! Please try again or come back later..."
+
+    if update.message is not None:
+        await update.message.reply(text)
+    elif update.callback_query is not None:
+        await update.callback_query.answer(text, show_alert=True)
     return True
 
 
