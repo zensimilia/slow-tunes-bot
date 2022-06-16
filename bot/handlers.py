@@ -63,6 +63,10 @@ def register_handlers(dp: Dispatcher):
         keyboards.share_cbd.filter(action="confirm"),
     )
     dp.register_callback_query_handler(
+        share_confiramtion_help,
+        keyboards.share_cbd.filter(action="help"),
+    )
+    dp.register_callback_query_handler(
         share_confiramtion_no,
         keyboards.share_cbd.filter(action="no"),
     )
@@ -234,6 +238,17 @@ async def share_confirmation(query: types.CallbackQuery, callback_data: dict):
             callback_data["file_id"],
             is_private,
         )
+    )
+
+
+async def share_confiramtion_help(
+    query: types.CallbackQuery, callback_data: dict
+):
+    """Handler for selection HELP at Share confiramtion."""
+
+    await query.answer(
+        "Help text there.",
+        show_alert=True,
     )
 
 

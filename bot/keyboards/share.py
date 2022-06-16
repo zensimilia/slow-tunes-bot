@@ -34,6 +34,14 @@ def share_confirm_buttons(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
+                    "❓",
+                    callback_data=share_cbd.new(
+                        action="help",
+                        file_id=file_id,
+                        is_private=is_private,
+                    ),
+                ),
+                InlineKeyboardButton(
                     "YES",
                     callback_data=share_cbd.new(
                         action="yes",
