@@ -89,6 +89,10 @@ def register_handlers(dp: Dispatcher):
         keyboards.random_cbd.filter(action="no"),
     )
     dp.register_callback_query_handler(
+        report_confiramtion_yes,
+        keyboards.random_cbd.filter(action="yes"),
+    )
+    dp.register_callback_query_handler(
         toggle_like,
         keyboards.random_cbd.filter(action="toggle_like"),
     )
@@ -132,7 +136,7 @@ async def command_random(message: types.Message):
         await message.answer_audio(
             file_id,
             caption="Random shared audio slowed by @slowtunesbot",
-            reply_markup=keyboards.random_buttons(idc, is_liked),
+            reply_markup=keyboards.random_buttons(idc, is_like=is_liked),
         )
         return
 
@@ -324,11 +328,66 @@ async def report_confiramtion_no(
 ):
     """Handler for selection NO at Report confiramtion."""
 
+    is_liked = await db.is_liked(callback_data["idc"], query.from_user.id)
+
     await query.message.edit_reply_markup(
-        keyboards.random_buttons(callback_data["idc"])
+        keyboards.random_buttons(callback_data["idc"], is_like=is_liked)
     )
 
     await query.answer("Canceled!")
+
+
+async def report_confiramtion_yes(
+    query: types.CallbackQuery, callback_data: dict
+):
+    """Handler for selection YES at Report confiramtion."""
+
+    if row := await db.get_by_pk("match", callback_data["idc"]):
+        (idc, _, file_id, _, _, is_forbidden) = row
+
+        if is_forbidden:
+            return await query.answer(
+                "This audio is already forbidden", show_alert=True
+            )
+
+        log.info(
+            "NEW REPORT TO AUDIO <file_id=%s user_id=%d>",
+            file_id,
+            query.from_user.id,
+        )
+
+        mention = f"<a href='tg://user?id={query.from_user.id}'>{query.from_user.username}</a>"
+
+        try:
+            await query.bot.send_audio(
+                config.ADMIN_ID,
+                file_id,
+                caption=f"{mention} report this audio. What should we do whith it?",
+            )
+
+            is_liked = await db.is_liked(idc, query.from_user.id)
+
+            await query.message.edit_reply_markup(
+                keyboards.random_buttons(
+                    idc,
+                    is_like=is_liked,
+                )
+            )
+
+            return await query.answer(
+                "Thanks! Your request is being processed...",
+                show_alert=True,
+            )
+        except TelegramAPIError as error:
+            log.error(
+                "Can't send Report message to admin <match id=%d> %s",
+                idc,
+                error,
+            )
+
+    raise ValueError(
+        f"Can't find row in 'match' table with id={callback_data['idc']}"
+    )
 
 
 async def toggle_like(query: types.CallbackQuery, callback_data: dict):
@@ -339,7 +398,7 @@ async def toggle_like(query: types.CallbackQuery, callback_data: dict):
 
     await db.toggle_like(not is_liked, callback_data["idc"], user_id)
     await query.message.edit_reply_markup(
-        keyboards.random_buttons(callback_data["idc"], not is_liked)
+        keyboards.random_buttons(callback_data["idc"], is_like=not is_liked)
     )
 
     await query.answer("Thanks for like!" if not is_liked else "Audio disliked")

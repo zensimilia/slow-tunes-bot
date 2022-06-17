@@ -4,7 +4,7 @@ from aiogram.utils.callback_data import CallbackData
 random_cbd = CallbackData("report", "action", "idc")
 
 
-def random_buttons(idc: str, is_like: bool = False) -> InlineKeyboardMarkup:
+def random_buttons(idc: str, *, is_like: bool = False) -> InlineKeyboardMarkup:
     """Returns markup for /random audio buttons."""
 
     return InlineKeyboardMarkup(
@@ -24,7 +24,7 @@ def random_buttons(idc: str, is_like: bool = False) -> InlineKeyboardMarkup:
                         idc=idc,
                     ),
                 ),
-            ],
+            ]
         ]
     )
 
