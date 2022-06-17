@@ -15,7 +15,7 @@ config = AppConfig()
 storage = MemoryStorage()
 queue = Queue()
 
-protected_handlers = ['answer_message']
+protected_handlers = ["answer_message", "report_confirmation"]
 throttling_middleware = ThrottlingMiddleware(
     protected_handlers, rate=config.THROTTLE_RATE
 )
@@ -29,10 +29,10 @@ async def on_startup(dp: Dispatcher):
     register_handlers(dp)
 
     commands = [
-        types.BotCommand('random', 'get some slowed tune'),
-        types.BotCommand('donate', 'buy me a beer'),
-        types.BotCommand('help', 'if you stuck'),
-        types.BotCommand('about', 'bot info'),
+        types.BotCommand("random", "get some slowed tune"),
+        types.BotCommand("donate", "buy me a beer"),
+        types.BotCommand("help", "if you stuck"),
+        types.BotCommand("about", "bot info"),
     ]
     await dp.bot.set_my_commands(commands)
 
@@ -62,5 +62,5 @@ def main():
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
