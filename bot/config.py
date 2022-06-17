@@ -11,14 +11,15 @@ class AppConfig(BaseSettings):
     that will take precedence.
     """
 
-    DEBUG: bool = False
+    ADMIN_ID: int
+    ALBUM_ART: str = "./assets/thumb.jpg"
     BOT_TOKEN: str = ""
     DATA_DIR: str = "./data/"
     DB_FILE: str = os.path.join(DATA_DIR, "db.sqlite")
+    DEBUG: bool = False
     SPEED_RATIO: float = 33 / 45
     PITCH_RATIO: float = -12 * math.log(1 / SPEED_RATIO, 2)  # Not used yet
     THROTTLE_RATE: int = 15  # In seconds
-    ALBUM_ART: str = "./assets/thumb.jpg"
 
     class Config:
         """Load variables from the dotenv file."""
