@@ -13,7 +13,7 @@ class AppConfig(BaseSettings):
 
     ADMIN_ID: int
     ALBUM_ART: str = "./assets/thumb.jpg"
-    BOT_TOKEN: str = ""
+    BOT_TOKEN: str
     DATA_DIR: str = "./data/"
     DB_FILE: str = os.path.join(DATA_DIR, "db.sqlite")
     DEBUG: bool = False
