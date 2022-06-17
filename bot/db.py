@@ -116,11 +116,8 @@ async def get_by_pk(table: str, pk: int) -> tuple | None:
     """Get the row by its id from a given table."""
 
     query = send_query(
-        'SELECT * FROM ? WHERE id = ?;',
-        (
-            table,
-            pk,
-        ),
+        f'SELECT * FROM {table} WHERE id = ?;',
+        (pk,),
     )
     return query.fetchone()
 
