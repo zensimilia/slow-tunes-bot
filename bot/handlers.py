@@ -188,10 +188,13 @@ async def slowing_down_task(message: types.Message) -> bool:
             await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
 
             file_name = audio.brand_file_name(message.audio.file_name)
+            thumb_file_exists = os.path.exists(config.ALBUM_ART)
             tags = {
                 'performer': message.audio.to_python().get("performer"),
                 'title': message.audio.to_python().get("title"),
-                'thumb': types.InputFile(config.ALBUM_ART),
+                'thumb': types.InputFile(config.ALBUM_ART)
+                if thumb_file_exists
+                else None,
             }
             uploaded = await message.answer_audio(
                 types.InputFile(slowed_down, filename=file_name),
@@ -202,7 +205,6 @@ async def slowing_down_task(message: types.Message) -> bool:
                 ),
                 **tags,
             )
-            os.remove(slowed_down)
             await db.insert_match(
                 message.audio.file_unique_id,
                 uploaded.audio.file_id,
@@ -223,6 +225,8 @@ async def slowing_down_task(message: types.Message) -> bool:
         if downloaded:
             downloaded.close()
             os.remove(downloaded.name)
+        if slowed_down:
+            os.remove(slowed_down)
 
 
 async def share_confirmation(query: types.CallbackQuery, callback_data: dict):
