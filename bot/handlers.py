@@ -367,6 +367,7 @@ async def report_confiramtion_yes(
                 config.ADMIN_ID,
                 file_id,
                 caption=f"{mention} report this audio. What should we do whith it?",
+                reply_markup=keyboards.report_response_buttons(idc),
             )
 
             is_liked = await db.is_liked(idc, query.from_user.id)

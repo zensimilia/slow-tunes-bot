@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.callback_data import CallbackData
 
-random_cbd = CallbackData("report", "action", "idc")
+random_cbd = CallbackData("random", "action", "idc")
 
 
 def random_buttons(idc: str, *, is_like: bool = False) -> InlineKeyboardMarkup:
