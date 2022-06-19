@@ -40,4 +40,6 @@ $ apt-get install ffmpeg libavcodec-extra
 
 ## Docker
 
-Soon...
+```bash
+$ docker-compose up -d
+```
