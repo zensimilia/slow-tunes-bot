@@ -69,7 +69,7 @@ async def report_confiramtion_yes(
             await query.bot.send_audio(
                 config.ADMIN_ID,
                 file_id,
-                caption=f"{mention} report this audio. What should we do whith it?",
+                caption=f"Hola! {mention} report this audio. What should we do whith this request?",
                 reply_markup=keyboards.report_response_buttons(idc),
             )
 
@@ -96,3 +96,23 @@ async def report_confiramtion_yes(
     raise ValueError(
         f"Can't find row in 'match' table with id={callback_data['idc']}"
     )
+
+
+async def report_response_accept(
+    query: types.CallbackQuery, callback_data: dict
+):
+    """Handler for selection ACCEPT at Report request."""
+
+    await db.toggle_forbidden(callback_data["idc"], True)
+
+    await query.answer("Success! Audio is forbidden.", show_alert=True)
+
+
+async def report_response_decline(
+    query: types.CallbackQuery, callback_data: dict
+):
+    """Handler for selection DECLINE at Report request."""
+
+    await db.toggle_forbidden(callback_data["idc"], False)
+
+    await query.answer("Success! Audio is acceptable.", show_alert=True)

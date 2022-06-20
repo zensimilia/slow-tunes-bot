@@ -21,6 +21,8 @@ from .report import (
     report_confiramtion_no,
     report_confiramtion_yes,
     report_confirmation,
+    report_response_accept,
+    report_response_decline,
 )
 from .share import (
     share_confiramtion_help,
@@ -84,7 +86,7 @@ def register_handlers(dp: Dispatcher):
         keyboards.share_cbd.filter(action="yes"),
     )
 
-    # Report and Likes callback handlers
+    # Report callback handlers
     dp.register_callback_query_handler(
         report_confirmation,
         keyboards.random_cbd.filter(action="confirm"),
@@ -101,9 +103,21 @@ def register_handlers(dp: Dispatcher):
         report_confiramtion_yes,
         keyboards.random_cbd.filter(action="yes"),
     )
+
+    # Likes callback handlers
     dp.register_callback_query_handler(
         toggle_like,
         keyboards.random_cbd.filter(action="toggle_like"),
+    )
+
+    # Report response callback handlers
+    dp.register_callback_query_handler(
+        report_response_accept,
+        keyboards.report_response_cbd.filter(action="accept"),
+    )
+    dp.register_callback_query_handler(
+        report_response_decline,
+        keyboards.report_response_cbd.filter(action="decline"),
     )
 
     dp.register_message_handler(answer_message)

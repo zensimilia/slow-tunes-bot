@@ -8,6 +8,13 @@ from bot import keyboards, db
 async def share_confirmation(query: types.CallbackQuery, callback_data: dict):
     """Display confirm Share buttons."""
 
+    (_, _, _, _, _, is_forbidden) = await db.get_match(callback_data["file_id"])
+
+    if is_forbidden:
+        return await query.answer(
+            "Sorry! This audio is forbidden to share.", show_alert=True
+        )
+
     is_private = json.loads(callback_data["is_private"].lower())
     text = (
         "Are you sure to make this audio public?"
