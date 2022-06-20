@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 from aiogram import types
@@ -7,6 +6,7 @@ from aiogram.utils.exceptions import FileIsTooBig, TelegramAPIError
 from bot import db, keyboards
 from bot.config import AppConfig
 from bot.utils import audio
+from bot.utils.brand import get_caption, get_branded_file_name
 from bot.utils.logger import get_logger
 from bot.utils.queue import Queue
 
@@ -37,17 +37,22 @@ async def slowing_down_task(message: types.Message) -> bool:
 
     # Check if the audio has already slowed down
     # then returns it from telegram servers directly
-    from_db = await db.get_match(message.audio.file_unique_id)
-    if from_db:
+    if from_db := await db.get_match(message.audio.file_unique_id):
+        (idc, _, file_id, *_) = from_db
+        is_liked = await db.is_liked(idc, message.from_user.id)
         await message.answer_audio(
-            from_db[2],
-            caption="Slowed by @slowtunesbot",
+            file_id,
+            caption=await get_caption(),
+            reply_markup=keyboards.random_buttons(
+                idc,
+                is_like=is_liked,
+            ),
         )
         return True
 
     downloaded = None
 
-    await message.reply(
+    info_message = await message.reply(
         "💿 Start recording at 33 rpm for you...",
         disable_notification=True,
     )
@@ -58,26 +63,23 @@ async def slowing_down_task(message: types.Message) -> bool:
             destination_dir=config.DATA_DIR
         )
 
-        # Run func in separate thread for unblock stack
-        slowed_down = await asyncio.to_thread(
-            audio.slow_down, downloaded.name, config.SPEED_RATIO
-        )
+        slowed_down = await audio.slow_down(downloaded.name, config.SPEED_RATIO)
 
         if slowed_down:
             await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
 
-            file_name = audio.brand_file_name(message.audio.file_name)
+            file_name = await get_branded_file_name(message.audio.file_name)
             thumb_file_exists = os.path.exists(config.ALBUM_ART)
             tags = {
-                'performer': message.audio.to_python().get("performer"),
-                'title': message.audio.to_python().get("title"),
-                'thumb': types.InputFile(config.ALBUM_ART)
+                "performer": message.audio.to_python().get("performer"),
+                "title": message.audio.to_python().get("title"),
+                "thumb": types.InputFile(config.ALBUM_ART)
                 if thumb_file_exists
                 else None,
             }
             uploaded = await message.answer_audio(
                 types.InputFile(slowed_down, filename=file_name),
-                caption="Slowed by @slowtunesbot",
+                caption=await get_caption(),
                 reply_markup=keyboards.share_button(
                     message.audio.file_unique_id,
                     True,
@@ -101,6 +103,7 @@ async def slowing_down_task(message: types.Message) -> bool:
         )
         return False
     finally:
+        await info_message.delete()
         if downloaded:
             downloaded.close()
             os.remove(downloaded.name)

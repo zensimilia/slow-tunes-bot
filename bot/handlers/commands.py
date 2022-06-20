@@ -1,6 +1,7 @@
 from aiogram import types
 
 from bot import db, keyboards
+from bot.utils.brand import get_caption
 from bot.utils.logger import get_logger
 
 log = get_logger()
@@ -16,7 +17,7 @@ async def command_random(message: types.Message):
         is_liked = await db.is_liked(idc, message.from_user.id)
         await message.answer_audio(
             file_id,
-            caption="Random shared audio slowed by @slowtunesbot",
+            caption=await get_caption(),
             reply_markup=keyboards.random_buttons(idc, is_like=is_liked),
         )
         return
