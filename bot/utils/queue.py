@@ -16,38 +16,42 @@ class Queue:
     ) -> None:
         self._queue = asyncio.Queue(maxsize=maxsize)
         self._queue_size = 0
+        self.count = 1
 
     async def start(self):
         """Starts loop worker for the queue."""
 
-        log.debug("Start worker for the main queue")
+        log.info("Start tasks queue.")
 
         while True:
             try:
                 coro = await self._queue.get()
-                log.debug("Run Task from the queue %s", coro)
+                log.debug("Run task #%d from the queue %s", self.count, coro)
                 await asyncio.create_task(coro)
             except (asyncio.CancelledError, ValueError):
-                pass
+                log.debug("Queue task #%d canceled %s", self.count, coro)
+            else:
+                log.debug("Queue task #%d done", self.count)
             finally:
                 self._queue_size -= 1
+                self.count += 1
 
     async def enqueue(self, func, *args, **kwargs) -> int:
         """Add a task into the queue."""
 
-        await self._queue.put(func(*args, **kwargs))
         self._queue_size += 1
-        log.debug("Task added to the queue %s", func)
+        await self._queue.put(func(*args, **kwargs))
+        log.debug("Task #%d added to the queue %s", self.count, func)
         return self._queue_size
 
     @property
     def size(self):
-        """Return the number of items in the queue."""
+        """Return the number of tasks in the queue."""
 
         return self._queue_size
 
     @property
     def is_empty(self):
-        """Return `True` if the queue is empty, `False` otherwise."""
+        """Return True if the queue is empty, False otherwise."""
 
-        return self._queue.empty()
+        return not bool(self.size)

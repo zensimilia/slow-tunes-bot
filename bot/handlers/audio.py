@@ -93,7 +93,10 @@ async def slowing_down_task(message: types.Message) -> bool:
             )
             return True
         await message.reply(
-            "⚠ I have some issues with decoding your audio file. Please try another..."
+            (
+                "⚠ I have some issues with processing your audio. "
+                "Please send another file or try later."
+            )
         )
         return False
     except TelegramAPIError as error:
