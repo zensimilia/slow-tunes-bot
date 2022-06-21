@@ -40,10 +40,14 @@ async def on_startup(dp: Dispatcher):
     asyncio.create_task(queue.start())
 
 
-async def on_shutdown(_dp: Dispatcher):
+async def on_shutdown(dp: Dispatcher):
     """Execute function before Bot shut down polling."""
 
     log.info("Execute shutdown Bot functions...")
+
+    # Close storage
+    await dp.storage.close()
+    await dp.storage.wait_closed()
 
 
 def main():
