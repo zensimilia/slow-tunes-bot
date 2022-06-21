@@ -38,7 +38,10 @@ async def share_confiramtion_help(
     """Handler for selection HELP at Share confiramtion."""
 
     await query.answer(
-        "Help text there.",
+        (
+            "You can share this audio with other people or keep it private. "
+            "Shared audio will be available by /random command."
+        ),
         show_alert=True,
     )
 

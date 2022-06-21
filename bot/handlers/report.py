@@ -25,7 +25,10 @@ async def report_confiramtion_help(
     """Handler for selection HELP at Report confiramtion."""
 
     await query.answer(
-        "Help text there.",
+        (
+            "Send an audio ban request to a moderator. "
+            "Banned audio is unavailable by /random command."
+        ),
         show_alert=True,
     )
 
