@@ -2,7 +2,6 @@ import asyncio
 
 from mutagen import MutagenError, id3
 from pydub import AudioSegment
-from pydub.exceptions import PydubException
 from pydub.utils import mediainfo
 
 from bot.config import AppConfig
@@ -35,7 +34,7 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str:
 
         # Add album art cover
         add_album_art(slowed_file_path, config.ALBUM_ART)
-    except PydubException as error:
+    except Exception as error:
         log.warning(error)
         slowed_file_path = ""
 
