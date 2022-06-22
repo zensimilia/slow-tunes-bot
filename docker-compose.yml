@@ -17,6 +17,9 @@ services:
     restart: on-failure
     depends_on:
       - cache
+    networks:
+      - external
+      - internal
   cache:
     container_name: slow-tunes-bot-cache
     hostname: slowtunesbotcache
@@ -27,11 +30,17 @@ services:
     command: redis-server --save 300 1 --loglevel notice
     volumes:
       - cache:/data
+    networks:
+      - internal
 volumes:
   data:
     name: bot-data
   cache:
     name: bot-cache
 networks:
-  default:
+  external:
     name: slow-tunes-bot-network
+    internal: false
+  internal:
+    name: slow-tunes-bot-internal
+    internal: true
