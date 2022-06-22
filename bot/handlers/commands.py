@@ -13,12 +13,18 @@ async def command_random(message: types.Message):
     await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
 
     if random := await db.get_random_match():
-        (idc, _, file_id, *_) = random
-        is_liked = await db.is_liked(idc, message.from_user.id)
+        (idc, file_unique_id, file_id, user_id, is_private, *_) = random
+
+        if user_id == message.from_user.id:
+            keyboard = keyboards.share_button(file_unique_id, is_private)
+        else:
+            is_liked = await db.is_liked(idc, message.from_user.id)
+            keyboard = keyboards.random_buttons(idc, is_like=is_liked)
+
         await message.answer_audio(
             file_id,
             caption=await get_caption(),
-            reply_markup=keyboards.random_buttons(idc, is_like=is_liked),
+            reply_markup=keyboard,
         )
         return
 
