@@ -1,7 +1,7 @@
 import asyncio
 
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.contrib.fsm_storage.redis import RedisStorage2
 
 from bot.config import AppConfig
 from bot.db import init_sqlite
@@ -12,7 +12,10 @@ from bot.utils.queue import Queue
 
 log = get_logger()
 config = AppConfig()
-storage = MemoryStorage()
+storage = RedisStorage2(
+    host=config.REDIS_HOST,
+    port=config.REDIS_PORT,
+)
 queue = Queue()
 
 protected_handlers = ["answer_message", "report_confirmation"]

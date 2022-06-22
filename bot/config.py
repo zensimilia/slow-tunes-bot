@@ -19,6 +19,8 @@ class AppConfig(BaseSettings):
     DEBUG: bool = False
     SPEED_RATIO: float = 33 / 45
     PITCH_RATIO: float = -12 * math.log(1 / SPEED_RATIO, 2)  # Not used yet
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
     THROTTLE_RATE: int = 15  # In seconds
 
     class Config:

@@ -7,14 +7,31 @@ services:
     volumes:
       - data:/app/data
     environment:
+      DEBUG: 0
       PYTHONUNBUFFERED: 1
       PYTHONDONTWRITEBYTECODE: 1
+      REDIS_HOST: cache
+      REDIS_PORT: 6379
     env_file:
       - ./.env
     restart: on-failure
+    depends_on:
+      - cache
+  cache:
+    container_name: slow-tunes-bot-cache
+    hostname: slowtunesbotcache
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --save 300 1 --loglevel notice
+    volumes:
+      - cache:/data
 volumes:
   data:
     name: bot-data
+  cache:
+    name: bot-cache
 networks:
   default:
     name: slow-tunes-bot-network
