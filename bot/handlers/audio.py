@@ -1,12 +1,13 @@
 import os
 
 from aiogram import types
+from aiogram.dispatcher import FSMContext
 from aiogram.utils.exceptions import FileIsTooBig, TelegramAPIError
 
 from bot import db, keyboards
 from bot.config import AppConfig
 from bot.utils import audio
-from bot.utils.brand import get_caption, get_branded_file_name
+from bot.utils.brand import get_branded_file_name, get_caption
 from bot.utils.logger import get_logger
 from bot.utils.queue import Queue
 
@@ -15,12 +16,29 @@ queue = Queue()
 log = get_logger()
 
 
-async def processing_audio(message: types.Message):
+async def processing_audio(message: types.Message, state: FSMContext):
     """Slow down uploaded audio track and send it to user."""
+
+    await message.answer_chat_action(types.ChatActions.TYPING)
 
     # Check file for size limit (20mb)
     if message.audio.file_size >= (20 * 1024 * 1024):
-        raise FileIsTooBig("File is too big")
+        raise FileIsTooBig(message.audio.file_size)
+
+    # Check if the audio has already slowed down
+    # then returns it from telegram servers directly
+    if from_db := await db.get_match(message.audio.file_unique_id):
+        (idc, file_unique_id, file_id, user_id, is_private, *_) = from_db
+        if user_id == message.from_user.id:
+            keyboard = keyboards.share_button(file_unique_id, is_private)
+        else:
+            is_liked = await db.is_liked(idc, message.from_user.id)
+            keyboard = keyboards.random_buttons(idc, is_like=is_liked)
+        return await message.answer_audio(
+            file_id,
+            caption=await get_caption(),
+            reply_markup=keyboard,
+        )
 
     # Add slowing down audio task to the queue
     await queue.enqueue(slowing_down_task, message)
@@ -35,21 +53,6 @@ async def processing_audio(message: types.Message):
 async def slowing_down_task(message: types.Message) -> bool:
     """Slowing down audio Task."""
 
-    # Check if the audio has already slowed down
-    # then returns it from telegram servers directly
-    if from_db := await db.get_match(message.audio.file_unique_id):
-        (idc, _, file_id, *_) = from_db
-        is_liked = await db.is_liked(idc, message.from_user.id)
-        await message.answer_audio(
-            file_id,
-            caption=await get_caption(),
-            reply_markup=keyboards.random_buttons(
-                idc,
-                is_like=is_liked,
-            ),
-        )
-        return True
-
     downloaded = None
 
     info_message = await message.reply(
@@ -62,6 +65,7 @@ async def slowing_down_task(message: types.Message) -> bool:
         downloaded = await message.audio.download(
             destination_dir=config.DATA_DIR
         )
+        downloaded.close()
 
         slowed_down = await audio.slow_down(downloaded.name, config.SPEED_RATIO)
 
@@ -108,7 +112,6 @@ async def slowing_down_task(message: types.Message) -> bool:
     finally:
         await info_message.delete()
         if downloaded:
-            downloaded.close()
             os.remove(downloaded.name)
         if slowed_down:
             os.remove(slowed_down)
