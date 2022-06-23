@@ -10,6 +10,7 @@ from bot.utils import audio
 from bot.utils.brand import get_branded_file_name, get_caption
 from bot.utils.logger import get_logger
 from bot.utils.queue import Queue
+from bot.utils.exceptions import QueueLimitReached
 
 config = AppConfig()
 queue = Queue()
@@ -25,23 +26,32 @@ async def processing_audio(message: types.Message, state: FSMContext):
     if message.audio.file_size >= (20 * 1024 * 1024):
         raise FileIsTooBig(message.audio.file_size)
 
-    # Check if the audio has already slowed down
-    # then returns it from telegram servers directly
+    # Checks if the audio has already slowed down then returns it
+    # from telegram servers directly avoiding the queue
     if from_db := await db.get_match(message.audio.file_unique_id):
         (idc, file_unique_id, file_id, user_id, is_private, *_) = from_db
+
         if user_id == message.from_user.id:
             keyboard = keyboards.share_button(file_unique_id, is_private)
         else:
             is_liked = await db.is_liked(idc, message.from_user.id)
             keyboard = keyboards.random_buttons(idc, is_like=is_liked)
+
         return await message.answer_audio(
             file_id,
             caption=await get_caption(),
             reply_markup=keyboard,
         )
 
-    # Add slowing down audio task to the queue
-    await queue.enqueue(slowing_down_task, message)
+    async with state.proxy() as data:
+        in_queue = data.get("in_queue", 0)
+        if in_queue >= 3:
+            raise QueueLimitReached("User has reached the limit in the queue")
+
+        # Add slowing down audio task to the queue
+        await queue.enqueue(slowing_down_task, message, state)
+
+        data.update(in_queue=in_queue + 1)
 
     if queue.size > 1:
         await message.reply(
@@ -50,7 +60,7 @@ async def processing_audio(message: types.Message, state: FSMContext):
         )
 
 
-async def slowing_down_task(message: types.Message) -> bool:
+async def slowing_down_task(message: types.Message, state: FSMContext) -> bool:
     """Slowing down audio Task."""
 
     downloaded = None
@@ -99,7 +109,7 @@ async def slowing_down_task(message: types.Message) -> bool:
         await message.reply(
             (
                 "⚠ I have some issues with processing your audio. "
-                "Please send another file or try later."
+                "Please send me another file or try again later."
             )
         )
         return False
@@ -115,3 +125,6 @@ async def slowing_down_task(message: types.Message) -> bool:
             os.remove(downloaded.name)
         if slowed_down:
             os.remove(slowed_down)
+        async with state.proxy() as data:
+            in_queue = data.get("in_queue", 1)
+            data.update(in_queue=in_queue - 1)
