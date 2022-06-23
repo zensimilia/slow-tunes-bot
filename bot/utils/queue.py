@@ -36,7 +36,7 @@ class Queue:
                 self._queue_size -= 1
                 self.count += 1
 
-    async def enqueue(self, func, *args, **kwargs) -> int:
+    def enqueue(self, func, *args, **kwargs) -> int:
         """Add a task into the queue."""
 
         self._queue_size += 1

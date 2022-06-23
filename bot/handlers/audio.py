@@ -49,7 +49,7 @@ async def processing_audio(message: types.Message, state: FSMContext):
             raise QueueLimitReached("User has reached the limit in the queue")
 
         # Add slowing down audio task to the queue
-        await queue.enqueue(slowing_down_task, message, state)
+        queue.enqueue(slowing_down_task, message, state)
 
         data.update(in_queue=in_queue + 1)
 
