@@ -40,7 +40,7 @@ class Queue:
         """Add a task into the queue."""
 
         self._queue_size += 1
-        await self._queue.put(func(*args, **kwargs))
+        self._queue.put_nowait(func(*args, **kwargs))
         log.debug("Task #%d added to the queue %s", self.count, func)
         return self._queue_size
 
