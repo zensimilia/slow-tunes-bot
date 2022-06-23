@@ -47,3 +47,17 @@ async def message_not_modified_error(_update: types.Update, error: Exception):
 
     log.warning(error)
     return True
+
+
+async def queue_limit_reached(update: types.Update, error: Exception):
+    """Error handler for QueueLimitReached exception."""
+
+    log.debug(error)
+    await update.message.reply(
+        (
+            # A string.
+            "✋ You've reached your queue limit. "
+            "Wait until the previous audios are ready."
+        )
+    )
+    return True
