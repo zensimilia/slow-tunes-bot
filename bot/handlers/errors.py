@@ -57,7 +57,7 @@ async def queue_limit_reached(update: types.Update, error: Exception):
         (
             # A string.
             "✋ You've reached your queue limit. "
-            "Wait until the previous audios are ready."
+            "Wait until the previous audios are ready and try again."
         )
     )
     return True
