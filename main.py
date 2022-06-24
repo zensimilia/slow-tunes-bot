@@ -12,16 +12,7 @@ from bot.utils.queue import Queue
 
 log = get_logger()
 config = AppConfig()
-storage = RedisStorage2(
-    host=config.REDIS_HOST,
-    port=config.REDIS_PORT,
-)
 queue = Queue()
-
-protected_handlers = ["answer_message", "report_confirmation"]
-throttling_middleware = ThrottlingMiddleware(
-    protected_handlers, rate=config.THROTTLE_RATE
-)
 
 
 async def on_startup(dp: Dispatcher):
@@ -55,6 +46,14 @@ async def on_shutdown(dp: Dispatcher):
 
 def main():
     """Main app runner."""
+
+    protected_handlers = ["answer_message", "report_confirmation"]
+    throttling_middleware = ThrottlingMiddleware(
+        protected_handlers,
+        rate=config.THROTTLE_RATE,
+    )
+
+    storage = RedisStorage2(host=config.REDIS_HOST, port=config.REDIS_PORT)
 
     bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
     dp = Dispatcher(bot, storage=storage)
