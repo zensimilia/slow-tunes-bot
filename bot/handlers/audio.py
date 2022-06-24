@@ -1,7 +1,6 @@
 import os
 
 from aiogram import types
-from aiogram.dispatcher import FSMContext
 from aiogram.utils.exceptions import FileIsTooBig, TelegramAPIError
 
 from bot import db, keyboards
@@ -10,14 +9,13 @@ from bot.utils import audio
 from bot.utils.brand import get_branded_file_name, get_caption
 from bot.utils.logger import get_logger
 from bot.utils.queue import Queue
-from bot.utils.exceptions import QueueLimitReached
 
 config = AppConfig()
 queue = Queue()
 log = get_logger()
 
 
-async def processing_audio(message: types.Message, state: FSMContext):
+async def processing_audio(message: types.Message):
     """Slow down uploaded audio track and send it to user."""
 
     await message.answer_chat_action(types.ChatActions.TYPING)
@@ -43,29 +41,22 @@ async def processing_audio(message: types.Message, state: FSMContext):
             reply_markup=keyboard,
         )
 
-    async with state.proxy() as data:
-        in_queue = data.get("in_queue", 0)
-        if in_queue >= 3:
-            raise QueueLimitReached("User has reached the limit in the queue")
+    # Add slowing down audio task to the queue
+    task = queue.enqueue(slowing_down_task, message)
 
-        # Add slowing down audio task to the queue
-        queue.enqueue(slowing_down_task, message, state)
-
-        data.update(in_queue=in_queue + 1)
-
-    if queue.size > 1:
+    if task > 1:
         await message.reply(
-            f"🕙 Added your request to the queue. Your position: {queue.size}.",
+            f"🕙 Added your request to the queue. Your position: {task}.",
             disable_notification=True,
         )
 
 
-async def slowing_down_task(message: types.Message, state: FSMContext) -> bool:
+async def slowing_down_task(message: types.Message) -> bool:
     """Slowing down audio Task."""
 
     downloaded = None
 
-    info_message = await message.reply(
+    await message.reply(
         "💿 Start recording at 33 rpm for you...",
         disable_notification=True,
     )
@@ -120,11 +111,7 @@ async def slowing_down_task(message: types.Message, state: FSMContext) -> bool:
         )
         return False
     finally:
-        await info_message.delete()
         if downloaded:
             os.remove(downloaded.name)
         if slowed_down:
             os.remove(slowed_down)
-        async with state.proxy() as data:
-            in_queue = data.get("in_queue", 1)
-            data.update(in_queue=in_queue - 1)
