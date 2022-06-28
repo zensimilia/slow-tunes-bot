@@ -73,7 +73,9 @@ async def slowing_down_task(message: types.Message) -> bool:
         if slowed_down:
             await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
 
-            file_name = await get_branded_file_name(message.audio.file_name)
+            file_name = await get_branded_file_name(
+                message.audio.file_name or message.audio.file_unique_id
+            )
             thumb_file_exists = os.path.exists(config.ALBUM_ART)
             tags = {
                 "performer": message.audio.to_python().get("performer"),
