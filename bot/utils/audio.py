@@ -94,9 +94,11 @@ def add_album_art(audio_file: str, art_file: str) -> bool:
 
         log.debug("Album art %s added to file %s", art_file, audio_file)
         return True
+
     except IOError as error:
         log.error("Can't read album art file - %s", error)
-        return False
+
     except MutagenError as error:
         log.error("Can't save album art to file - %s", error)
-        return False
+
+    return False
