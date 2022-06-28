@@ -1,11 +1,22 @@
 FROM python:3.10.4-alpine
-RUN apk add --no-cache ffmpeg
-RUN mkdir /app
-RUN mkdir /app/data
+
+# Install dependencies
+RUN apk add --no-cache ffmpeg=5.0.1-r1
+
+# Create user and group
+RUN addgroup -g 1998 botuser \
+    && adduser -u 1998 -G botuser -s /bin/sh -D botuser
+USER 1998
+
 WORKDIR /app
+RUN mkdir data
+
+# Install modules
 COPY ./requirements.txt .
-RUN pip install -r requirements.txt
-COPY ./assets ./assets
-COPY ./main.py .
-COPY ./bot ./bot
-ENTRYPOINT [ "python", "main.py" ]
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy files
+COPY --chown=1998:1998 . .
+
+# Run bot
+CMD ["python", "main.py"]

@@ -1,0 +1,15 @@
+.git/
+.vscode/
+data/
+env/
+.env
+Dockerfile
+docker-compose.yml
+.dockerignore
+.pylintrc
+.editorconfig
+**/.gitignore
+**/__pycache__/
+**/*.py[cod]
+README.md
+LICENSE

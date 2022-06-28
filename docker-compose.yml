@@ -4,8 +4,9 @@ services:
     container_name: slow-tunes-bot
     hostname: slowtunesbot
     build: .
+    user: 1998:1998
     volumes:
-      - data:/app/data
+      - bot-data:/app/data
     environment:
       DEBUG: 0
       PYTHONUNBUFFERED: 1
@@ -26,17 +27,15 @@ services:
     image: redis:7-alpine
     restart: always
     ports:
-      - "6379:6379"
+      - 6379:6379
     command: redis-server --save 300 1 --loglevel notice
     volumes:
-      - cache:/data
+      - bot-cache:/data
     networks:
       - internal
 volumes:
-  data:
-    name: bot-data
-  cache:
-    name: bot-cache
+  bot-data:
+  bot-cache:
 networks:
   external:
     name: slow-tunes-bot-network
