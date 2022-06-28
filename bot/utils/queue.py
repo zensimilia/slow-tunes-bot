@@ -30,6 +30,8 @@ class Queue:
                 await asyncio.create_task(coro)
             except (asyncio.CancelledError, ValueError):
                 log.debug("Queue task #%d canceled %s", self.count, coro)
+            except Exception as error:
+                log.error("Exception in queue task: %s", error)
             else:
                 log.debug("Queue task #%d done", self.count)
             finally:
