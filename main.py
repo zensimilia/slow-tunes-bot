@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 
 from bot.config import AppConfig
-from bot.db import init_sqlite
+from bot import db
 from bot.handlers import register_handlers
 from bot.middlewares.throttling import ThrottlingMiddleware
 from bot.utils.logger import get_logger
@@ -19,7 +19,7 @@ async def on_startup(dp: Dispatcher):
     """Execute function before Bot start polling."""
 
     log.info("Execute startup Bot functions...")
-    init_sqlite()
+    db.execute_script("./schema.sql")
     register_handlers(dp)
 
     commands = [

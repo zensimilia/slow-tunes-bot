@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS match (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    original CHAR NOT NULL UNIQUE,
+    slowed CHAR NOT NULL,
+    user_id INTEGER NOT NULL,
+    private BOOLEAN DEFAULT 1 NOT NULL,
+    forbidden BOOLEAN DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS likes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    match_id INEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    UNIQUE (match_id, user_id)
+);

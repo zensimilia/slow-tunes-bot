@@ -39,28 +39,24 @@ def send_query(query: str, args: tuple | None = None) -> sqlite3.Cursor:  # type
         return cursor
 
 
-def init_sqlite():
-    """Init sqlite database file and create tables."""
+def execute_script(script_file: str):
+    """Execute SQL script from file."""
 
-    # match table
-    send_query(
-        '''CREATE TABLE IF NOT EXISTS match (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        original CHAR NOT NULL UNIQUE,
-        slowed CHAR NOT NULL,
-        user_id INTEGER NOT NULL,
-        private BOOLEAN DEFAULT 1 NOT NULL,
-        forbidden BOOLEAN DEFAULT 0 NOT NULL);'''
-    )
+    try:
+        with open(script_file, "r", encoding="utf-8") as script:
+            sql = script.read()
+    except OSError as error:
+        log.critical("Can't read from SQL script file: %s", error)
+        raise SystemExit from error
 
-    # likes table
-    send_query(
-        '''CREATE TABLE IF NOT EXISTS likes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        match_id INEGER NOT NULL,
-        user_id INTEGER NOT NULL,
-        UNIQUE (match_id, user_id));'''
-    )
+    with sqlite_connect(config.DB_FILE) as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.executescript(sql)
+            conn.commit()
+        except sqlite3.Error as error:
+            log.error("Can't send query to the database - %s", error)
+            raise error
 
 
 async def insert_match(
