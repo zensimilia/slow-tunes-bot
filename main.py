@@ -43,6 +43,9 @@ async def on_shutdown(dp: Dispatcher):
     await dp.storage.close()
     await dp.storage.wait_closed()
 
+    # Clear list of bot commands
+    await dp.bot.set_my_commands([])
+
 
 def main():
     """Main app runner."""
