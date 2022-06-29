@@ -28,6 +28,7 @@ Variable| Type | Description | Required
 `SPEED_RATIO` | float | What slowing ratio to use. 1 - original speed, 0.5 - half speed, etc. |
 `REDIS_HOST` | string | Host or IP-address of Redis server. |
 `REDIS_PORT` | integer | Port of Redis server. |
+`TASK_LIMIT` | integer | Queue limit for single user tasks |
 `THROTTLE_RATE` | integer | Throttling rate in seconds. |
 
 ### Run

@@ -175,3 +175,51 @@ async def is_liked(match_id: int, user_id: int) -> bool:
     )
 
     return bool(query.fetchone())
+
+
+async def get_queue_count(user_id: int) -> int:
+    """Returns cout of task in queue for user."""
+
+    query = send_query(
+        'SELECT * FROM queue WHERE user_id = ?;',
+        (user_id,),
+    )
+
+    if row := query.fetchone():
+        return row[2]
+
+    return 0
+
+
+async def inc_queue_count(user_id: int) -> int:
+    """Increase count for queue of user tasks."""
+
+    send_query(
+        '''INSERT OR REPLACE INTO queue
+        VALUES (
+            NULL,
+            :user,
+            COALESCE((SELECT count FROM queue WHERE user_id = :user), 0) + 1
+        );''',
+        (user_id,),
+    )
+
+
+async def dec_queue_count(user_id: int) -> int:
+    """Decrease count for queue of user tasks."""
+
+    send_query(
+        '''INSERT OR REPLACE INTO queue
+        VALUES (
+            NULL,
+            :user_id,
+            COALESCE(
+                NULLIF(
+                    (SELECT count FROM queue WHERE user_id = :user_id),
+                    0
+                ),
+                1
+            ) - 1
+        );''',
+        (user_id,),
+    )

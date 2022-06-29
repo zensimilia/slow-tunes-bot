@@ -6,6 +6,7 @@ from aiogram.utils.exceptions import FileIsTooBig, TelegramAPIError
 
 from bot import db, keyboards
 from bot.config import AppConfig
+from bot.utils.exceptions import QueueLimitReached
 from bot.utils import audio
 from bot.utils.brand import get_branded_file_name, get_caption
 from bot.utils.logger import get_logger
@@ -41,6 +42,12 @@ async def processing_audio(message: types.Message):
             caption=await get_caption(),
             reply_markup=keyboard,
         )
+
+    queue_count = await db.get_queue_count(message.from_user.id)
+    if queue_count >= config.TASK_LIMIT:
+        raise QueueLimitReached(queue_count)
+
+    await db.inc_queue_count(message.from_user.id)
 
     # Add slowing down audio task to the queue
     task = queue.enqueue(slowing_down_task, message)
@@ -118,6 +125,7 @@ async def slowing_down_task(message: types.Message) -> bool:
         return False
 
     finally:
+        await db.dec_queue_count(message.from_user.id)
         os.remove(downloaded)
         os.remove(slowed)
 

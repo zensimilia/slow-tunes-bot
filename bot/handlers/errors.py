@@ -52,12 +52,16 @@ async def message_not_modified_error(_update: types.Update, error: Exception):
 async def queue_limit_reached(update: types.Update, error: Exception):
     """Error handler for QueueLimitReached exception."""
 
-    log.debug(error)
+    log.debug(
+        "User <user_id=%d> has reached his queue limit. Active tasks: %d",
+        update.message.from_user.id,
+        error,
+    )
     await update.message.reply(
         (
             # A string.
             "✋ You've reached your queue limit. "
-            "Wait until the previous audios are ready and try again."
+            "Wait until the previous tasks are ready and try again."
         )
     )
     return True
