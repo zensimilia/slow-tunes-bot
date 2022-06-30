@@ -8,7 +8,7 @@ from bot.utils.exceptions import QueueLimitReached
 from bot.utils.logger import get_logger
 
 from .audio import processing_audio
-from .commands import command_random, command_start
+from .commands import command_random, command_start, next_random
 from .common import answer_message
 from .errors import (
     database_error,
@@ -110,10 +110,14 @@ def register_handlers(dp: Dispatcher):
         keyboards.random_cbd.filter(action="yes"),
     )
 
-    # Likes callback handlers
+    # Likes and Next callback handlers
     dp.register_callback_query_handler(
         toggle_like,
         keyboards.random_cbd.filter(action="toggle_like"),
+    )
+    dp.register_callback_query_handler(
+        next_random,
+        keyboards.random_cbd.filter(action="next"),
     )
 
     # Report response callback handlers

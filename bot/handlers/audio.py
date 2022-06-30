@@ -6,9 +6,9 @@ from aiogram.utils.exceptions import FileIsTooBig, TelegramAPIError
 
 from bot import db, keyboards
 from bot.config import AppConfig
-from bot.utils.exceptions import QueueLimitReached
 from bot.utils import audio
 from bot.utils.brand import get_branded_file_name, get_caption
+from bot.utils.exceptions import QueueLimitReached
 from bot.utils.logger import get_logger
 from bot.utils.queue import Queue
 
@@ -32,7 +32,9 @@ async def processing_audio(message: types.Message):
         (idc, file_unique_id, file_id, user_id, is_private, *_) = from_db
 
         if user_id == message.from_user.id:
-            keyboard = keyboards.share_button(file_unique_id, is_private)
+            keyboard = keyboards.share_button(
+                file_unique_id, is_private=is_private
+            )
         else:
             is_liked = await db.is_liked(idc, message.from_user.id)
             keyboard = keyboards.random_buttons(idc, is_like=is_liked)
@@ -103,7 +105,8 @@ async def slowing_down_task(message: types.Message) -> bool:
             caption=await get_caption(),
             reply_markup=keyboards.share_button(
                 message.audio.file_unique_id,
-                True,
+                is_private=True,
+                is_random=False,
             ),
             **tags,
         )

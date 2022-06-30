@@ -2,7 +2,7 @@ import json
 
 from aiogram import types
 
-from bot import keyboards, db
+from bot import db, keyboards
 
 
 async def share_confirmation(query: types.CallbackQuery, callback_data: dict):
@@ -15,7 +15,9 @@ async def share_confirmation(query: types.CallbackQuery, callback_data: dict):
             "Sorry! This audio is forbidden to share.", show_alert=True
         )
 
+    # TODO: refactor this - string to boolean conversion
     is_private = json.loads(callback_data["is_private"].lower())
+
     text = (
         "Are you sure to make this audio public?"
         if is_private
@@ -27,7 +29,8 @@ async def share_confirmation(query: types.CallbackQuery, callback_data: dict):
     await query.message.edit_reply_markup(
         keyboards.share_confirm_buttons(
             callback_data["file_id"],
-            is_private,
+            is_private=is_private,
+            is_random=callback_data["is_random"],
         )
     )
 
@@ -51,12 +54,15 @@ async def share_confiramtion_no(
 ):
     """Handler for selection NO at Share confiramtion."""
 
+    # TODO: refactor this - string to boolean conversion
     is_private = json.loads(callback_data["is_private"].lower())
+    is_random = json.loads(callback_data["is_random"].lower())
 
     await query.message.edit_reply_markup(
         keyboards.share_button(
             callback_data["file_id"],
-            is_private,
+            is_private=is_private,
+            is_random=is_random,
         )
     )
 
@@ -77,11 +83,15 @@ async def share_confiramtion_yes(
                 show_alert=True,
             )
 
+        # TODO: refactor this - string to boolean conversion
+        is_random = json.loads(callback_data["is_random"].lower())
+
         await db.toggle_private(idc, not is_private)
         await query.message.edit_reply_markup(
             keyboards.share_button(
                 callback_data["file_id"],
-                not is_private,
+                is_private=not is_private,
+                is_random=is_random,
             )
         )
 

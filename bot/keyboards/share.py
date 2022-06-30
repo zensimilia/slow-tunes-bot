@@ -1,32 +1,50 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.callback_data import CallbackData
 
-share_cbd = CallbackData("share", "action", "file_id", "is_private")
+from .random import random_cbd
+
+share_cbd = CallbackData(
+    "share", "action", "file_id", "is_private", "is_random"
+)
 
 
-def share_button(file_id: str, is_private: bool = True) -> InlineKeyboardMarkup:
+def share_button(
+    file_id: str, *, is_private: bool = True, is_random: bool = False
+) -> InlineKeyboardMarkup:
     """Returns markup for Share button."""
 
     text = "🤙 Share?" if is_private else "🔒 Make private?"
 
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text,
-                    callback_data=share_cbd.new(
-                        action="confirm",
-                        file_id=file_id,
-                        is_private=is_private,
-                    ),
-                )
-            ],
-        ]
+    button = InlineKeyboardButton(
+        text,
+        callback_data=share_cbd.new(
+            action="confirm",
+            file_id=file_id,
+            is_private=is_private,
+            is_random=is_random,
+        ),
     )
+
+    markup = InlineKeyboardMarkup()
+    markup.insert(button)
+
+    if is_random:
+        markup.row()
+        markup.insert(
+            InlineKeyboardButton(
+                "⏭ Next",
+                callback_data=random_cbd.new(
+                    action="next",
+                    idc=file_id,
+                ),
+            )
+        )
+
+    return markup
 
 
 def share_confirm_buttons(
-    file_id: str, is_private: bool
+    file_id: str, *, is_private: bool, is_random: bool = False
 ) -> InlineKeyboardMarkup:
     """Returns markup for sharing confirmation buttons."""
 
@@ -39,6 +57,7 @@ def share_confirm_buttons(
                         action="help",
                         file_id=file_id,
                         is_private=is_private,
+                        is_random=is_random,
                     ),
                 ),
                 InlineKeyboardButton(
@@ -47,6 +66,7 @@ def share_confirm_buttons(
                         action="yes",
                         file_id=file_id,
                         is_private=is_private,
+                        is_random=is_random,
                     ),
                 ),
                 InlineKeyboardButton(
@@ -55,6 +75,7 @@ def share_confirm_buttons(
                         action="no",
                         file_id=file_id,
                         is_private=is_private,
+                        is_random=is_random,
                     ),
                 ),
             ],
