@@ -223,3 +223,24 @@ async def dec_queue_count(user_id: int) -> int:
         );''',
         (user_id,),
     )
+
+
+async def add_user(user_id: int, username: str) -> None:
+    """Add new user to database."""
+
+    send_query(
+        '''INSERT OR IGNORE INTO
+        users (user_id, username)
+        VALUES (?, ?);''',
+        (
+            user_id,
+            username,
+        ),
+    )
+
+
+async def users_count() -> int:
+    """Returns count of users in database."""
+
+    query = send_query('''SELECT COUNT(id) FROM users;''')
+    return query.fetchone()[0]

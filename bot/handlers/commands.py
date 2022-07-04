@@ -67,4 +67,6 @@ async def command_start(message: types.Message):
     log.info(
         "User join: %s <%s>", message.from_user.id, message.from_user.username
     )
-    await message.answer("Send me the audio track " "and i will...")
+    await db.add_user(message.from_user.id, message.from_user.username)
+
+    await message.answer("Welcome text")
