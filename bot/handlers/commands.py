@@ -72,7 +72,8 @@ async def command_start(message: types.Message):
     await message.answer(
         "<b>Welcome! Send me audio...</b>"
         "\n\n/help for a list of all commands."
-        "\n/random to get and listen shared tunes."
+        "\n/random to get and listen shared tunes.",
+        disable_notification=True,
     )
 
 
@@ -82,11 +83,35 @@ async def command_help(message: types.Message):
     await message.answer(
         "<b>Available commands:</b>"
         "\n\n/random to get and listen shared tunes."
-        "\n/about Bot info and author contacts."
+        "\n/about additional info and author contacts."
         "\n\n<b>How it works:</b>"
         "\n\nThis Bot slowing down your audio at 33/45 rpm vinyl ratio. "
         "You can share your result audio with other users by "
         "<code>share button</code> and promote by <code>like button</code>. "
         "You can also report any shared audio to have it removed "
-        "from public access."
+        "from public access.",
+        disable_notification=True,
+    )
+
+
+async def command_about(message: types.Message):
+    """Handler for `/about` command."""
+
+    users_count = await db.users_count()
+    slowed_count = await db.slowed_count()
+    random_count = await db.random_count()
+
+    await message.answer(
+        "This bot is written in Python with the aiogram and pydub modules. "
+        "It uses Redis and ffmpeg services. Enjoy!"
+        "\n\n<b>Statistics:</b>"
+        f"\n\nUsers: {users_count}"
+        f"\nSlowed tunes: {slowed_count}"
+        f"\nShared tunes: {random_count}"
+        "\n\n<b>Author:</b> "
+        "<a href='https://t.me/zensimilia'>@zensimilia</a>"
+        "\n<b>Source</b>: "
+        "<a href='https://github.com/zensimilia/slow-tunes-bot'>Github repo</a>",
+        disable_notification=True,
+        disable_web_page_preview=True,
     )

@@ -244,3 +244,19 @@ async def users_count() -> int:
 
     query = send_query('''SELECT COUNT(id) FROM users;''')
     return query.fetchone()[0]
+
+
+async def slowed_count() -> int:
+    """Returns count of slowed audios in database."""
+
+    query = send_query('''SELECT COUNT(id) FROM match;''')
+    return query.fetchone()[0]
+
+
+async def random_count() -> int:
+    """Returns count of public audios in database."""
+
+    query = send_query(
+        '''SELECT COUNT(id) FROM match WHERE private = 0 and forbidden = 0;'''
+    )
+    return query.fetchone()[0]

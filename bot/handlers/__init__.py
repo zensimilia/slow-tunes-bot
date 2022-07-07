@@ -8,7 +8,13 @@ from bot.utils.exceptions import QueueLimitReached
 from bot.utils.logger import get_logger
 
 from .audio import processing_audio
-from .commands import command_random, command_start, next_random, command_help
+from .commands import (
+    command_random,
+    command_start,
+    next_random,
+    command_help,
+    command_about,
+)
 from .common import answer_message
 from .errors import (
     database_error,
@@ -68,6 +74,10 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(
         command_help,
         commands=["help"],
+    )
+    dp.register_message_handler(
+        command_about,
+        commands=["about"],
     )
     dp.register_message_handler(
         command_random,

@@ -49,7 +49,14 @@ async def on_shutdown(dp: Dispatcher):
 def main():
     """Main app runner."""
 
-    protected_handlers = ["answer_message", "report_confirmation"]
+    protected_handlers = [
+        "answer_message",
+        "report_confirmation",
+        "command_help",
+        "command_start",
+        "command_random",
+        "command_about",
+    ]
     throttling_middleware = ThrottlingMiddleware(
         protected_handlers,
         rate=config.THROTTLE_RATE,
