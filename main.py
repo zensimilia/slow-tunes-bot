@@ -24,7 +24,6 @@ async def on_startup(dp: Dispatcher):
 
     commands = [
         types.BotCommand("random", "get some slowed tune"),
-        types.BotCommand("donate", "buy me a beer"),
         types.BotCommand("help", "if you stuck"),
         types.BotCommand("about", "bot info"),
     ]

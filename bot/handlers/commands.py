@@ -69,4 +69,24 @@ async def command_start(message: types.Message):
     )
     await db.add_user(message.from_user.id, message.from_user.username)
 
-    await message.answer("Welcome text")
+    await message.answer(
+        "<b>Welcome! Send me audio...</b>"
+        "\n\n/help for a list of all commands."
+        "\n/random to get and listen shared tunes."
+    )
+
+
+async def command_help(message: types.Message):
+    """Handler for `/help` command."""
+
+    await message.answer(
+        "<b>Available commands:</b>"
+        "\n\n/random to get and listen shared tunes."
+        "\n/about Bot info and author contacts."
+        "\n\n<b>How it works:</b>"
+        "\n\nThis Bot slowing down your audio at 33/45 rpm vinyl ratio. "
+        "You can share your result audio with other users by "
+        "<code>share button</code> and promote by <code>like button</code>. "
+        "You can also report any shared audio to have it removed "
+        "from public access."
+    )
