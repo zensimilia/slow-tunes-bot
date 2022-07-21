@@ -1,7 +1,7 @@
 FROM python:3.10.4-alpine
 
 # Install dependencies
-RUN apk add --no-cache ffmpeg=5.0.1-r1
+RUN apk add --no-cache ffmpeg
 
 # Create user and group
 RUN addgroup -g 1998 botuser \
