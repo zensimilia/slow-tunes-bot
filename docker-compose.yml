@@ -18,6 +18,8 @@ services:
     depends_on:
       - webhook
       - cache
+    ports:
+      - 3001:3001
     networks:
       - internal
       - external
