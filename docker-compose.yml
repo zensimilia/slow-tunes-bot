@@ -17,13 +17,13 @@ services:
       - ./.env
     restart: on-failure
     depends_on:
+      - webhook
       - cache
     networks:
-      - external
       - internal
   cache:
     container_name: slow-tunes-bot-cache
-    hostname: slowtunesbotcache
+    hostname: slowtunesbot-cache
     image: redis:7-alpine
     restart: always
     ports:
@@ -33,6 +33,19 @@ services:
       - bot-cache:/data
     networks:
       - internal
+  webhook:
+    container_name: slow-tunes-bot-webhook
+    hostname: slowtunesbot-webhook
+    image: nginx:stable-alpine
+    restart: always
+    user: 101:101
+    ports:
+      - 80:8080
+    networks:
+      - external
+      - internal
+    volumes:
+      - ./webhook:/etc/nginx/templates:ro
 volumes:
   bot-data:
   bot-cache:

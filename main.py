@@ -2,6 +2,7 @@ import asyncio
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
+from aiogram.utils.executor import start_webhook
 
 from bot.config import AppConfig
 from bot import db
@@ -20,6 +21,11 @@ async def on_startup(dp: Dispatcher):
 
     log.info("Execute startup Bot functions...")
     db.execute_script("./schema.sql")
+
+    # Set webhook
+    if config.USE_WEBHOOK:
+        await dp.bot.set_webhook(config.WEBHOOK_URL)
+
     register_handlers(dp)
 
     commands = [
@@ -45,6 +51,10 @@ async def on_shutdown(dp: Dispatcher):
     # Clear list of bot commands
     await dp.bot.set_my_commands([])
 
+    # Delete webhook
+    if config.USE_WEBHOOK:
+        await dp.bot.delete_webhook()
+
 
 def main():
     """Main app runner."""
@@ -69,12 +79,23 @@ def main():
     dp.errors_handlers.once = True  # Fix errors rethrowing
     dp.middleware.setup(throttling_middleware)  # Throttling middleware
 
-    executor.start_polling(
-        dp,
-        skip_updates=True,
-        on_startup=on_startup,
-        on_shutdown=on_shutdown,
-    )
+    if config.USE_WEBHOOK:
+        start_webhook(
+            dispatcher=dp,
+            webhook_path=config.WEBHOOK_PATH,
+            on_startup=on_startup,
+            on_shutdown=on_shutdown,
+            skip_updates=True,
+            host=config.APP_HOST,
+            port=config.APP_PORT,
+        )
+    else:
+        executor.start_polling(
+            dp,
+            skip_updates=True,
+            on_startup=on_startup,
+            on_shutdown=on_shutdown,
+        )
 
 
 if __name__ == "__main__":
