@@ -4,7 +4,6 @@ services:
     container_name: slow-tunes-bot
     hostname: slowtunesbot
     build: .
-    user: 1998:1998
     volumes:
       - bot-data:/app/data
     environment:
@@ -39,9 +38,8 @@ services:
     hostname: slowtunesbot-webhook
     image: nginx:stable-alpine
     restart: always
-    # user: 101:101
     ports:
-      - 80:8080
+      - 8080:8080
     networks:
       - external
       - internal
