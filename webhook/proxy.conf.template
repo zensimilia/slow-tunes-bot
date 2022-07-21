@@ -1,22 +1,16 @@
-pid /tmp/nginx.pid;
-error_log /dev/null crit;
+# pid /tmp/nginx.pid;
 
-http {
-    # Running nginx as a non-root user
-    client_body_temp_path /tmp/client_temp;
-    proxy_temp_path       /tmp/proxy_temp;
-    fastcgi_temp_path     /tmp/fastcgi_temp;
-    uwsgi_temp_path       /tmp/uwsgi_temp;
-    scgi_temp_path        /tmp/scgi_temp;
+upstream bot {
+    server app:3001;
+}
 
-    # Webhook proxy
-    server {
-        listen      8080;
-        server_name _;
-        access_log  off;
+server {
+    listen      8080;
+    server_name _;
+    access_log  off;
+    error_log   /dev/null crit;
 
-        location /slowtunesbot/ {
-            proxy_pass app:3001;
-        }
+    location /slowtunesbot/ {
+        proxy_pass http://bot;
     }
 }

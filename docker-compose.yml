@@ -21,6 +21,7 @@ services:
       - cache
     networks:
       - internal
+      - external
   cache:
     container_name: slow-tunes-bot-cache
     hostname: slowtunesbot-cache
@@ -38,14 +39,14 @@ services:
     hostname: slowtunesbot-webhook
     image: nginx:stable-alpine
     restart: always
-    user: 101:101
+    # user: 101:101
     ports:
       - 80:8080
     networks:
       - external
       - internal
     volumes:
-      - ./webhook:/etc/nginx/templates:ro
+      - ./webhook:/etc/nginx/templates
 volumes:
   bot-data:
   bot-cache:
