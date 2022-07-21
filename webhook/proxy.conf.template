@@ -1,7 +1,5 @@
-# pid /tmp/nginx.pid;
-
 upstream bot {
-    server app:3001;
+    server app;
 }
 
 server {
