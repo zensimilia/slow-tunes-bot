@@ -16,7 +16,6 @@ services:
       - ./.env
     restart: on-failure
     depends_on:
-      - webhook
       - cache
     networks:
       - internal
@@ -38,6 +37,8 @@ services:
     hostname: slowtunesbot-webhook
     image: nginx:stable-alpine
     restart: always
+    depends_on:
+      - app
     ports:
       - 8080:8080
     networks:
