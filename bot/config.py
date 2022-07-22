@@ -13,7 +13,7 @@ class AppConfig(BaseSettings):
 
     ADMIN_ID: int
     ALBUM_ART: str = "./assets/thumb.jpg"
-    APP_HOST: str = "localhost"
+    APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 3001
     BOT_TOKEN: str
     DATA_DIR: str = "./data/"
