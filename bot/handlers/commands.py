@@ -41,7 +41,14 @@ async def next_random(query: types.CallbackQuery, callback_data: dict):
         (idc, file_unique_id, file_id, user_id, is_private, *_) = random
 
         if str(callback_data["idc"]) in (str(idc), file_unique_id):
-            return await next_random(query, callback_data)
+            random_count = await db.random_count()
+            return (
+                await next_random(query, callback_data)
+                if (random_count > 1)
+                else await query.answer(
+                    "Sorry! I have just one of shared tune."
+                )
+            )
 
         if user_id == query.from_user.id:
             keyboard = keyboards.share_button(
