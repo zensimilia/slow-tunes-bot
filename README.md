@@ -21,6 +21,8 @@ Variable| Type | Description | Required
 --- | --- | --- | ---
 `ADMIN_ID` | integer | Telegram _user_id_ of moderator/administrator. | *
 `ALBUM_ART` | string | Relative path to album art (cover) JPEG image file. |
+`APP_HOST` | string | Host that bot will listen on. |
+`APP_PORT` | integer | Port that bot will listen on. |
 `BOT_TOKEN` | string | Telegram API Bot token. | *
 `DATA_DIR` | string | Relative path to the directory where the Bot will store a data. |
 `DB_FILE` | string | SQLite database filename. |
@@ -28,13 +30,22 @@ Variable| Type | Description | Required
 `SPEED_RATIO` | float | What slowing ratio to use. 1 - original speed, 0.5 - half speed, etc. |
 `REDIS_HOST` | string | Host or IP-address of Redis server. |
 `REDIS_PORT` | integer | Port of Redis server. |
-`TASK_LIMIT` | integer | Queue limit for single user tasks |
+`TASK_LIMIT` | integer | Queue limit for single user tasks. |
 `THROTTLE_RATE` | integer | Throttling rate in seconds. |
+`USE_WEBHOOK` | boolean | If true use webhook else polling. Default false. |
+`WEBHOOK_HOST` | string | Webhook host for receive Telegram updates (eg. "mywebhook.com"). |
+`WEBHOOK_PATH` | string | Webhook path (eg. "/bot/"). |
 
 ### Run
 
 ```bash
 $ python main.py
+```
+
+## Docker. The easiest way
+
+```bash
+$ docker-compose up -d --build
 ```
 
 ## Requirements
@@ -52,9 +63,3 @@ $ python main.py
 
     * Download and extract libav from [Windows binaries provided here](http://builds.libav.org/windows/).
     * Add the libav `/bin` folder to your PATH environment variable.
-
-## Docker
-
-```bash
-$ docker-compose up -d
-```

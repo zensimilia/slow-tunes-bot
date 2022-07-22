@@ -26,9 +26,9 @@ class AppConfig(BaseSettings):
     TASK_LIMIT: int = 2
     THROTTLE_RATE: int = 15  # In seconds
     USE_WEBHOOK: bool = False
-    WEBHOOK_HOST: str = ""
-    WEBHOOK_PATH: str = ""
-    WEBHOOK_URL: str = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
+    WEBHOOK_HOST: str = "localhost"
+    WEBHOOK_PATH: str = "/"
+    WEBHOOK_URL: str = f"https://{WEBHOOK_HOST}{WEBHOOK_PATH}"
 
     class Config:
         """Load variables from the dotenv file."""
