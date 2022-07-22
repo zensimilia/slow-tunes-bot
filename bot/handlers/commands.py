@@ -73,9 +73,9 @@ async def command_start(message: types.Message):
     await db.add_user(message.from_user.id, message.from_user.username)
 
     await message.answer(
-        "<b>Welcome! Send me audio...</b>"
-        "\n\n/help for a list of all commands."
-        "\n/random to get and listen shared tunes.",
+        "<b>Welcome!</b> Send me the audio "
+        "or listen other shared tunes by /random command. "
+        "Type /help for a list of all commands.",
         disable_notification=True,
     )
 
