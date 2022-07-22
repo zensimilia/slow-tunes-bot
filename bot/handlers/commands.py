@@ -41,7 +41,7 @@ async def next_random(query: types.CallbackQuery, callback_data: dict):
         (idc, file_unique_id, file_id, user_id, is_private, *_) = random
 
         if str(callback_data["idc"]) in (str(idc), file_unique_id):
-            return await query.answer("You got the same tune. Try again!")
+            return await next_random(query, callback_data)
 
         if user_id == query.from_user.id:
             keyboard = keyboards.share_button(
@@ -51,7 +51,10 @@ async def next_random(query: types.CallbackQuery, callback_data: dict):
             is_liked = await db.is_liked(idc, query.from_user.id)
             keyboard = keyboards.random_buttons(idc, is_like=is_liked)
 
-        media = types.InputMediaAudio(file_id)
+        media = types.InputMediaAudio(
+            file_id,
+            caption=await get_caption(),
+        )
 
         return await query.message.edit_media(
             media,
