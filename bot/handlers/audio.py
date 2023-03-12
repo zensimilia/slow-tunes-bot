@@ -73,6 +73,7 @@ async def slowing_down_task(message: types.Message) -> bool:
         await info_message.edit_text(
             "💾 Can't download your file. Please try again or come back later."
         )
+        await db.dec_queue_count(message.from_user.id)
         return False
 
     await message.answer_chat_action(types.ChatActions.RECORD_AUDIO)
@@ -84,6 +85,7 @@ async def slowing_down_task(message: types.Message) -> bool:
                 "Please send me another file or try again later."
             )
         )
+        await db.dec_queue_count(message.from_user.id)
         return False
 
     await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
