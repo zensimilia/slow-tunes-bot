@@ -1,8 +1,10 @@
 import asyncio
 
+import sox
 from mutagen import MutagenError, id3
-from pydub import AudioSegment
-from pydub.utils import mediainfo
+
+# from pydub import AudioSegment
+# from pydub.utils import mediainfo
 
 from bot.config import AppConfig
 from bot.utils.brand import get_tag_comment
@@ -18,19 +20,25 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
     slowed_file_path = f'{file_path[:-4]}_slow.mp3'
 
     try:
-        media_info = mediainfo(file_path)
-        tags = await fill_tags(media_info.get('TAG', {}))
+        # media_info = mediainfo(file_path)
+        # tags = await fill_tags(media_info.get('TAG', {}))
 
-        sound = AudioSegment.from_file(file_path)
-        slowed = speed_change(sound, speed)
+        # sound = AudioSegment.from_file(file_path)
+        # slowed = speed_change(sound, speed)
+
+        sound = sox.Transformer()
+        sound.set_globals(verbosity=4)
+        sound.speed(speed)
+        sound.reverb()
+        sound.set_output_format(
+            rate=44100,
+        )
 
         # Run function in separate thread to non-blocking stack
         await asyncio.to_thread(
-            slowed.export,
-            slowed_file_path,
-            format='mp3',
-            bitrate=media_info['bit_rate'],
-            tags=tags,
+            sound.build_file,
+            input_filepath=file_path,
+            output_filepath=slowed_file_path,
         )
 
         # Add album art cover
@@ -42,7 +50,7 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
     return slowed_file_path
 
 
-def speed_change(sound: AudioSegment, speed: float):
+def speed_change(sound, speed: float):
     """Change speed of AudioSegment."""
 
     # Manually override the frame_rate. This tells the computer how many

@@ -136,8 +136,10 @@ async def slowing_down_task(message: types.Message) -> bool:
 
 
 async def download_file(obj: Downloadable, **kwargs) -> str | None:
-    """Downloads a file and returns the path to
-    the downloaded file or None if error occured."""
+    """
+    Downloads a file and returns the path to
+    the downloaded file or None if error occured.
+    """
 
     options = {
         'destination_dir': config.DATA_DIR,
