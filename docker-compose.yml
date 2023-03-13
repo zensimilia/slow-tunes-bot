@@ -1,13 +1,14 @@
-version: '3'
+version: "3"
 services:
   app:
     container_name: slow-tunes-bot
     hostname: slowtunesbot
     build: .
+    init: true
     volumes:
       - bot-data:/app/data
     environment:
-      DEBUG: 0
+      # DEBUG: 0
       PYTHONUNBUFFERED: 1
       PYTHONDONTWRITEBYTECODE: 1
       REDIS_HOST: cache
@@ -27,7 +28,7 @@ services:
     restart: always
     ports:
       - 6379:6379
-    command: redis-server --save 300 1 --loglevel notice
+    command: redis-server --save 300 1 --loglevel warning
     volumes:
       - bot-cache:/data
     networks:
