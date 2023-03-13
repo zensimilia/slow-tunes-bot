@@ -44,6 +44,9 @@ async def on_shutdown(dp: Dispatcher):
 
     log.info("Execute shutdown Bot functions...")
 
+    # Close Queue connection
+    await queue.stop()
+
     # Close storage
     await dp.storage.close()
     await dp.storage.wait_closed()

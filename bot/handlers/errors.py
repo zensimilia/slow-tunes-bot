@@ -59,7 +59,6 @@ async def queue_limit_reached(update: types.Update, error: Exception):
     )
     await update.message.reply(
         (
-            # A string.
             "✋ You've reached your queue limit. "
             "Wait until the previous tasks are ready and try again."
         )

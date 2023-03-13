@@ -45,11 +45,11 @@ async def processing_audio(message: types.Message):
             reply_markup=keyboard,
         )
 
-    queue_count = await db.get_queue_count(message.from_user.id)
+    queue_count = await queue.get_user_queue(message.from_user.id)
     if queue_count >= config.TASK_LIMIT:
         raise QueueLimitReached(queue_count)
 
-    await db.inc_queue_count(message.from_user.id)
+    await queue.inc_user_queue(message.from_user.id)
 
     # Add slowing down audio task to the queue
     task = queue.enqueue(slowing_down_task, message)
@@ -73,7 +73,7 @@ async def slowing_down_task(message: types.Message) -> bool:
         await info_message.edit_text(
             "💾 Can't download your file. Please try again or come back later."
         )
-        await db.dec_queue_count(message.from_user.id)
+        await queue.dec_user_queue(message.from_user.id)
         return False
 
     await message.answer_chat_action(types.ChatActions.RECORD_AUDIO)
@@ -85,7 +85,7 @@ async def slowing_down_task(message: types.Message) -> bool:
                 "Please send me another file or try again later."
             )
         )
-        await db.dec_queue_count(message.from_user.id)
+        await queue.dec_user_queue(message.from_user.id)
         return False
 
     await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
@@ -130,7 +130,7 @@ async def slowing_down_task(message: types.Message) -> bool:
         return False
 
     finally:
-        await db.dec_queue_count(message.from_user.id)
+        await queue.dec_user_queue(message.from_user.id)
         os.remove(downloaded)
         os.remove(slowed)
 
@@ -147,7 +147,7 @@ async def download_file(obj: Downloadable, **kwargs) -> str | None:
     try:
         downloaded = await obj.download(**options)
         downloaded.close()
-    except Exception as error:
+    except Exception as error:  # pylint: disable=broad-except
         log.error(error)
         return None
     return downloaded.name
