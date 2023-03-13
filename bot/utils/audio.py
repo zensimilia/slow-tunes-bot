@@ -35,7 +35,7 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
 
         # Add album art cover
         add_album_art(slowed_file_path, config.ALBUM_ART)
-    except Exception as error:
+    except Exception as error:  # pylint: disable=broad-except
         log.warning(error)
         slowed_file_path = None
 
