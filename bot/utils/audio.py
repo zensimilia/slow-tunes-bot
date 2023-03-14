@@ -1,11 +1,12 @@
 import asyncio
 
-import sox
 from mutagen import MutagenError, id3
 
 from bot.config import AppConfig
 from bot.utils.brand import get_tag_comment
 from bot.utils.logger import get_logger
+
+from . import soxex
 
 config = AppConfig()
 log = get_logger()
@@ -19,7 +20,7 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
     try:
         # tags = await fill_tags(media_info.get('TAG', {}))
 
-        sound = sox.Transformer()
+        sound = soxex.ExtTransformer()
         sound.speed(speed)
         sound.highpass(100)
         sound.lowpass(8000)
@@ -33,9 +34,10 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
 
         # Run function in separate thread to non-blocking stack
         await asyncio.to_thread(
-            sound.build_file,
+            sound.build,
             input_filepath=file_path,
             output_filepath=slowed_file_path,
+            bitrate=320.0,
         )
 
         # Add album art cover
