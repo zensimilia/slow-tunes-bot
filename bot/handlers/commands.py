@@ -1,6 +1,6 @@
 from aiogram import types
 
-from bot import db, keyboards
+from bot import db, keyboards, __version__
 from bot.utils.brand import get_caption
 from bot.utils.logger import get_logger
 
@@ -121,7 +121,8 @@ async def command_about(message: types.Message):
         "\n\n<b>Author:</b> "
         "<a href='https://t.me/zensimilia'>@zensimilia</a>"
         "\n<b>Source</b>: "
-        "<a href='https://github.com/zensimilia/slow-tunes-bot'>Github repo</a>",
+        "<a href='https://github.com/zensimilia/slow-tunes-bot'>Github repo</a>"
+        f"\nVersion: {__version__}",
         disable_notification=True,
         disable_web_page_preview=True,
     )
