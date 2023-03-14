@@ -80,7 +80,7 @@ async def command_start(message: types.Message):
     await db.add_user(message.from_user.id, message.from_user.username)
 
     await message.answer(
-        "<b>Welcome!</b> Send me the audio "
+        "<b>Welcome!</b> Send me the audio track "
         "or listen other shared tunes by /random command. "
         "Type /help for a list of all commands.",
         disable_notification=True,
@@ -112,8 +112,8 @@ async def command_about(message: types.Message):
     random_count = await db.random_count()
 
     await message.answer(
-        "This bot is written in Python with the aiogram and pydub modules. "
-        "It uses Redis and ffmpeg services. Enjoy!"
+        "This bot is written in Python with the aiogram and sox modules. "
+        "It uses Redis and SoX services. Enjoy!"
         "\n\n<b>Statistics:</b>"
         f"\n\nUsers: {users_count}"
         f"\nSlowed tunes: {slowed_count}"

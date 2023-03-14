@@ -3,9 +3,6 @@ import asyncio
 import sox
 from mutagen import MutagenError, id3
 
-# from pydub import AudioSegment
-# from pydub.utils import mediainfo
-
 from bot.config import AppConfig
 from bot.utils.brand import get_tag_comment
 from bot.utils.logger import get_logger
@@ -20,18 +17,18 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
     slowed_file_path = f'{file_path[:-4]}_slow.mp3'
 
     try:
-        # media_info = mediainfo(file_path)
         # tags = await fill_tags(media_info.get('TAG', {}))
 
-        # sound = AudioSegment.from_file(file_path)
-        # slowed = speed_change(sound, speed)
-
         sound = sox.Transformer()
-        sound.set_globals(verbosity=4)
         sound.speed(speed)
-        sound.reverb()
-        sound.set_output_format(
-            rate=44100,
+        sound.highpass(100)
+        sound.lowpass(8000)
+        sound.norm(-1)
+        sound.reverb(
+            reverberance=speed * 100,
+            high_freq_damping=0,
+            room_scale=100,
+            stereo_depth=50,
         )
 
         # Run function in separate thread to non-blocking stack
@@ -44,27 +41,10 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
         # Add album art cover
         add_album_art(slowed_file_path, config.ALBUM_ART)
     except Exception as error:  # pylint: disable=broad-except
-        log.warning(error)
+        log.error(error)
         slowed_file_path = None
 
     return slowed_file_path
-
-
-def speed_change(sound, speed: float):
-    """Change speed of AudioSegment."""
-
-    # Manually override the frame_rate. This tells the computer how many
-    # samples to play per second
-    sound_with_altered_frame_rate = (
-        sound._spawn(  # pylint: disable=protected-access
-            sound.raw_data,
-            overrides={"frame_rate": int((sound.frame_rate or 1) * speed)},
-        )
-    )
-    # convert the sound with altered frame rate to a standard frame rate
-    # so that regular playback programs will work right. They often only
-    # know how to play audio at standard frame rate (like 44.1k)
-    return sound_with_altered_frame_rate.set_frame_rate(sound.frame_rate)
 
 
 async def fill_tags(tags: dict) -> dict:
