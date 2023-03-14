@@ -26,6 +26,7 @@ class Queue:
         self._queue = asyncio.Queue(maxsize=maxsize)
         self._queue_size = 0
         self._redis = None
+        self._running = False
         self.count = 1
 
     async def start(self):
@@ -34,8 +35,9 @@ class Queue:
         log.info("Start tasks queue.")
 
         self._redis = await redis_client.get_redis()
+        self._running = True
 
-        while True:  # TODO: implement stop()
+        while self._running:
             try:
                 coro = await self._queue.get()
                 log.debug("Run task #%d from the queue %s", self.count, coro)
@@ -52,6 +54,8 @@ class Queue:
 
     async def stop(self):
         """Stops loop worker for the queue."""
+        self._running = False
+
         await self._redis.close()
         await self._redis.wait_closed()
 
