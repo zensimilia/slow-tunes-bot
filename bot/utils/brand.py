@@ -30,4 +30,4 @@ async def get_tag_comment() -> str:
     """Returns branded comment for audio tag."""
 
     mention = await get_bot_mention()
-    return f"Slowed down to 44/33 rpm by {mention}"
+    return f"Slowed down to 44/33 vinyl rpm ratio by {mention}"

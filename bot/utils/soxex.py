@@ -1,5 +1,5 @@
 from sox import Transformer, file_info
-from sox.core import sox, SoxError
+from sox.core import SoxError, sox
 
 from .logger import get_logger
 
