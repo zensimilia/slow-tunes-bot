@@ -13,7 +13,7 @@ log = get_logger()
 async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
     """This function slow down audio file."""
 
-    slowed_file_path = f'{file_path[:-4]}_slow.mp3'
+    slowed_file_path = f"{file_path[:-4]}_slow.mp3"
 
     try:
         chain = ExtTransformer()

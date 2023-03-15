@@ -1,6 +1,6 @@
 from mutagen import MutagenError, id3
 
-from .brand import get_tag_comment, get_bot_mention
+from .brand import get_bot_mention, get_tag_comment
 from .logger import get_logger
 
 log = get_logger()

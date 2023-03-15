@@ -19,7 +19,7 @@ class ExtTransformer(Transformer):
         return_output=False,
         bitrate=None,
     ):
-        '''
+        """
         Given an input file, creates an output_file on disk by
         executing the current set of commands. This function returns True on
         success. If return_output is True, this function returns a triple of
@@ -63,7 +63,7 @@ class ExtTransformer(Transformer):
         err : str (optional)
             This is not returned unless return_output is True.
             When returned, captures the stderr produced by sox.
-        '''
+        """
 
         input_format, input_filepath = self._parse_inputs(
             input_filepath, input_array, sample_rate_in
@@ -88,7 +88,7 @@ class ExtTransformer(Transformer):
         if bitrate is not None:
             if not isinstance(bitrate, float):
                 raise ValueError("bitrate must be a float.")
-            args.extend(['-C', '{:f}'.format(bitrate)])
+            args.extend(["-C", "{:f}".format(bitrate)])
 
         args.append(output_filepath)
         args.extend(self.effects)

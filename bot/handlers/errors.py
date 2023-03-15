@@ -35,7 +35,7 @@ async def not_supported_format(update: types.Update, _error: Exception):
 
     log.info(
         "Not supported audio format <file_extension=%s>",
-        update.message.audio.file_name[:3],
+        update.message.audio.file_name[-3:],
     )
     await update.message.reply("✋ Sorry! Only MP3 files can be processed.")
     return True

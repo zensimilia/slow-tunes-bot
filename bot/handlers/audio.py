@@ -8,7 +8,7 @@ from bot import db, keyboards
 from bot.config import AppConfig
 from bot.utils import audio
 from bot.utils.brand import get_branded_file_name, get_caption
-from bot.utils.exceptions import QueueLimitReached, NotSupportedFormat
+from bot.utils.exceptions import NotSupportedFormat, QueueLimitReached
 from bot.utils.logger import get_logger
 from bot.utils.queue import Queue
 
@@ -27,7 +27,7 @@ async def processing_audio(message: types.Message):
         raise FileIsTooBig(message.audio.file_size)
 
     # Check file for supported format
-    if message.audio.file_name[:3].lower() != "mp3":
+    if message.audio.file_name[-3:].lower() != "mp3":
         raise NotSupportedFormat(message.audio.file_name)
 
     # Checks if the audio has already slowed down then returns it
@@ -146,7 +146,7 @@ async def download_file(obj: Downloadable, **kwargs) -> str | None:
     """
 
     options = {
-        'destination_dir': config.DATA_DIR,
+        "destination_dir": config.DATA_DIR,
         **kwargs,
     }
 
