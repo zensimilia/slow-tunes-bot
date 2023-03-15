@@ -4,7 +4,7 @@ from aiogram import Dispatcher, types
 from aiogram.utils.exceptions import FileIsTooBig, MessageNotModified
 
 from bot import keyboards
-from bot.utils.exceptions import QueueLimitReached
+from bot.utils.exceptions import QueueLimitReached, NotSupportedFormat
 from bot.utils.logger import get_logger
 
 from .audio import processing_audio
@@ -22,6 +22,7 @@ from .errors import (
     global_error_handler,
     message_not_modified_error,
     queue_limit_reached,
+    not_supported_format,
 )
 from .likes import toggle_like
 from .report import (
@@ -50,6 +51,10 @@ def register_handlers(dp: Dispatcher):
     dp.register_errors_handler(
         file_is_too_big,
         exception=FileIsTooBig,
+    )
+    dp.register_errors_handler(
+        not_supported_format,
+        exception=NotSupportedFormat,
     )
     dp.register_errors_handler(
         database_error,

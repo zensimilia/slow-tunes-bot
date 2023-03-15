@@ -1,5 +1,6 @@
 from mutagen import MutagenError, id3
 
+from .brand import get_tag_comment, get_bot_mention
 from .logger import get_logger
 
 log = get_logger()
@@ -17,7 +18,8 @@ class Tagging:
 
     def copy_from(self, source_path: str) -> bool:
         """
-        It reads the ID3 tags from the file, and adds them to the current file.
+        It reads the ID3 tags from the file,
+        and adds them to the current file.
         """
 
         try:
@@ -34,6 +36,22 @@ class Tagging:
 
         return False
 
+    async def add_brand(self) -> None:
+        """
+        It adds a comment to the mp3 file with the bot's username and
+        a link to the bot's telegram channel.
+        """
+
+        bot_mention = await get_bot_mention()
+        comment_text = await get_tag_comment()
+
+        # Add comment field
+        self.__id3.add(id3.COM(text=comment_text))
+
+        # Add website field
+        self.__id3.delall("WOAR")
+        self.__id3.add(id3.WOAR(url=f"https://t.me/{bot_mention[1:]}"))
+
     def add_cover(self, image_path: str, desc: str = None) -> bool:
         """
         It adds the image to the audio file as cover art.
@@ -41,12 +59,12 @@ class Tagging:
         """
 
         if data := self.get_image_file(image_path):
-            self.__id3.delall('APIC')
+            self.__id3.delall("APIC")
             self.__id3.add(
                 id3.APIC(
                     type=id3.PictureType.COVER_FRONT,
-                    mime='image/jpeg',
-                    desc=desc or 'Cover',
+                    mime="image/jpeg",
+                    desc=desc or "Cover",
                     data=data,
                 )
             )

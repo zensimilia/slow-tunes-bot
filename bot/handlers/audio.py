@@ -8,7 +8,7 @@ from bot import db, keyboards
 from bot.config import AppConfig
 from bot.utils import audio
 from bot.utils.brand import get_branded_file_name, get_caption
-from bot.utils.exceptions import QueueLimitReached
+from bot.utils.exceptions import QueueLimitReached, NotSupportedFormat
 from bot.utils.logger import get_logger
 from bot.utils.queue import Queue
 
@@ -25,6 +25,10 @@ async def processing_audio(message: types.Message):
     # Check file for size limit (20mb)
     if message.audio.file_size >= (20 * 1024 * 1024):
         raise FileIsTooBig(message.audio.file_size)
+
+    # Check file for supported format
+    if message.audio.file_name[:3].lower() != "mp3":
+        raise NotSupportedFormat(message.audio.file_name)
 
     # Checks if the audio has already slowed down then returns it
     # from telegram servers directly avoiding the queue

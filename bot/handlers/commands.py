@@ -80,7 +80,7 @@ async def command_start(message: types.Message):
     await db.add_user(message.from_user.id, message.from_user.username)
 
     await message.answer(
-        "<b>Welcome!</b> Send me the audio track "
+        "<b>Welcome!</b> Send me MP3 audio file "
         "or listen other shared tunes by /random command. "
         "Type /help for a list of all commands.",
         disable_notification=True,
@@ -95,8 +95,8 @@ async def command_help(message: types.Message):
         "\n\n/random to get and listen shared tunes."
         "\n/about additional info and author contacts."
         "\n\n<b>How it works:</b>"
-        "\n\nThis Bot slowing down your audio at 33/45 rpm vinyl ratio. "
-        "You can share your result audio with other users by "
+        "\n\nThis Bot slowing down your audio at 33/45 vinyl rpm ratio. "
+        "You can share your result slowed audio with other users by "
         "<code>share button</code> and promote by <code>like button</code>. "
         "You can also report any shared audio to have it removed "
         "from public access.",
@@ -122,7 +122,7 @@ async def command_about(message: types.Message):
         "<a href='https://t.me/zensimilia'>@zensimilia</a>"
         "\n<b>Source</b>: "
         "<a href='https://github.com/zensimilia/slow-tunes-bot'>Github repo</a>"
-        f"\nVersion: {__version__}",
+        f"\n<b>Version</b>: {__version__}",
         disable_notification=True,
         disable_web_page_preview=True,
     )

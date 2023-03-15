@@ -1,7 +1,6 @@
 import asyncio
 
 from bot.config import AppConfig
-from bot.utils.brand import get_tag_comment
 from bot.utils.logger import get_logger
 from bot.utils.tagging import Tagging
 
@@ -37,10 +36,7 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
             bitrate=320.0,
         )
 
-        tags = Tagging(slowed_file_path)
-        tags.copy_from(file_path)
-        tags.add_cover(config.ALBUM_ART)
-        tags.save()
+        await fill_id3_tags(file_path, slowed_file_path)
 
     except Exception as error:  # pylint: disable=broad-except
         log.error(error)
@@ -49,16 +45,14 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
     return slowed_file_path
 
 
-async def fill_tags(tags: dict) -> dict:
-    """Adds extra info to media TAG."""
+async def fill_id3_tags(src_path: str, dst_path: str) -> None:
+    """
+    It opies the ID3 tags from the source file to the destination file,
+    adds a brand text, and attach album art image.
+    """
 
-    extra_title = (tags.get("title", ""), "@slowtunesbot")
-    comment = await get_tag_comment()
-    tags.update(
-        title=" ".join(extra_title),
-        comment=comment,
-        encoder="ffmpeg",
-    )
-    log.debug("Updated media TAG: %s", tags)
-
-    return tags
+    tags = Tagging(dst_path)
+    tags.copy_from(src_path)
+    await tags.add_brand()
+    tags.add_cover(config.ALBUM_ART)
+    tags.save()
