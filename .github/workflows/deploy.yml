@@ -36,6 +36,7 @@ jobs:
           script_stop: true
           script: |
             cd $APP_PATH
-            git pull
+            git fetch
             git reset --hard $SHA
+            git status
             docker-compose up -d --build
