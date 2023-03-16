@@ -4,8 +4,8 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.utils.executor import start_webhook
 
-from bot.config import AppConfig
 from bot import db
+from bot.config import AppConfig
 from bot.handlers import register_handlers
 from bot.middlewares.throttling import ThrottlingMiddleware
 from bot.utils.logger import get_logger
@@ -13,7 +13,6 @@ from bot.utils.queue import Queue
 
 log = get_logger()
 config = AppConfig()
-queue = Queue()
 
 
 async def on_startup(dp: Dispatcher):
@@ -36,7 +35,8 @@ async def on_startup(dp: Dispatcher):
     await dp.bot.set_my_commands(commands)
 
     # Starts loop worker for the queue
-    asyncio.create_task(queue.start())
+    dp.bot.data.update(queue=await Queue.create())
+    asyncio.create_task(dp.bot.data.get("queue").start())
 
 
 async def on_shutdown(dp: Dispatcher):
@@ -45,7 +45,7 @@ async def on_shutdown(dp: Dispatcher):
     log.info("Execute shutdown Bot functions...")
 
     # Close Queue connection
-    await queue.stop()
+    await dp.bot.data.get("queue").stop()
 
     # Close storage
     await dp.storage.close()

@@ -10,10 +10,8 @@ from bot.utils import audio
 from bot.utils.brand import get_branded_file_name, get_caption
 from bot.utils.exceptions import NotSupportedFormat, QueueLimitReached
 from bot.utils.logger import get_logger
-from bot.utils.queue import Queue
 
 config = AppConfig()
-queue = Queue()
 log = get_logger()
 
 
@@ -49,6 +47,7 @@ async def processing_audio(message: types.Message):
             reply_markup=keyboard,
         )
 
+    queue = message.bot.data.get("queue")
     queue_count = await queue.get_user_queue(message.from_user.id)
     if queue_count >= config.TASK_LIMIT:
         raise QueueLimitReached(queue_count)
@@ -68,6 +67,7 @@ async def processing_audio(message: types.Message):
 async def slowing_down_task(message: types.Message) -> bool:
     """Slowing down audio Task."""
 
+    queue = message.bot.data.get("queue")
     info_message = await message.reply(
         "💿 Start recording at 33 rpm for you...",
         disable_notification=True,
