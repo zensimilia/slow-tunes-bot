@@ -8,12 +8,10 @@ from bot import db, keyboards
 from bot.config import AppConfig
 from bot.utils import audio
 from bot.utils.brand import get_branded_file_name, get_caption
-from bot.utils.exceptions import QueueLimitReached
+from bot.utils.exceptions import NotSupportedFormat, QueueLimitReached
 from bot.utils.logger import get_logger
-from bot.utils.queue import Queue
 
 config = AppConfig()
-queue = Queue()
 log = get_logger()
 
 
@@ -25,6 +23,10 @@ async def processing_audio(message: types.Message):
     # Check file for size limit (20mb)
     if message.audio.file_size >= (20 * 1024 * 1024):
         raise FileIsTooBig(message.audio.file_size)
+
+    # Check file for supported format
+    if message.audio.file_name[-3:].lower() != "mp3":
+        raise NotSupportedFormat(message.audio.file_name)
 
     # Checks if the audio has already slowed down then returns it
     # from telegram servers directly avoiding the queue
@@ -45,6 +47,7 @@ async def processing_audio(message: types.Message):
             reply_markup=keyboard,
         )
 
+    queue = message.bot.data.get("queue")
     queue_count = await queue.get_user_queue(message.from_user.id)
     if queue_count >= config.TASK_LIMIT:
         raise QueueLimitReached(queue_count)
@@ -64,6 +67,7 @@ async def processing_audio(message: types.Message):
 async def slowing_down_task(message: types.Message) -> bool:
     """Slowing down audio Task."""
 
+    queue = message.bot.data.get("queue")
     info_message = await message.reply(
         "💿 Start recording at 33 rpm for you...",
         disable_notification=True,
@@ -136,11 +140,13 @@ async def slowing_down_task(message: types.Message) -> bool:
 
 
 async def download_file(obj: Downloadable, **kwargs) -> str | None:
-    """Downloads a file and returns the path to
-    the downloaded file or None if error occured."""
+    """
+    Downloads a file and returns the path to
+    the downloaded file or None if error occured.
+    """
 
     options = {
-        'destination_dir': config.DATA_DIR,
+        "destination_dir": config.DATA_DIR,
         **kwargs,
     }
 

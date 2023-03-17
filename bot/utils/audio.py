@@ -1,12 +1,10 @@
 import asyncio
 
-from mutagen import MutagenError, id3
-from pydub import AudioSegment
-from pydub.utils import mediainfo
-
 from bot.config import AppConfig
-from bot.utils.brand import get_tag_comment
 from bot.utils.logger import get_logger
+from bot.utils.tagging import Tagging
+
+from .soxex import ExtTransformer
 
 config = AppConfig()
 log = get_logger()
@@ -15,90 +13,46 @@ log = get_logger()
 async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
     """This function slow down audio file."""
 
-    slowed_file_path = f'{file_path[:-4]}_slow.mp3'
+    slowed_file_path = f"{file_path[:-4]}_slow.mp3"
 
     try:
-        media_info = mediainfo(file_path)
-        tags = await fill_tags(media_info.get('TAG', {}))
-
-        sound = AudioSegment.from_file(file_path)
-        slowed = speed_change(sound, speed)
+        chain = ExtTransformer()
+        chain.speed(speed)
+        chain.highpass(100)
+        chain.lowpass(8000)
+        chain.norm(-1)
+        chain.reverb(
+            reverberance=speed * 100,
+            high_freq_damping=0,
+            room_scale=100,
+            stereo_depth=50,
+        )
 
         # Run function in separate thread to non-blocking stack
         await asyncio.to_thread(
-            slowed.export,
-            slowed_file_path,
-            format='mp3',
-            bitrate=media_info['bit_rate'],
-            tags=tags,
+            chain.build,
+            input_filepath=file_path,
+            output_filepath=slowed_file_path,
+            bitrate=320.0,
         )
 
-        # Add album art cover
-        add_album_art(slowed_file_path, config.ALBUM_ART)
+        await fill_id3_tags(file_path, slowed_file_path)
+
     except Exception as error:  # pylint: disable=broad-except
-        log.warning(error)
+        log.error(error)
         slowed_file_path = None
 
     return slowed_file_path
 
 
-def speed_change(sound: AudioSegment, speed: float):
-    """Change speed of AudioSegment."""
+async def fill_id3_tags(src_path: str, dst_path: str) -> None:
+    """
+    It opies the ID3 tags from the source file to the destination file,
+    adds a brand text, and attach album art image.
+    """
 
-    # Manually override the frame_rate. This tells the computer how many
-    # samples to play per second
-    sound_with_altered_frame_rate = (
-        sound._spawn(  # pylint: disable=protected-access
-            sound.raw_data,
-            overrides={"frame_rate": int((sound.frame_rate or 1) * speed)},
-        )
-    )
-    # convert the sound with altered frame rate to a standard frame rate
-    # so that regular playback programs will work right. They often only
-    # know how to play audio at standard frame rate (like 44.1k)
-    return sound_with_altered_frame_rate.set_frame_rate(sound.frame_rate)
-
-
-async def fill_tags(tags: dict) -> dict:
-    """Adds extra info to media TAG."""
-
-    extra_title = (tags.get("title", ""), "@slowtunesbot")
-    comment = await get_tag_comment()
-    tags.update(
-        title=" ".join(extra_title),
-        comment=comment,
-        encoder="ffmpeg",
-    )
-    log.debug("Updated media TAG: %s", tags)
-
-    return tags
-
-
-def add_album_art(audio_file: str, art_file: str) -> bool:
-    """Add album art to mp3 audio file."""
-
-    try:
-        with open(art_file, "rb") as raw:
-            data = raw.read()
-
-        tags = id3.ID3()
-        tags.add(
-            id3.APIC(
-                type=id3.PictureType.COVER_FRONT,
-                data=data,
-                mime='image/jpeg',
-                desc='Cover',
-            )
-        )
-        tags.save(audio_file)
-
-        log.debug("Album art %s added to file %s", art_file, audio_file)
-        return True
-
-    except IOError as error:
-        log.error("Can't read album art file - %s", error)
-
-    except MutagenError as error:
-        log.error("Can't save album art to file - %s", error)
-
-    return False
+    tags = Tagging(dst_path)
+    tags.copy_from(src_path)
+    await tags.add_brand()
+    tags.add_cover(config.ALBUM_ART)
+    tags.save()

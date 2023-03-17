@@ -1,6 +1,6 @@
 from aiogram import types
 
-from bot import db, keyboards
+from bot import db, keyboards, __version__
 from bot.utils.brand import get_caption
 from bot.utils.logger import get_logger
 
@@ -80,7 +80,7 @@ async def command_start(message: types.Message):
     await db.add_user(message.from_user.id, message.from_user.username)
 
     await message.answer(
-        "<b>Welcome!</b> Send me the audio "
+        "<b>Welcome!</b> Send me MP3 audio file "
         "or listen other shared tunes by /random command. "
         "Type /help for a list of all commands.",
         disable_notification=True,
@@ -95,8 +95,8 @@ async def command_help(message: types.Message):
         "\n\n/random to get and listen shared tunes."
         "\n/about additional info and author contacts."
         "\n\n<b>How it works:</b>"
-        "\n\nThis Bot slowing down your audio at 33/45 rpm vinyl ratio. "
-        "You can share your result audio with other users by "
+        "\n\nThis Bot slowing down your audio at 33/45 vinyl rpm ratio. "
+        "You can share your result slowed audio with other users by "
         "<code>share button</code> and promote by <code>like button</code>. "
         "You can also report any shared audio to have it removed "
         "from public access.",
@@ -112,8 +112,8 @@ async def command_about(message: types.Message):
     random_count = await db.random_count()
 
     await message.answer(
-        "This bot is written in Python with the aiogram and pydub modules. "
-        "It uses Redis and ffmpeg services. Enjoy!"
+        "This bot is written in Python with the aiogram and sox modules. "
+        "It uses Redis and SoX services. Enjoy!"
         "\n\n<b>Statistics:</b>"
         f"\n\nUsers: {users_count}"
         f"\nSlowed tunes: {slowed_count}"
@@ -121,7 +121,8 @@ async def command_about(message: types.Message):
         "\n\n<b>Author:</b> "
         "<a href='https://t.me/zensimilia'>@zensimilia</a>"
         "\n<b>Source</b>: "
-        "<a href='https://github.com/zensimilia/slow-tunes-bot'>Github repo</a>",
+        "<a href='https://github.com/zensimilia/slow-tunes-bot'>Github repo</a>"
+        f"\n<b>Version</b>: {__version__}",
         disable_notification=True,
         disable_web_page_preview=True,
     )

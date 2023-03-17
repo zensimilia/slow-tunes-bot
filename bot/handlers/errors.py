@@ -30,6 +30,17 @@ async def file_is_too_big(update: types.Update, _error: Exception):
     return True
 
 
+async def not_supported_format(update: types.Update, _error: Exception):
+    """Error handler for NotSupportedFormat exception."""
+
+    log.info(
+        "Not supported audio format <file_extension=%s>",
+        update.message.audio.file_name[-3:],
+    )
+    await update.message.reply("✋ Sorry! Only MP3 files can be processed.")
+    return True
+
+
 async def database_error(update: types.Update, _error: Exception):
     """Error handler for database Error exception."""
 

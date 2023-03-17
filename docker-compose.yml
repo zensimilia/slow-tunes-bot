@@ -24,7 +24,7 @@ services:
   cache:
     container_name: slow-tunes-bot-cache
     hostname: slowtunesbot-cache
-    image: redis:7-alpine
+    image: redis:7.0.9-alpine
     restart: always
     ports:
       - 6379:6379
