@@ -22,7 +22,7 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
         chain.lowpass(8000)
         chain.norm(-1)
         chain.reverb(
-            reverberance=speed * 100,
+            reverberance=50,
             high_freq_damping=0,
             room_scale=100,
             stereo_depth=50,
