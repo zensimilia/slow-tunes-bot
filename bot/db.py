@@ -13,6 +13,7 @@ class Error(Exception):
 
 def sqlite_connect(db_file: str) -> sqlite3.Connection:
     """Connect to the database file."""
+
     try:
         conn = sqlite3.connect(db_file, check_same_thread=False)
         conn.execute("pragma journal_mode=wal;")

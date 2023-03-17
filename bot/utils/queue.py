@@ -56,6 +56,7 @@ class Queue:
 
     async def stop(self):
         """Stops loop worker for the queue."""
+
         self.__running = False
 
         await self.__storage.close()

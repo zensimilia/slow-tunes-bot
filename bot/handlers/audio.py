@@ -153,7 +153,9 @@ async def download_file(obj: Downloadable, **kwargs) -> str | None:
     try:
         downloaded = await obj.download(**options)
         downloaded.close()
+
+        return downloaded.name
     except Exception as error:  # pylint: disable=broad-except
         log.error(error)
-        return None
-    return downloaded.name
+
+    return None
