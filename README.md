@@ -51,27 +51,14 @@ Set the necessary environment variables from table below or fill they in `.env` 
 The following requirements are not needful if you are using Docker.
 
 1. [Redis](https://redis.io/) server.
-2. You must install _libav_ or _ffmpeg_ codec.
+2. You must install _sox_ utility.
 
     **Linux:**
 
     ```bash
-    apt-get install ffmpeg libavcodec-extra
+    apt-get install sox libsox-fmt-all
     ```
 
     **Windows:**
 
-    - Download and extract libav from [Windows binaries provided here](http://builds.libav.org/windows/).
-    - Add the libav `/bin` folder to your PATH environment variable.
-
-## Vaporwave
-
-Some command line parameters to reach a vaporwave effect on audio. Contains filters, compression and reverb.
-
-```bash
-sox in.mp3 -c 2 -C 320 out.mp3 speed 0.733 highpass 100 lowpass 10k reverb 73.3 0 73.3 0 0 0
-```
-
-```bash
-sox in.mp3 -c 2 -C 320 out.mp3 speed 0.733 norm -1 reverb 73.3 0 73.3 0 0 0 rate 44100 deemph
-```
+    Download and install [SoX - Sound eXchange](https://sourceforge.net/projects/sox/).
