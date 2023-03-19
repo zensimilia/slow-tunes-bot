@@ -1,7 +1,9 @@
 .git/
+.github/
 .vscode/
 data/
 env/
+venv/
 .env
 Dockerfile
 docker-compose.yml
