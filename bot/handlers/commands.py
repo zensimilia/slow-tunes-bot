@@ -114,14 +114,18 @@ async def command_about(message: types.Message):
     await message.answer(
         "This bot is written in Python with the aiogram and sox modules. "
         "It uses Redis and SoX services. Enjoy!"
-        "\n\n<b>Statistics:</b>"
-        f"\n\nUsers: {users_count}"
-        f"\nSlowed tunes: {slowed_count}"
-        f"\nShared tunes: {random_count}"
-        "\n\n<b>Author:</b> "
+        "\n\n<b>Copyrights notice</b>: "
+        "All audio tracks belong to their respective owners "
+        "and author of this bot does not claim any right over them. "
+        "The uploaded files are stored on the Telegram servers and "
+        "are downloaded by the user directly from there."
+        f"\n\n<b>Users</b>: {users_count}"
+        f"\n<b>Slowed tunes</b>: {slowed_count}"
+        f"\n<b>Shared tunes</b>: {random_count}"
+        "\n\n<b>Author</b>: "
         "<a href='https://t.me/zensimilia'>@zensimilia</a>"
         "\n<b>Source</b>: "
-        "<a href='https://github.com/zensimilia/slow-tunes-bot'>Github repo</a>"
+        "<a href='https://github.com/zensimilia/slow-tunes-bot'>Github</a>"
         f"\n<b>Version</b>: {__version__}",
         disable_notification=True,
         disable_web_page_preview=True,
