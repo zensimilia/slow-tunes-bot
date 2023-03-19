@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 
 from bot.config import AppConfig
@@ -25,7 +27,7 @@ class Queue:
         self.count = 1
 
     @classmethod
-    async def create(cls, maxsize: int = 0):
+    async def create(cls, maxsize: int = 0) -> Queue:
         """It creates a Queue object."""
 
         self = Queue(maxsize=maxsize)

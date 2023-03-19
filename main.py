@@ -36,7 +36,7 @@ async def on_startup(dp: Dispatcher):
 
     # Starts loop worker for the queue
     dp.bot.data.update(queue=await Queue.create())
-    asyncio.create_task(dp.bot.data.get("queue").start())
+    asyncio.create_task(dp.bot.data["queue"].start())
 
 
 async def on_shutdown(dp: Dispatcher):
@@ -45,7 +45,7 @@ async def on_shutdown(dp: Dispatcher):
     log.info("Execute shutdown Bot functions...")
 
     # Close Queue connection
-    await dp.bot.data.get("queue").stop()
+    await dp.bot.data["queue"].stop()
 
     # Close storage
     await dp.storage.close()
