@@ -18,9 +18,11 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
     try:
         chain = ExtTransformer()
         chain.speed(speed)
-        chain.highpass(100)
-        chain.lowpass(8000)
-        chain.norm(-1)
+        chain.norm(-3)
+        chain.equalizer(85, 3, 8)  # bass boost
+        chain.equalizer(120, 1, 5)  # bass boost
+        chain.highpass(50)
+        chain.lowpass(12000)
         chain.reverb(
             reverberance=50,
             high_freq_damping=0,
