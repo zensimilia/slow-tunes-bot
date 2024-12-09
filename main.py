@@ -5,14 +5,13 @@ from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.utils.executor import start_webhook
 
 from bot import db
-from bot.config import AppConfig
+from bot.config import config
 from bot.handlers import register_handlers
 from bot.middlewares.throttling import ThrottlingMiddleware
 from bot.utils.logger import get_logger
 from bot.utils.queue import Queue
 
 log = get_logger()
-config = AppConfig()
 
 
 async def on_startup(dp: Dispatcher):
