@@ -1,7 +1,9 @@
 import math
 import os
+import sys
 
-from pydantic import BaseSettings
+from pydantic import ValidationError
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class AppConfig(BaseSettings):
@@ -11,6 +13,13 @@ class AppConfig(BaseSettings):
     there is a shell environment variable having the same name,
     that will take precedence.
     """
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        frozen=True,
+    )
 
     ADMIN_ID: int
     ALBUM_ART: str = "./assets/thumb.jpg"
@@ -31,8 +40,7 @@ class AppConfig(BaseSettings):
     WEBHOOK_PATH: str = "/"
     WEBHOOK_URL: str = f"https://{WEBHOOK_HOST}{WEBHOOK_PATH}"
 
-    class Config:
-        """Load variables from the dotenv file."""
-
-        env_file: str = ".env"
-        env_file_encoding: str = "utf-8"
+try:
+    config = AppConfig.model_validate({})
+except ValidationError as err:
+    sys.exit(1)
