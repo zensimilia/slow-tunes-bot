@@ -1,12 +1,11 @@
 import asyncio
 
-from bot.config import AppConfig
+from bot.config import config
 from bot.utils.logger import get_logger
 from bot.utils.tagging import Tagging
 
 from .soxex import ExtTransformer
 
-config = AppConfig()
 log = get_logger()
 
 
@@ -17,18 +16,21 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
 
     try:
         chain = ExtTransformer()
+        chain.upsample(1)
         chain.speed(speed)
-        chain.norm(-3)
-        chain.equalizer(85, 3, 8)  # bass boost
-        chain.equalizer(120, 1, 5)  # bass boost
+        chain.norm(-1)
         chain.highpass(50)
-        chain.lowpass(12000)
+        chain.bass(8)
+        # chain.equalizer(85, 1, 5)  # bass boost
+        # chain.equalizer(120, 1, 5)  # bass boost
         chain.reverb(
-            reverberance=50,
-            high_freq_damping=0,
+            reverberance=70,
+            high_freq_damping=10,
             room_scale=100,
             stereo_depth=50,
         )
+        chain.lowpass(16000)
+        chain.fade(fade_out_len=1)
 
         # Run function in separate thread to non-blocking stack
         await asyncio.to_thread(

@@ -1,9 +1,9 @@
-from aiogram.contrib.fsm_storage.redis import AioRedisAdapterV2
+from aiogram.contrib.fsm_storage.redis import RedisStorage2
 
 PREFIX = "bot"
 
 
-class RedisClient(AioRedisAdapterV2):
+class RedisClient(RedisStorage2):
     """Wrapper for the redis client."""
 
     def __init__(

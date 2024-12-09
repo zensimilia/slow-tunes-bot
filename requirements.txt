@@ -1,6 +1,7 @@
-aiogram==2.20
+aiogram==2.25.2
 aioredis==2.0.1
 mutagen==1.45.1
-pydantic==1.9.0
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+redis==5.2.1
 sox==1.4.1
-python-dotenv==0.20.0

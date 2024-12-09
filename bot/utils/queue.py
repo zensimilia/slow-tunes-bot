@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import asyncio
 
-from bot.config import AppConfig
+from bot.config import config
 from bot.utils.logger import get_logger
 from bot.utils.redis import RedisClient
 
 log = get_logger()
-config = AppConfig()
 redis_client = RedisClient(
     host=config.REDIS_HOST,
     port=config.REDIS_PORT,
@@ -31,7 +30,7 @@ class Queue:
         """It creates a Queue object."""
 
         self = Queue(maxsize=maxsize)
-        self.__storage = await redis_client.get_redis()
+        self.__storage = await redis_client.redis()
         return self
 
     async def start(self):
