@@ -23,9 +23,10 @@ jobs:
           APP_PATH: ${{ secrets.APP_PATH }}
         with:
           host: ${{ secrets.HOST }}
+          port: ${{ secrets.PORT }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT }}
+          key: ${{ secrets.KEY }}
           envs: SHA, APP_PATH
           script_stop: true
           script: |
