@@ -16,8 +16,8 @@ jobs:
     name: Run script by SSH
     runs-on: ubuntu-latest
     steps:
-      - name: Pull, build and run
-        uses: appleboy/ssh-action@v0.1.8
+      - name: Pull, build and up
+        uses: appleboy/ssh-action@v1.2.0
         env:
           SHA: ${{ github.sha }}
           APP_PATH: ${{ secrets.APP_PATH }}
