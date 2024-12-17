@@ -20,7 +20,7 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
         chain.speed(speed)
         chain.norm(-1)
         chain.highpass(50)
-        chain.bass(8)
+        chain.bass(1)
         # chain.equalizer(85, 1, 5)  # bass boost
         # chain.equalizer(120, 1, 5)  # bass boost
         chain.reverb(
