@@ -2,11 +2,10 @@ from aiogram import types
 from aiogram.utils.exceptions import TelegramAPIError
 
 from bot import db, keyboards
-from bot.config import AppConfig
+from bot.config import config
 from bot.utils.logger import get_logger
 
 log = get_logger()
-config = AppConfig()
 
 
 async def report_confirmation(query: types.CallbackQuery, callback_data: dict):
@@ -19,9 +18,7 @@ async def report_confirmation(query: types.CallbackQuery, callback_data: dict):
     )
 
 
-async def report_confiramtion_help(
-    query: types.CallbackQuery, callback_data: dict
-):
+async def report_confiramtion_help(query: types.CallbackQuery, callback_data: dict):
     """Handler for selection HELP at Report confiramtion."""
 
     await query.answer(
@@ -33,9 +30,7 @@ async def report_confiramtion_help(
     )
 
 
-async def report_confiramtion_no(
-    query: types.CallbackQuery, callback_data: dict
-):
+async def report_confiramtion_no(query: types.CallbackQuery, callback_data: dict):
     """Handler for selection NO at Report confiramtion."""
 
     is_liked = await db.is_liked(callback_data["idc"], query.from_user.id)
@@ -47,9 +42,7 @@ async def report_confiramtion_no(
     await query.answer("Canceled!")
 
 
-async def report_confiramtion_yes(
-    query: types.CallbackQuery, callback_data: dict
-):
+async def report_confiramtion_yes(query: types.CallbackQuery, callback_data: dict):
     """Handler for selection YES at Report confiramtion."""
 
     if row := await db.get_by_pk("match", callback_data["idc"]):
@@ -96,14 +89,10 @@ async def report_confiramtion_yes(
                 error,
             )
 
-    raise ValueError(
-        f"Can't find row in 'match' table with id={callback_data['idc']}"
-    )
+    raise ValueError(f"Can't find row in 'match' table with id={callback_data['idc']}")
 
 
-async def report_response_accept(
-    query: types.CallbackQuery, callback_data: dict
-):
+async def report_response_accept(query: types.CallbackQuery, callback_data: dict):
     """Handler for selection ACCEPT at Report request."""
 
     await db.toggle_forbidden(callback_data["idc"], True)
@@ -111,9 +100,7 @@ async def report_response_accept(
     await query.answer("Success! Audio is forbidden.", show_alert=True)
 
 
-async def report_response_decline(
-    query: types.CallbackQuery, callback_data: dict
-):
+async def report_response_decline(query: types.CallbackQuery, callback_data: dict):
     """Handler for selection DECLINE at Report request."""
 
     await db.toggle_forbidden(callback_data["idc"], False)

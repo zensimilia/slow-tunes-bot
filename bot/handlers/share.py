@@ -8,9 +8,9 @@ from bot import db, keyboards
 async def share_confirmation(query: types.CallbackQuery, callback_data: dict):
     """Display confirm Share buttons."""
 
-    (_, _, _, _, _, is_forbidden) = await db.get_match(callback_data["file_id"])
+    match = await db.get_match(callback_data["file_id"])
 
-    if is_forbidden:
+    if match is not None and match[5]:
         return await query.answer(
             "Sorry! This audio is forbidden to share.", show_alert=True
         )
@@ -35,9 +35,7 @@ async def share_confirmation(query: types.CallbackQuery, callback_data: dict):
     )
 
 
-async def share_confiramtion_help(
-    query: types.CallbackQuery, callback_data: dict
-):
+async def share_confiramtion_help(query: types.CallbackQuery, callback_data: dict):
     """Handler for selection HELP at Share confiramtion."""
 
     await query.answer(
@@ -49,9 +47,7 @@ async def share_confiramtion_help(
     )
 
 
-async def share_confiramtion_no(
-    query: types.CallbackQuery, callback_data: dict
-):
+async def share_confiramtion_no(query: types.CallbackQuery, callback_data: dict):
     """Handler for selection NO at Share confiramtion."""
 
     # TODO: refactor this - string to boolean conversion
@@ -69,9 +65,7 @@ async def share_confiramtion_no(
     await query.answer("Canceled!")
 
 
-async def share_confiramtion_yes(
-    query: types.CallbackQuery, callback_data: dict
-):
+async def share_confiramtion_yes(query: types.CallbackQuery, callback_data: dict):
     """Handler for selection YES at Share confiramtion."""
 
     if row := await db.get_match(callback_data["file_id"]):

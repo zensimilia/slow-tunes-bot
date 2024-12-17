@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from aioredis import Redis
 
 from bot.config import config
 from bot.utils.logger import get_logger
@@ -21,7 +22,7 @@ class Queue:
     def __init__(self, maxsize: int = 0) -> None:
         self.__queue = asyncio.Queue(maxsize=maxsize)
         self.__running = False
-        self.__storage = None
+        self.__storage: Redis | None = None
         self.__size = 0
         self.count = 1
 
@@ -58,10 +59,10 @@ class Queue:
     async def stop(self):
         """Stops loop worker for the queue."""
 
+        if self.__storage is not None:
+            await self.__storage.close()
+            # await self.__storage.wait_closed()
         self.__running = False
-
-        await self.__storage.close()
-        await self.__storage.wait_closed()
 
     def enqueue(self, func, *args, **kwargs) -> int:
         """Add a task into the queue."""
@@ -75,8 +76,9 @@ class Queue:
         """It gets the user's queue from the database."""
 
         key = redis_client.generate_key(user_id, QUEUE_KEY)
-        val = await self.__storage.get(key)
-        return int(val or 0)
+        if self.__storage is not None:
+            return int(await self.__storage.get(key))
+        return 0
 
     async def inc_user_queue(self, user_id: int) -> bool:
         """
@@ -85,7 +87,9 @@ class Queue:
         """
 
         key = redis_client.generate_key(user_id, QUEUE_KEY)
-        return bool(await self.__storage.incr(key))
+        if self.__storage is not None:
+            return bool(await self.__storage.incr(key))
+        return False
 
     async def dec_user_queue(self, user_id: int) -> bool:
         """
@@ -94,7 +98,9 @@ class Queue:
         """
 
         key = redis_client.generate_key(user_id, QUEUE_KEY)
-        return bool(await self.__storage.decr(key))
+        if self.__storage is not None:
+            return bool(await self.__storage.decr(key))
+        return False
 
     @property
     def size(self):

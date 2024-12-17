@@ -1,10 +1,9 @@
 import sqlite3
 
-from bot.config import AppConfig
+from bot.config import config
 from bot.utils.logger import get_logger
 
 log = get_logger()
-config = AppConfig()
 
 
 class Error(Exception):
@@ -70,9 +69,9 @@ async def insert_match(
     """Insert row with original and slowed file ids."""
 
     query = send_query(
-        '''INSERT INTO
+        """INSERT INTO
         match (original, slowed, user_id, private, forbidden)
-        VALUES (?, ?, ?, ?, ?);''',
+        VALUES (?, ?, ?, ?, ?);""",
         (
             original,
             slowed,
@@ -88,7 +87,7 @@ async def get_match(original: str) -> tuple | None:
     """Get row of pair original and slowed file ids."""
 
     query = send_query(
-        'SELECT * FROM match WHERE original = ?;',
+        "SELECT * FROM match WHERE original = ?;",
         (original,),
     )
     return query.fetchone()
@@ -98,9 +97,9 @@ async def get_random_match() -> tuple | None:
     """Get random row from match table."""
 
     query = send_query(
-        '''SELECT * FROM match
+        """SELECT * FROM match
         WHERE private = ? AND forbidden = ?
-        ORDER BY RANDOM() LIMIT 1;''',
+        ORDER BY RANDOM() LIMIT 1;""",
         (
             False,
             False,
@@ -113,7 +112,7 @@ async def get_by_pk(table: str, pk: int) -> tuple | None:
     """Get the row by its id from a given table."""
 
     query = send_query(
-        f'SELECT * FROM {table} WHERE id = ?;',
+        f"SELECT * FROM {table} WHERE id = ?;",
         (pk,),
     )
     return query.fetchone()
@@ -123,7 +122,7 @@ async def toggle_private(idc: int, is_private: bool = True) -> None:
     """Toggle private status for slowed row."""
 
     send_query(
-        'UPDATE match SET private = ? WHERE id = ?;',
+        "UPDATE match SET private = ? WHERE id = ?;",
         (
             is_private,
             idc,
@@ -135,7 +134,7 @@ async def toggle_forbidden(idc: int, is_forbidden: bool = True) -> None:
     """Toggle forbidden status for slowed row."""
 
     send_query(
-        'UPDATE match SET forbidden = ? WHERE id = ?;',
+        "UPDATE match SET forbidden = ? WHERE id = ?;",
         (
             is_forbidden,
             idc,
@@ -148,7 +147,7 @@ async def toggle_like(toggle: bool, match_id: int, user_id: int) -> None:
 
     if toggle:
         send_query(
-            'INSERT OR IGNORE INTO likes (match_id, user_id) VALUES (?, ?);',
+            "INSERT OR IGNORE INTO likes (match_id, user_id) VALUES (?, ?);",
             (
                 match_id,
                 user_id,
@@ -156,7 +155,7 @@ async def toggle_like(toggle: bool, match_id: int, user_id: int) -> None:
         )
     else:
         send_query(
-            'DELETE FROM likes WHERE match_id = ? AND user_id = ?;',
+            "DELETE FROM likes WHERE match_id = ? AND user_id = ?;",
             (
                 match_id,
                 user_id,
@@ -168,7 +167,7 @@ async def is_liked(match_id: int, user_id: int) -> bool:
     """Check if audio is already liked."""
 
     query = send_query(
-        'SELECT * FROM likes WHERE match_id = ? AND user_id = ?;',
+        "SELECT * FROM likes WHERE match_id = ? AND user_id = ?;",
         (
             match_id,
             user_id,
@@ -182,7 +181,7 @@ async def get_queue_count(user_id: int) -> int:
     """Returns cout of task in queue for user."""
 
     query = send_query(
-        'SELECT * FROM queue WHERE user_id = ?;',
+        "SELECT * FROM queue WHERE user_id = ?;",
         (user_id,),
     )
 
@@ -192,25 +191,25 @@ async def get_queue_count(user_id: int) -> int:
     return 0
 
 
-async def inc_queue_count(user_id: int) -> int:
+async def inc_queue_count(user_id: int) -> sqlite3.Cursor:
     """Increase count for queue of user tasks."""
 
-    send_query(
-        '''INSERT OR REPLACE INTO queue
+    return send_query(
+        """INSERT OR REPLACE INTO queue
         VALUES (
             NULL,
             :user,
             COALESCE((SELECT count FROM queue WHERE user_id = :user), 0) + 1
-        );''',
+        );""",
         (user_id,),
     )
 
 
-async def dec_queue_count(user_id: int) -> int:
+async def dec_queue_count(user_id: int) -> sqlite3.Cursor:
     """Decrease count for queue of user tasks."""
 
-    send_query(
-        '''INSERT OR REPLACE INTO queue
+    return send_query(
+        """INSERT OR REPLACE INTO queue
         VALUES (
             NULL,
             :user_id,
@@ -221,7 +220,7 @@ async def dec_queue_count(user_id: int) -> int:
                 ),
                 1
             ) - 1
-        );''',
+        );""",
         (user_id,),
     )
 
@@ -230,9 +229,9 @@ async def add_user(user_id: int, username: str) -> None:
     """Add new user to database."""
 
     send_query(
-        '''INSERT OR IGNORE INTO
+        """INSERT OR IGNORE INTO
         users (user_id, username)
-        VALUES (?, ?);''',
+        VALUES (?, ?);""",
         (
             user_id,
             username,
@@ -243,14 +242,14 @@ async def add_user(user_id: int, username: str) -> None:
 async def users_count() -> int:
     """Returns count of users in database."""
 
-    query = send_query('''SELECT COUNT(id) FROM users;''')
+    query = send_query("""SELECT COUNT(id) FROM users;""")
     return query.fetchone()[0]
 
 
 async def slowed_count() -> int:
     """Returns count of slowed audios in database."""
 
-    query = send_query('''SELECT COUNT(id) FROM match;''')
+    query = send_query("""SELECT COUNT(id) FROM match;""")
     return query.fetchone()[0]
 
 
@@ -258,6 +257,6 @@ async def random_count() -> int:
     """Returns count of public audios in database."""
 
     query = send_query(
-        '''SELECT COUNT(id) FROM match WHERE private = 0 and forbidden = 0;'''
+        """SELECT COUNT(id) FROM match WHERE private = 0 and forbidden = 0;"""
     )
     return query.fetchone()[0]

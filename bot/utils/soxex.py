@@ -88,7 +88,7 @@ class ExtTransformer(Transformer):
         if bitrate is not None:
             if not isinstance(bitrate, float):
                 raise ValueError("bitrate must be a float.")
-            args.extend(["-C", "{:f}".format(bitrate)])
+            args.extend(["-C", f"{bitrate:f}"])
 
         args.append(output_filepath)
         args.extend(self.effects)
@@ -100,7 +100,7 @@ class ExtTransformer(Transformer):
 
         status, out, err = sox(args, input_array, True)
         if status != 0:
-            raise SoxError("Stdout: {}\nStderr: {}".format(out, err))
+            raise SoxError(f"Stdout: {out}\nStderr: {err}")
 
         logger.info(
             "Created %s with effects: %s",

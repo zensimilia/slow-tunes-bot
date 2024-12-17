@@ -1,4 +1,3 @@
-import math
 import os
 import sys
 
@@ -30,7 +29,6 @@ class AppConfig(BaseSettings):
     DB_FILE: str = os.path.join(DATA_DIR, "db.sqlite")
     DEBUG: bool = False
     SPEED_RATIO: float = 33 / 45
-    PITCH_RATIO: float = -12 * math.log(1 / SPEED_RATIO, 2)  # Not used yet
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     TASK_LIMIT: int = 2
@@ -39,6 +37,7 @@ class AppConfig(BaseSettings):
     WEBHOOK_HOST: str = "localhost"
     WEBHOOK_PATH: str = "/"
     WEBHOOK_URL: str = f"https://{WEBHOOK_HOST}{WEBHOOK_PATH}"
+
 
 try:
     config = AppConfig.model_validate({})

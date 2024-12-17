@@ -1,13 +1,12 @@
 import inspect
 import logging
 
-from bot.config import AppConfig
+from bot.config import config
 
-config = AppConfig()
 
 logging.basicConfig(
     level=logging.DEBUG if config.DEBUG else logging.INFO,
-    format='%(asctime)s [%(levelname)-8s] %(name)s <%(funcName)s:%(lineno)d> %(message)s',
+    format="%(asctime)s [%(levelname)-8s] %(name)s <%(funcName)s:%(lineno)d> %(message)s",
 )
 
 

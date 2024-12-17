@@ -5,13 +5,12 @@ from aiogram.types.mixins import Downloadable
 from aiogram.utils.exceptions import FileIsTooBig, TelegramAPIError
 
 from bot import db, keyboards
-from bot.config import AppConfig
+from bot.config import config
 from bot.utils import audio
 from bot.utils.brand import get_branded_file_name, get_caption
 from bot.utils.exceptions import NotSupportedFormat, QueueLimitReached
 from bot.utils.logger import get_logger
 
-config = AppConfig()
 log = get_logger()
 
 
@@ -34,9 +33,7 @@ async def processing_audio(message: types.Message):
         (idc, file_unique_id, file_id, user_id, is_private, *_) = from_db
 
         if user_id == message.from_user.id:
-            keyboard = keyboards.share_button(
-                file_unique_id, is_private=is_private
-            )
+            keyboard = keyboards.share_button(file_unique_id, is_private=is_private)
         else:
             is_liked = await db.is_liked(idc, message.from_user.id)
             keyboard = keyboards.random_buttons(idc, is_like=is_liked)
@@ -102,9 +99,7 @@ async def slowing_down_task(message: types.Message) -> bool:
         tags = {
             "performer": message.audio.to_python().get("performer"),
             "title": message.audio.to_python().get("title"),
-            "thumb": types.InputFile(config.ALBUM_ART)
-            if thumb_file_exists
-            else None,
+            "thumb": types.InputFile(config.ALBUM_ART) if thumb_file_exists else None,
         }
         uploaded = await message.answer_audio(
             types.InputFile(slowed, filename=file_name),

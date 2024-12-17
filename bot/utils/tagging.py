@@ -52,7 +52,7 @@ class Tagging:
         self.__id3.delall("WOAR")
         self.__id3.add(id3.WOAR(url=f"https://t.me/{bot_mention[1:]}"))
 
-    def add_cover(self, image_path: str, desc: str = None) -> bool:
+    def add_cover(self, image_path: str, desc: str | None = None) -> bool:
         """
         It adds the image to the audio file as cover art.
         Only supports JPEG format.
@@ -87,7 +87,7 @@ class Tagging:
 
         return None
 
-    def save(self, file_path: str = None) -> bool:
+    def save(self, file_path: str | None = None) -> bool:
         """It tries to save the ID3 tags to the file."""
 
         try:
