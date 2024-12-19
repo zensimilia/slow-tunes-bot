@@ -3,9 +3,7 @@ from aiogram.utils.callback_data import CallbackData
 
 from .random import random_cbd
 
-share_cbd = CallbackData(
-    "share", "action", "file_id", "is_private", "is_random"
-)
+share_cbd = CallbackData("share", "action", "file_id", "is_private", "is_random")
 
 
 def share_button(
@@ -32,7 +30,7 @@ def share_button(
         markup.row()
         markup.insert(
             InlineKeyboardButton(
-                "⏭ Next",
+                "🎲 Next",
                 callback_data=random_cbd.new(
                     action="next",
                     idc=file_id,
