@@ -27,7 +27,7 @@ def random_buttons(idc: str, *, is_like: bool = False) -> InlineKeyboardMarkup:
             ],
             [
                 InlineKeyboardButton(
-                    "⏭ Next",
+                    "🎲 Next",
                     callback_data=random_cbd.new(
                         action="next",
                         idc=idc,
