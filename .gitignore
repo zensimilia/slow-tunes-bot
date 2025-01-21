@@ -3,3 +3,5 @@ data/
 .vscode/
 .env
 **/__pycache__
+
+compose.override.yml
