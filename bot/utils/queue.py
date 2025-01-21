@@ -77,7 +77,7 @@ class Queue:
 
         key = redis_client.generate_key(user_id, QUEUE_KEY)
         if self.__storage is not None:
-            return int(await self.__storage.get(key))
+            return int(await self.__storage.get(key) or 0)
         return 0
 
     async def inc_user_queue(self, user_id: int) -> bool:
