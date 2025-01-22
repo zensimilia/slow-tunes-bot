@@ -33,5 +33,5 @@ jobs:
             cd $APP_PATH
             git fetch
             git reset --hard $SHA
-            docker-compose up -d --build
+            docker compose up -d --build
             docker system prune -f
