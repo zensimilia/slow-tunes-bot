@@ -10,7 +10,7 @@ and polling modes.
 
 ```bash
 touch .env
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ### Install: old method
@@ -56,7 +56,7 @@ The following requirements are not needful if you are using Docker.
     **Linux:**
 
     ```bash
-    apt-get install sox libsox-fmt-all
+    apt install sox libsox-fmt-all
     ```
 
     **Windows:**
