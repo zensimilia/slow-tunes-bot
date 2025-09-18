@@ -3,7 +3,7 @@ import math
 from aiogram import types
 
 from bot import __version__, db, keyboards
-from bot.utils.admin import get_tunes_list
+from bot.utils.admin import get_tunes_list, get_username_by_id
 from bot.utils.brand import get_caption
 from bot.utils.logger import get_logger
 
@@ -181,6 +181,7 @@ async def get_tune(message: types.Message, regexp_command):
 
     if tune := await db.get_match_by_pk(pk):
         (id_, file_unique_id, file_id, user_id, is_private, *_) = tune
+        username = await get_username_by_id(message.bot, user_id)
 
         if user_id == message.from_user.id:
             keyboard = keyboards.share_button(
@@ -192,7 +193,7 @@ async def get_tune(message: types.Message, regexp_command):
 
         return await message.reply_audio(
             file_id,
-            caption=await get_caption(),
+            caption=f"Uploaded by {username}",
             reply_markup=keyboard,
         )
 

@@ -1,7 +1,11 @@
-from aiogram import types
+from aiogram import Bot, types
 from aiogram.dispatcher.filters import BoundFilter
 
 from bot.config import config
+
+from .logger import get_logger
+
+log = get_logger()
 
 
 class IsAdmin(BoundFilter):
@@ -27,3 +31,15 @@ def get_tunes_list(data: list) -> str:
         str_list += f"{shared} {banned} /tune_{pk} by {user_id}\n"
 
     return str_list
+
+
+async def get_username_by_id(bot: Bot, user_id: int):
+    """Retrieves the username or user ID."""
+
+    try:
+        chat = await bot.get_chat(user_id)
+        username = chat.username
+        return f"@{username}" if username else f"#{user_id}"
+    except Exception as e:
+        log.warning("get_username_by_id: %s", e)
+    return f"#{user_id}"
