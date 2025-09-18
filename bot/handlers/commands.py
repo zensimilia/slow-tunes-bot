@@ -165,7 +165,7 @@ async def tunes_pagging(query: types.CallbackQuery, callback_data: dict):
 
 
 async def get_tune(message: types.Message, regexp_command):
-    """Retrieves a tune based on a given ID and sends it as an audio message."""
+    """Retrieves a tune based on the given ID and sends it as an audio message."""
 
     await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
 
@@ -189,5 +189,5 @@ async def get_tune(message: types.Message, regexp_command):
         )
         return
 
-    log.info("No tune in database with given id: %d", id_)
-    await message.answer("Sorry! There is no tune with given id.")
+    log.warning("No tune in database with the given id <%d>", id_)
+    await message.reply("Sorry! There is no tune with the given id.")
