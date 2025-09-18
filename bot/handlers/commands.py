@@ -139,29 +139,37 @@ async def command_all(message: types.Message):
     pages = math.ceil(await db.slowed_count() / ITEMS_ON_PAGE)
 
     if tunes := await db.get_matches(ITEMS_ON_PAGE, 0):
-        await message.answer(
+        return await message.answer(
             get_tunes_list(tunes),
             reply_markup=keyboards.tunes_pagging_buttons(current_page, pages),
         )
-        return
 
-    log.info("No tunes in database for /all command")
-    await message.answer("Sorry! I don't have any tunes yet.")
+    log.warning("No tunes in database for `/all` command.")
+    return await message.reply("Sorry! I don't have any tunes yet.")
 
 
 async def tunes_pagging(query: types.CallbackQuery, callback_data: dict):
     """Handler for change page in tunes list."""
 
-    page = callback_data["page"]
+    page = int(callback_data["page"])
+    curr_page = int(callback_data["curr_page"])
+    total_pages = math.ceil(await db.slowed_count() / ITEMS_ON_PAGE)
 
-    pages = math.ceil(await db.slowed_count() / ITEMS_ON_PAGE)
+    if curr_page == page:
+        return await query.answer()
 
-    if tunes := await db.get_matches(ITEMS_ON_PAGE, ITEMS_ON_PAGE * (int(page) - 1)):
-        await query.message.edit_text(
+    if tunes := await db.get_matches(ITEMS_ON_PAGE, ITEMS_ON_PAGE * (page - 1)):
+        return await query.message.edit_text(
             get_tunes_list(tunes),
-            reply_markup=keyboards.tunes_pagging_buttons(int(page), pages),
+            reply_markup=keyboards.tunes_pagging_buttons(page, total_pages),
         )
-        return
+
+    log.warning(
+        "tunes_pagging: There is no page number <%d>. There are <%d> pages in total.",
+        page,
+        total_pages,
+    )
+    return
 
 
 async def get_tune(message: types.Message, regexp_command):
@@ -169,25 +177,24 @@ async def get_tune(message: types.Message, regexp_command):
 
     await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
 
-    id_ = regexp_command.group(1)
+    pk = int(regexp_command.group(1))
 
-    if tune := await db.get_match_by_pk(id_):
-        (idc, file_unique_id, file_id, user_id, is_private, *_) = tune
+    if tune := await db.get_match_by_pk(pk):
+        (id_, file_unique_id, file_id, user_id, is_private, *_) = tune
 
         if user_id == message.from_user.id:
             keyboard = keyboards.share_button(
                 file_unique_id, is_private=is_private, is_random=True
             )
         else:
-            is_liked = await db.is_liked(idc, message.from_user.id)
-            keyboard = keyboards.random_buttons(idc, is_like=is_liked)
+            is_liked = await db.is_liked(id_, message.from_user.id)
+            keyboard = keyboards.random_buttons(id_, is_like=is_liked)
 
-        await message.reply_audio(
+        return await message.reply_audio(
             file_id,
             caption=await get_caption(),
             reply_markup=keyboard,
         )
-        return
 
-    log.warning("No tune in database with the given id <%d>", id_)
-    await message.reply("Sorry! There is no tune with the given id.")
+    log.warning("No tune in database with the given id <%d>", pk)
+    return await message.reply("Sorry! There is no tune with the given id.")
