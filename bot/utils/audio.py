@@ -24,8 +24,8 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
         # chain.equalizer(85, 1, 5)  # bass boost
         # chain.equalizer(120, 1, 5)  # bass boost
         chain.reverb(
-            reverberance=70,
-            high_freq_damping=10,
+            reverberance=50,
+            high_freq_damping=50,
             room_scale=100,
             stereo_depth=50,
         )
