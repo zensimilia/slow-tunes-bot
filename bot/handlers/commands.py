@@ -157,11 +157,9 @@ async def tunes_pagging(query: types.CallbackQuery, callback_data: dict):
     pages = math.ceil(await db.slowed_count() / ITEMS_ON_PAGE)
 
     if tunes := await db.get_matches(ITEMS_ON_PAGE, ITEMS_ON_PAGE * (int(page) - 1)):
-        await query.message.edit_reply_markup(
-            keyboards.tunes_pagging_buttons(int(page), pages),
-        )
         await query.message.edit_text(
             get_tunes_list(tunes),
+            reply_markup=keyboards.tunes_pagging_buttons(int(page), pages),
         )
         return
 
