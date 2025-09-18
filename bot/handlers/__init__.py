@@ -1,19 +1,22 @@
 from sqlite3 import Error as SqliteError
 
-from aiogram import Dispatcher, types
+from aiogram import Dispatcher, filters, types
 from aiogram.utils.exceptions import FileIsTooBig, MessageNotModified
 
 from bot import keyboards
-from bot.utils.exceptions import QueueLimitReached, NotSupportedFormat
+from bot.utils.exceptions import NotSupportedFormat, QueueLimitReached
 from bot.utils.logger import get_logger
 
 from .audio import processing_audio
 from .commands import (
+    command_about,
+    command_all,
+    command_help,
     command_random,
     command_start,
+    get_tune,
     next_random,
-    command_help,
-    command_about,
+    tunes_pagging,
 )
 from .common import answer_message
 from .errors import (
@@ -21,8 +24,8 @@ from .errors import (
     file_is_too_big,
     global_error_handler,
     message_not_modified_error,
-    queue_limit_reached,
     not_supported_format,
+    queue_limit_reached,
 )
 from .likes import toggle_like
 from .report import (
@@ -87,6 +90,20 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(
         command_random,
         commands=["random"],
+    )
+    dp.register_message_handler(
+        command_all,
+        is_admin=True,
+        commands=["all"],
+    )
+    dp.register_message_handler(
+        get_tune,
+        filters.RegexpCommandsFilter(regexp_commands=["tune_([0-9]*)"]),
+        is_admin=True,
+    )
+    dp.register_callback_query_handler(
+        tunes_pagging,
+        keyboards.tunes_list_cbd.filter(flag="ok"),
     )
     dp.register_message_handler(
         processing_audio,

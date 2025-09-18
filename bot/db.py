@@ -260,3 +260,27 @@ async def random_count() -> int:
         """SELECT COUNT(id) FROM match WHERE private = 0 and forbidden = 0;"""
     )
     return query.fetchone()[0]
+
+
+async def get_matches(limit: int = 10, offset: int = 0) -> list | None:
+    """Get rows from match table."""
+
+    query = send_query(
+        """SELECT * FROM match
+        ORDER BY id DESC LIMIT ? OFFSET ?;""",
+        (
+            limit,
+            offset,
+        ),
+    )
+    return query.fetchall()
+
+
+async def get_match_by_pk(pk: int) -> tuple | None:
+    """Get the match by its id."""
+
+    query = send_query(
+        f"SELECT * FROM match WHERE id = ?;",
+        (pk,),
+    )
+    return query.fetchone()

@@ -8,6 +8,7 @@ from bot import db
 from bot.config import config
 from bot.handlers import register_handlers
 from bot.middlewares.throttling import ThrottlingMiddleware
+from bot.utils.admin import IsAdmin
 from bot.utils.logger import get_logger
 from bot.utils.queue import Queue
 
@@ -79,6 +80,7 @@ def main():
     dp = Dispatcher(bot, storage=storage)
     dp.errors_handlers.once = True  # Fix errors rethrowing
     dp.middleware.setup(throttling_middleware)  # Throttling middleware
+    dp.filters_factory.bind(IsAdmin)
 
     if config.USE_WEBHOOK:
         start_webhook(

@@ -1,10 +1,14 @@
+import math
+
 from aiogram import types
 
-from bot import db, keyboards, __version__
+from bot import __version__, db, keyboards
+from bot.utils.admin import get_tunes_list
 from bot.utils.brand import get_caption
 from bot.utils.logger import get_logger
 
 log = get_logger()
+ITEMS_ON_PAGE = 10
 
 
 async def command_random(message: types.Message):
@@ -45,9 +49,7 @@ async def next_random(query: types.CallbackQuery, callback_data: dict):
             return (
                 await next_random(query, callback_data)
                 if (random_count > 1)
-                else await query.answer(
-                    "Sorry! I have just one of shared tune."
-                )
+                else await query.answer("Sorry! I have just one of shared tune.")
             )
 
         if user_id == query.from_user.id:
@@ -74,9 +76,7 @@ async def next_random(query: types.CallbackQuery, callback_data: dict):
 async def command_start(message: types.Message):
     """Handler for `/start` command."""
 
-    log.info(
-        "User join: %s <%s>", message.from_user.id, message.from_user.username
-    )
+    log.info("User join: %s <%s>", message.from_user.id, message.from_user.username)
     await db.add_user(message.from_user.id, message.from_user.username)
 
     await message.answer(
@@ -130,3 +130,66 @@ async def command_about(message: types.Message):
         disable_notification=True,
         disable_web_page_preview=True,
     )
+
+
+async def command_all(message: types.Message):
+    """Handler for `/all` command. Returns a list of all tunes from database."""
+
+    current_page = 1
+    pages = math.ceil(await db.slowed_count() / ITEMS_ON_PAGE)
+
+    if tunes := await db.get_matches(ITEMS_ON_PAGE, 0):
+        await message.answer(
+            get_tunes_list(tunes),
+            reply_markup=keyboards.tunes_pagging_buttons(current_page, pages),
+        )
+        return
+
+    log.info("No tunes in database for /all command")
+    await message.answer("Sorry! I don't have any tunes yet.")
+
+
+async def tunes_pagging(query: types.CallbackQuery, callback_data: dict):
+    """Handler for change page in tunes list."""
+
+    page = callback_data["page"]
+
+    pages = math.ceil(await db.slowed_count() / ITEMS_ON_PAGE)
+
+    if tunes := await db.get_matches(ITEMS_ON_PAGE, ITEMS_ON_PAGE * (int(page) - 1)):
+        await query.message.edit_reply_markup(
+            keyboards.tunes_pagging_buttons(int(page), pages),
+        )
+        await query.message.edit_text(
+            get_tunes_list(tunes),
+        )
+        return
+
+
+async def get_tune(message: types.Message, regexp_command):
+    """Retrieves a tune based on a given ID and sends it as an audio message."""
+
+    await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
+
+    id_ = regexp_command.group(1)
+
+    if tune := await db.get_match_by_pk(id_):
+        (idc, file_unique_id, file_id, user_id, is_private, *_) = tune
+
+        if user_id == message.from_user.id:
+            keyboard = keyboards.share_button(
+                file_unique_id, is_private=is_private, is_random=True
+            )
+        else:
+            is_liked = await db.is_liked(idc, message.from_user.id)
+            keyboard = keyboards.random_buttons(idc, is_like=is_liked)
+
+        await message.reply_audio(
+            file_id,
+            caption=await get_caption(),
+            reply_markup=keyboard,
+        )
+        return
+
+    log.info("No tune in database with given id: %d", id_)
+    await message.answer("Sorry! There is no tune with given id.")
