@@ -87,7 +87,7 @@ async def get_match(original: str) -> tuple | None:
     """Get row of pair original and slowed file ids."""
 
     query = send_query(
-        "SELECT * FROM match WHERE original = ?;",
+        "SELECT * FROM match WHERE original = ? LIMIT 1;",
         (original,),
     )
     return query.fetchone()
@@ -112,7 +112,7 @@ async def get_by_pk(table: str, pk: int) -> tuple | None:
     """Get the row by its id from a given table."""
 
     query = send_query(
-        f"SELECT * FROM {table} WHERE id = ?;",
+        f"SELECT * FROM {table} WHERE id = ? LIMIT 1;",
         (pk,),
     )
     return query.fetchone()
@@ -167,7 +167,7 @@ async def is_liked(match_id: int, user_id: int) -> bool:
     """Check if audio is already liked."""
 
     query = send_query(
-        "SELECT * FROM likes WHERE match_id = ? AND user_id = ?;",
+        "SELECT * FROM likes WHERE match_id = ? AND user_id = ? LIMIT 1;",
         (
             match_id,
             user_id,
@@ -280,7 +280,7 @@ async def get_match_by_pk(pk: int) -> tuple | None:
     """Get the match by its id."""
 
     query = send_query(
-        f"SELECT * FROM match WHERE id = ?;",
+        "SELECT * FROM match WHERE id = ? LIMIT 1;",
         (pk,),
     )
     return query.fetchone()
