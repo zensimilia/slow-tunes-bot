@@ -1,7 +1,7 @@
 import sqlite3
 
 from bot.config import config
-from bot.utils.logger import get_logger
+from bot.utils.u_logger import get_logger
 
 log = get_logger()
 

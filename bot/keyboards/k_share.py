@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.callback_data import CallbackData
 
-from .random import random_cbd
+from .k_random import random_cbd
 
 share_cbd = CallbackData("share", "action", "file_id", "is_private", "is_random")
 

@@ -4,11 +4,11 @@ from aiogram import Dispatcher, filters, types
 from aiogram.utils.exceptions import FileIsTooBig, MessageNotModified
 
 from bot import keyboards
-from bot.utils.exceptions import NotSupportedFormat, QueueLimitReached
-from bot.utils.logger import get_logger
+from bot.utils.u_exceptions import NotSupportedFormat, QueueLimitReached
+from bot.utils.u_logger import get_logger
 
-from .audio import processing_audio
-from .commands import (
+from .h_audio import processing_audio
+from .h_commands import (
     command_about,
     command_all,
     command_help,
@@ -18,8 +18,8 @@ from .commands import (
     next_random,
     tunes_pagging,
 )
-from .common import answer_message
-from .errors import (
+from .h_common import answer_message
+from .h_errors import (
     database_error,
     file_is_too_big,
     global_error_handler,
@@ -27,8 +27,8 @@ from .errors import (
     not_supported_format,
     queue_limit_reached,
 )
-from .likes import toggle_like
-from .report import (
+from .h_likes import toggle_like
+from .h_report import (
     report_confiramtion_help,
     report_confiramtion_no,
     report_confiramtion_yes,
@@ -36,7 +36,7 @@ from .report import (
     report_response_accept,
     report_response_decline,
 )
-from .share import (
+from .h_share import (
     share_confiramtion_help,
     share_confiramtion_no,
     share_confiramtion_yes,

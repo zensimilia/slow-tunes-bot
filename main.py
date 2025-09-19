@@ -7,10 +7,10 @@ from aiogram.utils.executor import start_webhook
 from bot import db
 from bot.config import config
 from bot.handlers import register_handlers
-from bot.middlewares.throttling import ThrottlingMiddleware
-from bot.utils.admin import IsAdmin
-from bot.utils.logger import get_logger
-from bot.utils.queue import Queue
+from bot.middlewares.m_throttling import ThrottlingMiddleware
+from bot.utils.u_admin import IsAdmin
+from bot.utils.u_logger import get_logger
+from bot.utils.u_queue import Queue
 
 log = get_logger()
 

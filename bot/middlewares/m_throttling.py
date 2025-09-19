@@ -5,7 +5,7 @@ from aiogram.dispatcher.handler import CancelHandler, current_handler
 from aiogram.dispatcher.middlewares import BaseMiddleware
 from aiogram.utils.exceptions import Throttled
 
-from bot.utils.logger import get_logger
+from bot.utils.u_logger import get_logger
 
 log = get_logger()
 
@@ -19,9 +19,7 @@ class ThrottlingMiddleware(BaseMiddleware):
 
         super().__init__()
 
-    async def check_for_throttling(
-        self, obj: types.Message | types.CallbackQuery
-    ):
+    async def check_for_throttling(self, obj: types.Message | types.CallbackQuery):
         """Common method for checking request for throttling."""
 
         # Get dispatcher from context
@@ -57,9 +55,7 @@ class ThrottlingMiddleware(BaseMiddleware):
             # Cancel current handler
             raise CancelHandler() from error
 
-    async def on_process_callback_query(
-        self, query: types.CallbackQuery, _data: dict
-    ):
+    async def on_process_callback_query(self, query: types.CallbackQuery, _data: dict):
         """This handler is called when dispatcher receives a callback query."""
 
         return await self.check_for_throttling(query)
