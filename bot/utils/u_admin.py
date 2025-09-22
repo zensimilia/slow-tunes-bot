@@ -16,7 +16,7 @@ class IsAdmin(BoundFilter):
     def __init__(self, is_admin: bool):
         self.is_admin = is_admin
 
-    async def check(self, message: types.Message) -> bool:
+    async def check(self, message: types.Message) -> bool:  # pylint: disable=all
         return message.from_user.id == config.ADMIN_ID
 
 
