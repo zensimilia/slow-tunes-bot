@@ -7,16 +7,14 @@ from bot import keyboards
 from bot.utils.u_exceptions import NotSupportedFormat, QueueLimitReached
 from bot.utils.u_logger import get_logger
 
+from .h_admin import command_admin, command_all, get_tune, tunes_pagging
 from .h_audio import processing_audio
 from .h_commands import (
     command_about,
-    command_all,
     command_help,
     command_random,
     command_start,
-    get_tune,
     next_random,
-    tunes_pagging,
 )
 from .h_common import answer_message
 from .h_errors import (
@@ -92,6 +90,12 @@ def register_handlers(dp: Dispatcher):
         commands=["random"],
     )
     dp.register_message_handler(
+        processing_audio,
+        content_types=[types.ContentType.AUDIO],
+    )
+
+    # Admin handlers
+    dp.register_message_handler(
         command_all,
         is_admin=True,
         commands=["all"],
@@ -106,8 +110,9 @@ def register_handlers(dp: Dispatcher):
         keyboards.tunes_list_cbd.filter(flag="ok"),
     )
     dp.register_message_handler(
-        processing_audio,
-        content_types=[types.ContentType.AUDIO],
+        command_admin,
+        is_admin=True,
+        commands=["admin"],
     )
 
     # Share callback handlers

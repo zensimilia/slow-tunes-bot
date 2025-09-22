@@ -23,7 +23,7 @@ class IsAdmin(BoundFilter):
 def get_tunes_list(data: list) -> str:
     """Generate table for tunes list."""
 
-    str_list = "**Slowed tunes:**\n\n"
+    str_list = "<b>Slowed tunes:</b>\n\n"
 
     for pk, _, _, user_id, is_private, is_forbidden in data:
         shared = "🔒" if bool(is_private) else "🤙"
