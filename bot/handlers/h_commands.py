@@ -4,7 +4,7 @@ from bot import __version__, db, keyboards
 from bot.utils.u_brand import get_caption
 from bot.utils.u_logger import get_logger
 
-log = get_logger()
+LOG = get_logger()
 ITEMS_ON_PAGE = 10
 
 
@@ -31,7 +31,7 @@ async def command_random(message: types.Message):
         )
         return
 
-    log.info("No tunes in database for /random command")
+    LOG.info("No tunes in database for /random command")
     await message.answer("Sorry! I don't have shared tunes yet.")
 
 
@@ -73,7 +73,7 @@ async def next_random(query: types.CallbackQuery, callback_data: dict):
 async def command_start(message: types.Message):
     """Handler for `/start` command."""
 
-    log.info("User join: %s <%s>", message.from_user.id, message.from_user.username)
+    LOG.info("User join: %s <%s>", message.from_user.id, message.from_user.username)
     await db.add_user(message.from_user.id, message.from_user.username)
 
     await message.answer(

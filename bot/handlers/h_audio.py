@@ -11,7 +11,7 @@ from bot.utils.u_brand import get_branded_file_name, get_caption
 from bot.utils.u_exceptions import NotSupportedFormat, QueueLimitReached
 from bot.utils.u_logger import get_logger
 
-log = get_logger()
+LOG = get_logger()
 
 
 async def processing_audio(message: types.Message):
@@ -119,7 +119,7 @@ async def slowing_down_task(message: types.Message) -> bool:
         return True
 
     except TelegramAPIError as error:
-        log.error(error)
+        LOG.error(error)
         await info_message.edit_text(
             (
                 f"🤷‍♂️ I'm sorry {message.from_user.username}, "
@@ -151,6 +151,6 @@ async def download_file(obj: Downloadable, **kwargs) -> str | None:
 
         return downloaded.name
     except Exception as error:  # pylint: disable=broad-except
-        log.error(error)
+        LOG.error(error)
 
     return None

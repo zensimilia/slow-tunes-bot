@@ -7,7 +7,7 @@ from aiogram.utils.exceptions import Throttled
 
 from bot.utils.u_logger import get_logger
 
-log = get_logger()
+LOG = get_logger()
 
 
 class ThrottlingMiddleware(BaseMiddleware):
@@ -40,7 +40,7 @@ class ThrottlingMiddleware(BaseMiddleware):
         try:
             await dispatcher.throttle(key, rate=self.rate)
         except Throttled as error:
-            log.debug(
+            LOG.debug(
                 "Prevent flooding <user_id=%s handler=%s>",
                 obj.from_user.id,
                 key,

@@ -3,7 +3,7 @@ from sox.core import SoxError, sox
 
 from .u_logger import get_logger
 
-logger = get_logger()
+LOG = get_logger()
 
 
 class ExtTransformer(Transformer):
@@ -100,7 +100,7 @@ class ExtTransformer(Transformer):
         if status != 0:
             raise SoxError(f"Stdout: {out}\nStderr: {err}")
 
-        logger.info(
+        LOG.info(
             "Created %s with effects: %s",
             output_filepath,
             " ".join(self.effects_log),

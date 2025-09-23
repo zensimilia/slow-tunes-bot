@@ -5,7 +5,7 @@ from bot import db, keyboards
 from bot.config import config
 from bot.utils.u_logger import get_logger
 
-log = get_logger()
+LOG = get_logger()
 
 
 async def report_confirmation(query: types.CallbackQuery, callback_data: dict):
@@ -53,7 +53,7 @@ async def report_confiramtion_yes(query: types.CallbackQuery, callback_data: dic
                 "This audio is already forbidden", show_alert=True
             )
 
-        log.info(
+        LOG.info(
             "NEW REPORT TO AUDIO <file_id=%s user_id=%d>",
             file_id,
             query.from_user.id,
@@ -83,7 +83,7 @@ async def report_confiramtion_yes(query: types.CallbackQuery, callback_data: dic
                 show_alert=True,
             )
         except TelegramAPIError as error:
-            log.error(
+            LOG.error(
                 "Can't send Report message to admin <match id=%d> %s",
                 idc,
                 error,

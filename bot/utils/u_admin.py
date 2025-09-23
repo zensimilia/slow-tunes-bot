@@ -5,7 +5,7 @@ from bot.config import config
 
 from .u_logger import get_logger
 
-log = get_logger()
+LOG = get_logger()
 
 
 class IsAdmin(BoundFilter):
@@ -41,5 +41,5 @@ async def get_username_by_id(bot: Bot, user_id: int):
         username = chat.username
         return f"@{username}" if username else f"#{user_id}"
     except Exception as e:
-        log.warning("get_username_by_id: %s", e)
+        LOG.warning("get_username_by_id: %s", e)
     return f"#{user_id}"

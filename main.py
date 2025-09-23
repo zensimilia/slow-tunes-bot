@@ -1,62 +1,14 @@
-import asyncio
-
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.utils.executor import start_webhook
 
-from bot import db
 from bot.config import config
-from bot.handlers import register_handlers
 from bot.middlewares.m_throttling import ThrottlingMiddleware
+from bot.setup import on_shutdown, on_startup
 from bot.utils.u_admin import IsAdmin
 from bot.utils.u_logger import get_logger
-from bot.utils.u_queue import Queue
 
-log = get_logger()
-
-
-async def on_startup(dp: Dispatcher):
-    """Execute function before Bot start polling."""
-
-    log.info("Execute startup Bot functions...")
-    db.execute_script("./schema.sql")
-
-    # Set webhook
-    if config.USE_WEBHOOK:
-        await dp.bot.set_webhook(config.WEBHOOK_URL)
-
-    register_handlers(dp)
-
-    commands = [
-        types.BotCommand("random", "get some slowed tune"),
-        types.BotCommand("help", "if you stuck"),
-        types.BotCommand("about", "bot info"),
-    ]
-    await dp.bot.set_my_commands(commands)
-
-    # Starts loop worker for the queue
-    dp.bot.data.update(queue=await Queue.create())
-    asyncio.create_task(dp.bot.data["queue"].start())
-
-
-async def on_shutdown(dp: Dispatcher):
-    """Execute function before Bot shut down polling."""
-
-    log.info("Execute shutdown Bot functions...")
-
-    # Close Queue connection
-    await dp.bot.data["queue"].stop()
-
-    # Close storage
-    await dp.storage.close()
-    await dp.storage.wait_closed()
-
-    # Clear list of bot commands
-    await dp.bot.set_my_commands([])
-
-    # Delete webhook
-    if config.USE_WEBHOOK:
-        await dp.bot.delete_webhook()
+LOG = get_logger()
 
 
 def main():

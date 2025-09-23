@@ -3,7 +3,7 @@ from mutagen import MutagenError, id3
 from .u_brand import get_bot_mention, get_tag_comment
 from .u_logger import get_logger
 
-log = get_logger()
+LOG = get_logger()
 
 
 class Tagging:
@@ -28,7 +28,7 @@ class Tagging:
                 self.__id3.add(frame)
             return True
         except MutagenError as error:
-            log.warning(
+            LOG.warning(
                 "Can't read ID3 tags from file %s - %s",
                 source_path,
                 error,
@@ -83,7 +83,7 @@ class Tagging:
             with open(file_path, "rb") as raw:
                 return raw.read()
         except IOError as error:
-            log.warning("Can't read image file %s - %s", file_path, error)
+            LOG.warning("Can't read image file %s - %s", file_path, error)
 
         return None
 
@@ -94,7 +94,7 @@ class Tagging:
             self.__id3.save(file_path or self.__file_path, v2_version=3)
             return True
         except MutagenError as error:
-            log.warning(
+            LOG.warning(
                 "Can't save ID3 tags to the file %s - %s",
                 self.__file_path,
                 error,

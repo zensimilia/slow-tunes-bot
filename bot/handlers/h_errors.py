@@ -2,13 +2,13 @@ from aiogram import types
 
 from bot.utils.u_logger import get_logger
 
-log = get_logger()
+LOG = get_logger()
 
 
 async def global_error_handler(update: types.Update, error: Exception):
     """Global errors handler."""
 
-    log.error("(%s) %s", error.__class__.__name__, error)
+    LOG.error("(%s) %s", error.__class__.__name__, error)
     text = "😱 Something wrong happened! Please try again or come back later..."
 
     if update.message is not None:
@@ -21,7 +21,7 @@ async def global_error_handler(update: types.Update, error: Exception):
 async def file_is_too_big(update: types.Update, _error: Exception):
     """Error handler for FileIsTooBig exception."""
 
-    log.warning(
+    LOG.warning(
         "File is too big <file_id=%s file_size=%d>",
         update.message.audio.file_id,
         update.message.audio.file_size,
@@ -33,7 +33,7 @@ async def file_is_too_big(update: types.Update, _error: Exception):
 async def not_supported_format(update: types.Update, _error: Exception):
     """Error handler for NotSupportedFormat exception."""
 
-    log.info(
+    LOG.info(
         "Not supported audio format <file_extension=%s>",
         update.message.audio.file_name[-3:],
     )
@@ -56,14 +56,14 @@ async def database_error(update: types.Update, _error: Exception):
 async def message_not_modified_error(_update: types.Update, error: Exception):
     """Error handler for MessageNotModified exception."""
 
-    log.warning(error)
+    LOG.warning(error)
     return True
 
 
 async def queue_limit_reached(update: types.Update, error: Exception):
     """Error handler for QueueLimitReached exception."""
 
-    log.debug(
+    LOG.debug(
         "User <user_id=%d> has reached his queue limit. Active tasks: %d",
         update.message.from_user.id,
         error,

@@ -6,7 +6,7 @@ from bot import db, keyboards
 from bot.utils.u_admin import get_tunes_list, get_username_by_id
 from bot.utils.u_logger import get_logger
 
-log = get_logger()
+LOG = get_logger()
 ITEMS_ON_PAGE = 10
 
 
@@ -34,7 +34,7 @@ async def command_all(message: types.Message):
             reply_markup=keyboards.tunes_pagging_buttons(current_page, pages),
         )
 
-    log.warning("No tunes in database for `/all` command.")
+    LOG.warning("No tunes in database for `/all` command.")
     return await message.reply("Sorry! I don't have any tunes yet.")
 
 
@@ -54,7 +54,7 @@ async def tunes_pagging(query: types.CallbackQuery, callback_data: dict):
             reply_markup=keyboards.tunes_pagging_buttons(page, total_pages),
         )
 
-    log.warning(
+    LOG.warning(
         "tunes_pagging: There is no page number <%d>. There are <%d> pages in total.",
         page,
         total_pages,
@@ -87,5 +87,5 @@ async def get_tune(message: types.Message, regexp_command):
             reply_markup=keyboard,
         )
 
-    log.warning("No tune in database with the given id <%d>", pk)
+    LOG.warning("No tune in database with the given id <%d>", pk)
     return await message.reply("Sorry! There is no tune with the given id.")

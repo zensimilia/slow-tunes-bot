@@ -8,7 +8,7 @@ from bot.config import config
 from bot.utils.u_logger import get_logger
 from bot.utils.u_redis import RedisClient
 
-log = get_logger()
+LOG = get_logger()
 redis_client = RedisClient(
     host=config.REDIS_HOST,
     port=config.REDIS_PORT,
@@ -38,21 +38,21 @@ class Queue:
     async def start(self):
         """Starts loop worker for the queue."""
 
-        log.info("Start tasks queue.")
+        LOG.info("Start tasks queue.")
 
         self.__running = True
 
         while self.__running:
             try:
                 coro = await self.__queue.get()
-                log.debug("Run task #%d from the queue %s", self.count, coro)
+                LOG.debug("Run task #%d from the queue %s", self.count, coro)
                 await asyncio.create_task(coro)
             except (asyncio.CancelledError, ValueError) as error:
-                log.debug("Queue task #%d canceled %s", self.count, error)
+                LOG.debug("Queue task #%d canceled %s", self.count, error)
             except Exception as error:  # pylint: disable=broad-except
-                log.error("Exception in queue task: %s", error)
+                LOG.error("Exception in queue task: %s", error)
             else:
-                log.debug("Queue task #%d done", self.count)
+                LOG.debug("Queue task #%d done", self.count)
             finally:
                 self.__size -= 1
                 self.count += 1
@@ -70,7 +70,7 @@ class Queue:
 
         self.__size += 1
         self.__queue.put_nowait(func(*args, **kwargs))
-        log.debug("Task #%d added to the queue %s", self.count, func)
+        LOG.debug("Task #%d added to the queue %s", self.count, func)
         return self.__size
 
     async def get_user_queue(self, user_id: int) -> int:

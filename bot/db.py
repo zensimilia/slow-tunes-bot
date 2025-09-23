@@ -3,7 +3,7 @@ import sqlite3
 from bot.config import config
 from bot.utils.u_logger import get_logger
 
-log = get_logger()
+LOG = get_logger()
 
 
 class Error(Exception):
@@ -18,7 +18,7 @@ def sqlite_connect(db_file: str) -> sqlite3.Connection:
         conn.execute("pragma journal_mode=wal;")
         return conn
     except sqlite3.Error as error:
-        log.critical("Can't connect to the database - %s", error)
+        LOG.critical("Can't connect to the database - %s", error)
         raise error
 
 
@@ -34,7 +34,7 @@ def send_query(query: str, args: tuple | None = None) -> sqlite3.Cursor:  # type
             cursor.execute(query, args)
             conn.commit()
         except sqlite3.Error as error:
-            log.error("Can't send query to the database - %s", error)
+            LOG.error("Can't send query to the database - %s", error)
             raise error
         return cursor
 
@@ -46,7 +46,7 @@ def execute_script(script_file: str):
         with open(script_file, "r", encoding="utf-8") as script:
             sql = script.read()
     except OSError as error:
-        log.critical("Can't read from SQL script file: %s", error)
+        LOG.critical("Can't read from SQL script file: %s", error)
         raise SystemExit from error
 
     with sqlite_connect(config.DB_FILE) as conn:
@@ -55,7 +55,7 @@ def execute_script(script_file: str):
             cursor.executescript(sql)
             conn.commit()
         except sqlite3.Error as error:
-            log.error("Can't send query to the database - %s", error)
+            LOG.error("Can't send query to the database - %s", error)
             raise error
 
 

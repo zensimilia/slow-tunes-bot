@@ -6,7 +6,7 @@ from bot.utils.u_tagging import Tagging
 
 from .u_soxex import ExtTransformer
 
-log = get_logger()
+LOG = get_logger()
 
 
 async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
@@ -43,7 +43,7 @@ async def slow_down(file_path: str, speed: float = 33 / 45) -> str | None:
         await fill_id3_tags(file_path, slowed_file_path)
 
     except Exception as error:  # pylint: disable=broad-except
-        log.error(error)
+        LOG.error(error)
         slowed_file_path = None
 
     return slowed_file_path
