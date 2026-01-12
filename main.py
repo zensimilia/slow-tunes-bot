@@ -1,4 +1,4 @@
-from aiogram import Bot, Dispatcher, executor, types
+from aiogram import Bot, Dispatcher, executor
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.utils.executor import start_webhook
 
@@ -28,7 +28,7 @@ def main():
     )
 
     storage = RedisStorage2(host=config.REDIS_HOST, port=config.REDIS_PORT)
-    bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
+    bot = Bot(token=config.BOT_TOKEN, parse_mode="HTML")
     dp = Dispatcher(bot, storage=storage)
     dp.errors_handlers.once = True  # Fix errors rethrowing
     dp.middleware.setup(throttling_middleware)  # Throttling middleware
