@@ -6,5 +6,5 @@ for aesthetic pleasure. Also Bot allows to share slowed audio to
 other users.
 """
 
-__version__ = "0.8.2"
+__version__ = "0.8.3"
 __author__ = "Dubovik Dmitry"

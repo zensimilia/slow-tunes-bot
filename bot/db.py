@@ -93,6 +93,21 @@ async def get_match(original: str) -> tuple | None:
     return query.fetchone()
 
 
+async def get_random_ids() -> list:
+    """Get list of random public match ids."""
+
+    query = send_query(
+        """SELECT id FROM match
+        WHERE private = ? AND forbidden = ?
+        ORDER BY RANDOM();""",
+        (
+            False,
+            False,
+        ),
+    )
+    return [row[0] for row in query.fetchall()]
+
+
 async def get_random_match() -> tuple | None:
     """Get random row from match table."""
 

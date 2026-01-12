@@ -1,20 +1,48 @@
+import random
+
+import aioredis
 from aiogram import types
 
 from bot import __version__, db, keyboards
+from bot.config import config
 from bot.utils.u_brand import get_caption
 from bot.utils.u_logger import get_logger
 
 LOG = get_logger()
 ITEMS_ON_PAGE = 10
+RANDOM_EXPIRE = 60 * 60 * 24  # 24 hours
+
+r = aioredis.Redis(
+    host=config.REDIS_HOST, port=config.REDIS_PORT, decode_responses=True
+)
+
+
+async def get_random_match_id(user: str) -> int | None:
+    """Get id of the random shared tune from database."""
+
+    key = f"random:{user}"
+    match_id = await r.lpop(key)
+    if match_id is None:
+        ids = await db.get_random_ids()
+        pipe = r.pipeline()
+        pipe.lpush(key, *ids)
+        pipe.expire(key, RANDOM_EXPIRE)
+        await pipe.execute()
+        return await r.lpop(key)
+    return match_id
 
 
 async def command_random(message: types.Message):
     """Handler for `/random` command. Returns random tune from database."""
 
-    await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
+    random_id = await get_random_match_id(str(message.from_user.id))
+    if random_id is None:
+        LOG.info("No tunes in database for /random command")
+        return await message.answer("Sorry! I don't have shared tunes yet.")
 
-    if random := await db.get_random_match():
-        (idc, file_unique_id, file_id, user_id, is_private, *_) = random
+    if match := await db.get_by_pk("match", int(random_id)):
+        await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
+        (idc, file_unique_id, file_id, user_id, is_private, *_) = match
 
         if user_id == message.from_user.id:
             keyboard = keyboards.share_button(
@@ -24,22 +52,24 @@ async def command_random(message: types.Message):
             is_liked = await db.is_liked(idc, message.from_user.id)
             keyboard = keyboards.random_buttons(idc, is_like=is_liked)
 
-        await message.answer_audio(
+        return await message.answer_audio(
             file_id,
             caption=await get_caption(),
             reply_markup=keyboard,
         )
-        return
 
-    LOG.info("No tunes in database for /random command")
-    await message.answer("Sorry! I don't have shared tunes yet.")
+    return await message.answer("Sorry! Something is gone wrong.")
 
 
 async def next_random(query: types.CallbackQuery, callback_data: dict):
     """Handler for Next button on random tune."""
 
-    if random := await db.get_random_match():
-        (idc, file_unique_id, file_id, user_id, is_private, *_) = random
+    random_id = await get_random_match_id(str(query.from_user.id))
+    if random_id is None:
+        return await query.answer("Sorry! I don't have shared tunes yet.")
+
+    if match := await db.get_by_pk("match", int(random_id)):
+        (idc, file_unique_id, file_id, user_id, is_private, *_) = match
 
         if str(callback_data["idc"]) in (str(idc), file_unique_id):
             random_count = await db.random_count()
@@ -60,14 +90,14 @@ async def next_random(query: types.CallbackQuery, callback_data: dict):
         media = types.InputMediaAudio(
             file_id,
             caption=await get_caption(),
-        )
+        )  # type: ignore
 
         return await query.message.edit_media(
             media,
             reply_markup=keyboard,
         )
 
-    await query.answer("Sorry! I don't have shared tunes yet.")
+    return await query.answer("Sorry! Something is gone wrong.")
 
 
 async def command_start(message: types.Message):
