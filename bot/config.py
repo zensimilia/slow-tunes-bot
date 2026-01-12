@@ -41,5 +41,5 @@ class AppConfig(BaseSettings):
 
 try:
     config = AppConfig.model_validate({})
-except ValidationError as err:
+except ValidationError:
     sys.exit(1)
