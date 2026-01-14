@@ -62,7 +62,7 @@ def register_handlers(dp: Dispatcher):
     )
     dp.register_message_handler(
         h_commands.command_about,
-        commands=["about"],
+        commands=["about", "developer_info"],
     )
     dp.register_message_handler(
         h_commands.command_random,

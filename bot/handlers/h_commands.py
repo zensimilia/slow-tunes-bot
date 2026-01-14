@@ -1,5 +1,3 @@
-import random
-
 import aioredis
 from aiogram import types
 
@@ -118,42 +116,49 @@ async def command_help(message: types.Message):
     """Handler for `/help` command."""
 
     await message.answer(
-        "<b>Available commands:</b>"
-        "\n\n/random to get and listen shared tunes."
-        "\n/about additional info and author contacts."
-        "\n\n<b>How it works:</b>"
-        "\n\nThis Bot slowing down your audio at 33/45 vinyl rpm ratio. "
-        "You can share your result slowed audio with other users by "
-        "<code>share button</code> and promote by <code>like button</code>. "
-        "You can also report any shared audio to have it removed "
-        "from public access.",
+        "Send me MP3 audio file "
+        "or use one of the following commands:\n\n"
+        "/about additional info and author contacts.\n"
+        "/help this help message.\n"
+        "/random to get and listen shared tunes.\n\n"
+        "<b>How it works:</b>\n"
+        "This bot gives your audio a vinyl vibe by slowing it down from 33 to 45 RPM. "
+        "You can share your finished tracks with other users, support them with likes, "
+        "and report any content that should be removed from public access.",
         disable_notification=True,
     )
 
 
 async def command_about(message: types.Message):
-    """Handler for `/about` command."""
+    """Handler for `/about` and `/developer_info` command."""
 
     users_count = await db.users_count()
     slowed_count = await db.slowed_count()
     random_count = await db.random_count()
 
-    await message.answer(
-        "This bot is written in Python with the aiogram and sox modules. "
-        "It uses Redis and SoX services. Enjoy!"
-        "\n\n<b>Copyrights notice</b>: "
-        "All audio tracks belong to their respective owners "
-        "and author of this bot does not claim any right over them. "
-        "The uploaded files are stored on the Telegram servers and "
-        "are downloaded by the user directly from there."
-        f"\n\n<b>Users</b>: {users_count}"
-        f"\n<b>Slowed tunes</b>: {slowed_count}"
-        f"\n<b>Shared tunes</b>: {random_count}"
-        "\n\n<b>Author</b>: "
-        "<a href='https://t.me/zensimilia'>@zensimilia</a>"
-        "\n<b>Source</b>: "
-        "<a href='https://github.com/zensimilia/slow-tunes-bot'>Github</a>"
-        f"\n<b>Version</b>: {__version__}",
+    return await message.answer(
+        f"""This bot is intended for personal and informational use only. For feedback or issues — contact via Telegram. Enjoy!
+
+<b>Author</b>: @zensimilia
+<b>Source</b>: <a href='https://github.com/zensimilia/slow-tunes-bot'>Github</a>
+<b>Version</b>: {__version__}
+
+<b>Users</b>: {users_count}
+<b>Slowed tunes</b>: {slowed_count}
+<b>Shared tunes</b>: {random_count}
+
+<b>Copyrights Notice:</b>
+All audio tracks and media files belong to their respective owners. The author of this bot does not claim any ownership or rights over the content made available through this bot.
+
+<b>DMCA / Copyright Policy:</b>
+This bot acts as a technical intermediary and does not host or store any copyrighted content on its own servers. All uploaded files are stored on Telegram servers and are downloaded by users directly from Telegram. If you are a copyright owner and believe that your rights have been infringed, please contact the developer with relevant information, and the content will be promptly reviewed and removed if necessary.
+
+<b>Terms of Use:</b>
+By using this bot, you agree that:
+— You are solely responsible for how you use the content obtained via this bot.
+— You will comply with all applicable local and international copyright laws.
+— The developer is not responsible for user actions or misuse of the bot.
+""",
         disable_notification=True,
         disable_web_page_preview=True,
     )
