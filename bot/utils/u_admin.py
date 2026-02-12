@@ -23,12 +23,12 @@ class IsAdmin(BoundFilter):
 def get_tunes_list(data: list) -> str:
     """Generate table for tunes list."""
 
-    str_list = "<b>Slowed tunes:</b>\n\n"
+    str_list = "<b>Slowed tunes list:</b>\n\n"
 
     for pk, _, _, user_id, is_private, is_forbidden in data:
         shared = "🔒" if bool(is_private) else "🤙"
         banned = "🔴" if bool(is_forbidden) else "🟢"
-        str_list += f"{shared} {banned} /tune_{pk} by {user_id}\n"
+        str_list += f'{shared} {banned} /tune_{pk} by <a href="tg://user?id={user_id}">{user_id}</a>\n'
 
     return str_list
 

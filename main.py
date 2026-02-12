@@ -1,6 +1,5 @@
 from aiogram import Bot, Dispatcher, executor
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
-from aiogram.utils.executor import start_webhook
 
 from bot.config import config
 from bot.middlewares.m_throttling import ThrottlingMiddleware

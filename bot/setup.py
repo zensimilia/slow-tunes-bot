@@ -5,7 +5,6 @@ from aiogram import Dispatcher, filters, types
 from aiogram.utils.exceptions import FileIsTooBig, MessageNotModified
 
 from bot import db, keyboards
-from bot.config import config
 from bot.handlers import (
     h_admin,
     h_audio,
