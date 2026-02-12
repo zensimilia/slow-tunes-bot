@@ -159,10 +159,6 @@ async def on_startup(dp: Dispatcher):
     LOG.info("Execute startup Bot functions...")
     db.execute_script("./schema.sql")
 
-    # Set webhook
-    if config.USE_WEBHOOK:
-        await dp.bot.set_webhook(config.WEBHOOK_URL)
-
     register_handlers(dp)
 
     commands = [
@@ -191,7 +187,3 @@ async def on_shutdown(dp: Dispatcher):
 
     # Clear list of bot commands
     await dp.bot.set_my_commands([])
-
-    # Delete webhook
-    if config.USE_WEBHOOK:
-        await dp.bot.delete_webhook()

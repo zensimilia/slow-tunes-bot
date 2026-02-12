@@ -33,10 +33,6 @@ class AppConfig(BaseSettings):
     REDIS_PORT: int = 6379
     TASK_LIMIT: int = 2
     THROTTLE_RATE: int = 15  # In seconds
-    USE_WEBHOOK: bool = False
-    WEBHOOK_HOST: str = "localhost"
-    WEBHOOK_PATH: str = "/"
-    WEBHOOK_URL: str = f"https://{WEBHOOK_HOST}{WEBHOOK_PATH}"
 
 
 try:

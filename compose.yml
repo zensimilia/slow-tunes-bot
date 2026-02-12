@@ -14,45 +14,19 @@ services:
       REDIS_PORT: 6379
     env_file:
       - ./.env
-    restart: on-failure
+    restart: unless-stopped
     depends_on:
       - cache
-    networks:
-      - internal
-      - external
   cache:
     container_name: slow-tunes-bot-cache
     hostname: slowtunesbot-cache
     image: redis:8-alpine
-    restart: always
-    ports:
-      - 6379:6379
+    init: true
+    mem_limit: 16m
+    restart: unless-stopped
     command: redis-server --save 300 1 --loglevel warning
     volumes:
       - bot-cache:/data
-    networks:
-      - internal
-  webhook:
-    container_name: slow-tunes-bot-webhook
-    hostname: slowtunesbot-webhook
-    image: nginx:stable-alpine
-    restart: always
-    depends_on:
-      - app
-    ports:
-      - 8080:8080
-    networks:
-      - external
-      - internal
-    volumes:
-      - ./webhook:/etc/nginx/templates
 volumes:
   bot-data:
   bot-cache:
-networks:
-  external:
-    name: slow-tunes-bot-network
-    internal: false
-  internal:
-    name: slow-tunes-bot-internal
-    internal: true

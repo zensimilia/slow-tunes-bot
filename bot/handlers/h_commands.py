@@ -105,9 +105,9 @@ async def command_start(message: types.Message):
     await db.add_user(message.from_user.id, message.from_user.username)
 
     await message.answer(
-        "<b>Welcome!</b> Send me MP3 audio file "
-        "or listen other shared tunes by /random command. "
-        "Type /help for a list of all commands.",
+        "<b>Welcome!</b> Send an <code>MP3</code> file to process your audio, "
+        "or try /random to discover a random tracks shared by another users. "
+        "Use /help to view all commands. <b>Enjoy!</b>",
         disable_notification=True,
     )
 
@@ -116,15 +116,16 @@ async def command_help(message: types.Message):
     """Handler for `/help` command."""
 
     await message.answer(
-        "Send me MP3 audio file "
+        "Send me an <code>MP3</code> audio file "
         "or use one of the following commands:\n\n"
+        "/random to get and listen shared tunes.\n"
         "/about additional info and author contacts.\n"
-        "/help this help message.\n"
-        "/random to get and listen shared tunes.\n\n"
+        "/help this help message.\n\n"
         "<b>How it works:</b>\n"
-        "This bot gives your audio a vinyl vibe by slowing it down from 33 to 45 RPM. "
-        "You can share your finished tracks with other users, support them with likes, "
-        "and report any content that should be removed from public access.",
+        "This bot adds a vinyl vibe to your audio by adjusting playback speed from 45 to 33 RPM. "
+        "You can publish your processed tracks for other users, "
+        "support their uploads with likes, "
+        "or report any content that shouldn’t remain publicly available.",
         disable_notification=True,
     )
 
