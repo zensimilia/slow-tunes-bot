@@ -22,7 +22,7 @@ def tunes_pagging_buttons(curr_page: int, total_pages: int) -> InlineKeyboardMar
                 callback_data=tunes_list_cbd.new(
                     page=curr_page - 1, curr_page=curr_page, flag="ok"
                 ),
-            ),
+            ),  # pyright: ignore[reportArgumentType]
         )
 
     markup.insert(
@@ -31,7 +31,7 @@ def tunes_pagging_buttons(curr_page: int, total_pages: int) -> InlineKeyboardMar
             callback_data=tunes_list_cbd.new(
                 page=curr_page, curr_page=curr_page, flag="ok"
             ),
-        )
+        ),  # pyright: ignore[reportArgumentType]
     )
 
     if total_pages > 1 and curr_page != total_pages:
@@ -41,7 +41,7 @@ def tunes_pagging_buttons(curr_page: int, total_pages: int) -> InlineKeyboardMar
                 callback_data=tunes_list_cbd.new(
                     page=min(curr_page + 1, total_pages), curr_page=curr_page, flag="ok"
                 ),
-            ),
+            ),  # pyright: ignore[reportArgumentType]
         )
 
     return markup
@@ -68,14 +68,14 @@ def tune_buttons(
                             action="toggle_like",
                             idc=idc,
                         ),
-                    ),
+                    ),  # pyright: ignore[reportArgumentType]
                     InlineKeyboardButton(
                         "💩 Report!",
                         callback_data=random_cbd.new(
                             action="confirm",
                             idc=idc,
                         ),
-                    ),
+                    ),  # pyright: ignore[reportArgumentType]
                 ]
             ]
         )

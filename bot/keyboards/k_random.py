@@ -11,28 +11,28 @@ def random_buttons(idc: str, *, is_like: bool = False) -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    "💔 Dislike!" if is_like else "❤ Like!",
+                    text="💔 Dislike!" if is_like else "❤ Like!",
                     callback_data=random_cbd.new(
                         action="toggle_like",
                         idc=idc,
                     ),
-                ),
+                ),  # pyright: ignore[reportArgumentType]
                 InlineKeyboardButton(
-                    "💩 Report!",
+                    text="💩 Report!",
                     callback_data=random_cbd.new(
                         action="confirm",
                         idc=idc,
                     ),
-                ),
+                ),  # pyright: ignore[reportArgumentType]
             ],
             [
                 InlineKeyboardButton(
-                    "🎲 Next",
+                    text="🎲 Next",
                     callback_data=random_cbd.new(
                         action="next",
                         idc=idc,
                     ),
-                ),
+                ),  # pyright: ignore[reportArgumentType]
             ],
         ]
     )
@@ -45,17 +45,17 @@ def report_confirm_buttons(idc: str) -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    "❓",
+                    text="❓",
                     callback_data=random_cbd.new(action="help", idc=idc),
-                ),
+                ),  # pyright: ignore[reportArgumentType]
                 InlineKeyboardButton(
-                    "YES",
+                    text="YES",
                     callback_data=random_cbd.new(action="yes", idc=idc),
-                ),
+                ),  # pyright: ignore[reportArgumentType]
                 InlineKeyboardButton(
-                    "NO",
+                    text="NO",
                     callback_data=random_cbd.new(action="no", idc=idc),
-                ),
+                ),  # pyright: ignore[reportArgumentType]
             ],
         ]
     )

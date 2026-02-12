@@ -21,7 +21,7 @@ def share_button(
             is_private=is_private,
             is_random=is_random,
         ),
-    )
+    )  # pyright: ignore[reportArgumentType]
 
     markup = InlineKeyboardMarkup()
     markup.insert(button)
@@ -35,7 +35,7 @@ def share_button(
                     action="next",
                     idc=file_id,
                 ),
-            )
+            )  # pyright: ignore[reportArgumentType]
         )
 
     return markup
@@ -57,7 +57,7 @@ def share_confirm_buttons(
                         is_private=is_private,
                         is_random=is_random,
                     ),
-                ),
+                ),  # pyright: ignore[reportArgumentType]
                 InlineKeyboardButton(
                     "YES",
                     callback_data=share_cbd.new(
@@ -66,7 +66,7 @@ def share_confirm_buttons(
                         is_private=is_private,
                         is_random=is_random,
                     ),
-                ),
+                ),  # pyright: ignore[reportArgumentType]
                 InlineKeyboardButton(
                     "NO",
                     callback_data=share_cbd.new(
@@ -75,7 +75,7 @@ def share_confirm_buttons(
                         is_private=is_private,
                         is_random=is_random,
                     ),
-                ),
+                ),  # pyright: ignore[reportArgumentType]
             ],
         ]
     )
