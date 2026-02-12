@@ -35,7 +35,8 @@ def main():
 
     executor.start_polling(
         dp,
-        skip_updates=True,
+        skip_updates=True,  # reset pending updates
+        allowed_updates=[],  # allow all updates
         on_startup=on_startup,
         on_shutdown=on_shutdown,
     )

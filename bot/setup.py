@@ -158,7 +158,7 @@ async def on_startup(dp: Dispatcher):
     LOG.info("Execute startup Bot functions...")
     db.execute_script("./schema.sql")
 
-    await dp.bot.delete_webhook()
+    await dp.bot.delete_webhook(drop_pending_updates=True)
     register_handlers(dp)
 
     commands = [
