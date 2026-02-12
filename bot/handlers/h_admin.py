@@ -3,6 +3,7 @@ import math
 from aiogram import types
 
 from bot import db, keyboards
+from bot.keyboards.k_admin import tune_buttons
 from bot.utils.u_admin import get_tunes_list, get_username_by_id
 from bot.utils.u_logger import get_logger
 
@@ -73,13 +74,11 @@ async def get_tune(message: types.Message, regexp_command):
         (id_, file_unique_id, file_id, user_id, is_private, *_) = tune
         username = await get_username_by_id(message.bot, user_id)
 
-        if user_id == message.from_user.id:
-            keyboard = keyboards.share_button(
-                file_unique_id, is_private=is_private, is_random=True
-            )
-        else:
-            is_liked = await db.is_liked(id_, message.from_user.id)
-            keyboard = keyboards.random_buttons(id_, is_like=is_liked)
+        is_own = user_id == message.from_user.id
+        is_liked = await db.is_liked(id_, message.from_user.id)
+        keyboard = tune_buttons(
+            id_, file_unique_id, is_private=is_private, is_own=is_own, is_liked=is_liked
+        )
 
         return await message.reply_audio(
             file_id,
