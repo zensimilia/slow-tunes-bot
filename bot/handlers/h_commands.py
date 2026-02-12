@@ -1,17 +1,23 @@
 import aioredis
 from aiogram import types
 
-from bot import __version__, db, keyboards
+from bot import __version__, db
 from bot.config import config
+from bot.keyboards.k_public import public_buttons
+from bot.keyboards.k_random import random_button
+from bot.keyboards.k_share import share_button
 from bot.utils.u_brand import get_caption
 from bot.utils.u_logger import get_logger
 
 LOG = get_logger()
 ITEMS_ON_PAGE = 10
-RANDOM_EXPIRE = 60 * 60 * 24  # 24 hours
+RANDOM_EXPIRE = 60 * 60 * 24 * 30  # month in seconds
+TEXT_NO_RANDOM_TUNES = "Sorry! There are no public tunes yet."
 
 r = aioredis.Redis(
-    host=config.REDIS_HOST, port=config.REDIS_PORT, decode_responses=True
+    host=config.REDIS_HOST,
+    port=config.REDIS_PORT,
+    decode_responses=True,
 )
 
 
@@ -36,21 +42,26 @@ async def command_random(message: types.Message):
     random_id = await get_random_match_id(str(message.from_user.id))
     if random_id is None:
         LOG.info("No tunes in database for /random command")
-        return await message.answer("Sorry! I don't have shared tunes yet.")
+        return await message.answer(TEXT_NO_RANDOM_TUNES)
 
     if match := await db.get_by_pk("match", int(random_id)):
         await message.answer_chat_action(types.ChatActions.UPLOAD_AUDIO)
         (idc, file_unique_id, file_id, user_id, is_private, *_) = match
 
         if user_id == message.from_user.id:
-            keyboard = keyboards.share_button(
-                file_unique_id, is_private=is_private, is_random=True
+            keyboard = share_button(
+                file_unique_id,
+                is_private=is_private,
+                is_random=True,
             )
         else:
             is_liked = await db.is_liked(idc, message.from_user.id)
-            keyboard = keyboards.random_buttons(idc, is_like=is_liked)
+            keyboard = public_buttons(idc, is_like=is_liked, is_random=True)
 
-        return await message.answer_audio(
+        keyboard.row()
+        keyboard.insert(random_button(idc))
+
+        return await message.reply_audio(
             file_id,
             caption=await get_caption(),
             reply_markup=keyboard,
@@ -64,7 +75,7 @@ async def next_random(query: types.CallbackQuery, callback_data: dict):
 
     random_id = await get_random_match_id(str(query.from_user.id))
     if random_id is None:
-        return await query.answer("Sorry! I don't have shared tunes yet.")
+        return await query.answer(TEXT_NO_RANDOM_TUNES)
 
     if match := await db.get_by_pk("match", int(random_id)):
         (idc, file_unique_id, file_id, user_id, is_private, *_) = match
@@ -78,12 +89,17 @@ async def next_random(query: types.CallbackQuery, callback_data: dict):
             )
 
         if user_id == query.from_user.id:
-            keyboard = keyboards.share_button(
-                file_unique_id, is_private=is_private, is_random=True
+            keyboard = share_button(
+                idc,
+                is_private=is_private,
+                is_random=True,
             )
         else:
             is_liked = await db.is_liked(idc, query.from_user.id)
-            keyboard = keyboards.random_buttons(idc, is_like=is_liked)
+            keyboard = public_buttons(idc, is_like=is_liked, is_random=True)
+
+        keyboard.row()
+        keyboard.insert(random_button(idc))
 
         media = types.InputMediaAudio(
             file_id,

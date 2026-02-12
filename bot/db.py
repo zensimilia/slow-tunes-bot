@@ -59,28 +59,52 @@ def execute_script(script_file: str):
             raise error
 
 
-async def insert_match(
+async def create_empty_match(file_unique_id: str) -> int | None:
+    """Create new match id for pair of original and slowed file ids. Returns id of new row"""
+
+    query = send_query(
+        """INSERT INTO match (original, slowed, user_id, private, forbidden)
+        VALUES (?, ?, ?, ?, ?);""",
+        (
+            file_unique_id,
+            0,
+            0,
+            True,
+            False,
+        ),
+    )
+    return query.lastrowid
+
+
+async def update_match(
+    id_: int,
     original: str,
     slowed: str,
     user_id: int,
     private: bool = True,
     forbidden: bool = False,
 ) -> int | None:
-    """Insert row with original and slowed file ids."""
+    """Update row with original and slowed file ids."""
 
     query = send_query(
-        """INSERT INTO
-        match (original, slowed, user_id, private, forbidden)
-        VALUES (?, ?, ?, ?, ?);""",
+        """UPDATE
+        match
+        SET original = ?,
+            slowed = ?,
+            user_id = ?,
+            private = ?,
+            forbidden = ?
+        WHERE id = ?;""",
         (
             original,
             slowed,
             user_id,
             private,
             forbidden,
+            id_,
         ),
     )
-    return query.lastrowid
+    return query.rowcount
 
 
 async def get_match(original: str) -> tuple | None:

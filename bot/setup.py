@@ -4,7 +4,7 @@ from sqlite3 import Error as SqliteError
 from aiogram import Dispatcher, filters, types
 from aiogram.utils.exceptions import FileIsTooBig, MessageNotModified
 
-from bot import db, keyboards
+from bot import db
 from bot.handlers import (
     h_admin,
     h_audio,
@@ -15,6 +15,10 @@ from bot.handlers import (
     h_report,
     h_share,
 )
+from bot.keyboards.k_admin import tunes_list_cbd
+from bot.keyboards.k_public import public_cbd
+from bot.keyboards.k_random import random_cbd
+from bot.keyboards.k_share import share_cbd
 from bot.utils.u_exceptions import NotSupportedFormat, QueueLimitReached
 from bot.utils.u_logger import get_logger
 from bot.utils.u_queue import Queue
@@ -85,7 +89,7 @@ def register_handlers(dp: Dispatcher):
     )
     dp.register_callback_query_handler(
         h_admin.tunes_pagging,
-        keyboards.tunes_list_cbd.filter(flag="ok"),
+        tunes_list_cbd.filter(flag="ok"),
     )
     dp.register_message_handler(
         h_admin.command_admin,
@@ -96,57 +100,57 @@ def register_handlers(dp: Dispatcher):
     # Share callback handlers
     dp.register_callback_query_handler(
         h_share.share_confirmation,
-        keyboards.share_cbd.filter(action="confirm"),
+        share_cbd.filter(action="share_confirm"),
     )
     dp.register_callback_query_handler(
         h_share.share_confiramtion_help,
-        keyboards.share_cbd.filter(action="help"),
+        share_cbd.filter(action="share_help"),
     )
     dp.register_callback_query_handler(
         h_share.share_confiramtion_no,
-        keyboards.share_cbd.filter(action="no"),
+        share_cbd.filter(action="share_no"),
     )
     dp.register_callback_query_handler(
         h_share.share_confiramtion_yes,
-        keyboards.share_cbd.filter(action="yes"),
+        share_cbd.filter(action="share_yes"),
     )
 
     # Report callback handlers
     dp.register_callback_query_handler(
         h_report.report_confirmation,
-        keyboards.random_cbd.filter(action="confirm"),
+        public_cbd.filter(action="report"),
     )
     dp.register_callback_query_handler(
         h_report.report_confiramtion_help,
-        keyboards.random_cbd.filter(action="help"),
+        public_cbd.filter(action="report_help"),
     )
     dp.register_callback_query_handler(
         h_report.report_confiramtion_no,
-        keyboards.random_cbd.filter(action="no"),
+        public_cbd.filter(action="report_no"),
     )
     dp.register_callback_query_handler(
         h_report.report_confiramtion_yes,
-        keyboards.random_cbd.filter(action="yes"),
+        public_cbd.filter(action="report_yes"),
     )
 
     # Likes and Next callback handlers
     dp.register_callback_query_handler(
         h_likes.toggle_like,
-        keyboards.random_cbd.filter(action="toggle_like"),
+        public_cbd.filter(action="toggle_like"),
     )
     dp.register_callback_query_handler(
         h_commands.next_random,
-        keyboards.random_cbd.filter(action="next"),
+        random_cbd.filter(action="next"),
     )
 
     # Report response callback handlers
     dp.register_callback_query_handler(
         h_report.report_response_accept,
-        keyboards.report_response_cbd.filter(action="accept"),
+        public_cbd.filter(action="report_accept"),
     )
     dp.register_callback_query_handler(
         h_report.report_response_decline,
-        keyboards.report_response_cbd.filter(action="decline"),
+        public_cbd.filter(action="report_decline"),
     )
 
     dp.register_message_handler(h_common.answer_message)

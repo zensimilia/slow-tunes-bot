@@ -2,8 +2,8 @@ import math
 
 from aiogram import types
 
-from bot import db, keyboards
-from bot.keyboards.k_admin import tune_buttons
+from bot import db
+from bot.keyboards.k_admin import tune_buttons, tunes_pagging_buttons
 from bot.utils.u_admin import get_tunes_list, get_username_by_id
 from bot.utils.u_logger import get_logger
 
@@ -32,7 +32,7 @@ async def command_all(message: types.Message):
     if tunes := await db.get_matches(ITEMS_ON_PAGE, 0):
         return await message.answer(
             get_tunes_list(tunes),
-            reply_markup=keyboards.tunes_pagging_buttons(current_page, pages),
+            reply_markup=tunes_pagging_buttons(current_page, pages),
         )
 
     LOG.warning("No tunes in database for `/all` command.")
@@ -52,7 +52,7 @@ async def tunes_pagging(query: types.CallbackQuery, callback_data: dict):
     if tunes := await db.get_matches(ITEMS_ON_PAGE, ITEMS_ON_PAGE * (page - 1)):
         return await query.message.edit_text(
             get_tunes_list(tunes),
-            reply_markup=keyboards.tunes_pagging_buttons(page, total_pages),
+            reply_markup=tunes_pagging_buttons(page, total_pages),
         )
 
     LOG.warning(

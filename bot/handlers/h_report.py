@@ -1,8 +1,16 @@
+import json
+
 from aiogram import types
 from aiogram.utils.exceptions import TelegramAPIError
 
-from bot import db, keyboards
+from bot import db
 from bot.config import config
+from bot.keyboards.k_public import (
+    public_buttons,
+    report_confirm_buttons,
+    report_response_buttons,
+)
+from bot.keyboards.k_random import random_button
 from bot.utils.u_logger import get_logger
 
 LOG = get_logger()
@@ -13,9 +21,18 @@ async def report_confirmation(query: types.CallbackQuery, callback_data: dict):
 
     await query.answer("Are you sure to report this audio?")
 
-    await query.message.edit_reply_markup(
-        keyboards.report_confirm_buttons(callback_data["idc"])
+    is_random = json.loads(callback_data["is_random"].lower())
+
+    markup = report_confirm_buttons(
+        callback_data["idc"],
+        is_random=is_random,
     )
+
+    if is_random:
+        markup.row()
+        markup.insert(random_button(callback_data["idc"]))
+
+    await query.message.edit_reply_markup(markup)
 
 
 async def report_confiramtion_help(query: types.CallbackQuery, callback_data: dict):
@@ -34,18 +51,27 @@ async def report_confiramtion_no(query: types.CallbackQuery, callback_data: dict
     """Handler for selection NO at Report confiramtion."""
 
     is_liked = await db.is_liked(callback_data["idc"], query.from_user.id)
+    is_random = json.loads(callback_data["is_random"].lower())
 
-    await query.message.edit_reply_markup(
-        keyboards.random_buttons(callback_data["idc"], is_like=is_liked)
+    markup = public_buttons(
+        callback_data["idc"],
+        is_like=is_liked,
+        is_random=is_random,
     )
 
-    await query.answer("Canceled!")
+    if is_random:
+        markup.row()
+        markup.insert(random_button(callback_data["idc"]))
+
+    await query.message.edit_reply_markup(markup)
+
+    return await query.answer("Canceled!")
 
 
 async def report_confiramtion_yes(query: types.CallbackQuery, callback_data: dict):
     """Handler for selection YES at Report confiramtion."""
 
-    if row := await db.get_by_pk("match", callback_data["idc"]):
+    if row := await db.get_match_by_pk(callback_data["idc"]):
         (idc, _, file_id, _, _, is_forbidden) = row
 
         if is_forbidden:
@@ -66,17 +92,23 @@ async def report_confiramtion_yes(query: types.CallbackQuery, callback_data: dic
                 config.ADMIN_ID,
                 file_id,
                 caption=f"Hola! {mention} report this audio. What should we do whith this request?",
-                reply_markup=keyboards.report_response_buttons(idc),
+                reply_markup=report_response_buttons(idc),
             )
 
             is_liked = await db.is_liked(idc, query.from_user.id)
+            is_random = json.loads(callback_data["is_random"].lower())
 
-            await query.message.edit_reply_markup(
-                keyboards.random_buttons(
-                    idc,
-                    is_like=is_liked,
-                )
+            markup = public_buttons(
+                idc,
+                is_like=is_liked,
+                is_random=is_random,
             )
+
+            if is_random:
+                markup.row()
+                markup.insert(random_button(callback_data["idc"]))
+
+            await query.message.edit_reply_markup(markup)
 
             return await query.answer(
                 "Thanks! Your request is being processed...",
@@ -97,7 +129,7 @@ async def report_response_accept(query: types.CallbackQuery, callback_data: dict
 
     await db.toggle_forbidden(callback_data["idc"], True)
 
-    await query.answer("Success! Audio is forbidden.", show_alert=True)
+    return await query.answer("Success! Audio is forbidden.", show_alert=True)
 
 
 async def report_response_decline(query: types.CallbackQuery, callback_data: dict):
@@ -105,4 +137,4 @@ async def report_response_decline(query: types.CallbackQuery, callback_data: dic
 
     await db.toggle_forbidden(callback_data["idc"], False)
 
-    await query.answer("Success! Audio is acceptable.", show_alert=True)
+    return await query.answer("Success! Audio is acceptable.", show_alert=True)

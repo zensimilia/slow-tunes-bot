@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.callback_data import CallbackData
 
-from .k_random import random_cbd
+from .k_public import public_buttons
 from .k_share import share_button
 
 tunes_list_cbd = CallbackData("tunes_list", "page", "curr_page", "flag")
@@ -57,27 +57,8 @@ def tune_buttons(
     """Returns markup for single tune."""
 
     if is_own:
-        markup = share_button(file_id, is_private=is_private, is_random=False)
+        markup = share_button(idc, is_private=is_private, is_random=False)
     else:
-        markup = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        "💔 Dislike!" if is_liked else "❤ Like!",
-                        callback_data=random_cbd.new(
-                            action="toggle_like",
-                            idc=idc,
-                        ),
-                    ),  # pyright: ignore[reportArgumentType]
-                    InlineKeyboardButton(
-                        "💩 Report!",
-                        callback_data=random_cbd.new(
-                            action="confirm",
-                            idc=idc,
-                        ),
-                    ),  # pyright: ignore[reportArgumentType]
-                ]
-            ]
-        )
+        markup = public_buttons(idc, is_like=is_liked, is_random=False)
 
     return markup
