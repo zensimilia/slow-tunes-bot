@@ -95,3 +95,15 @@ def report_response_buttons(idc: str) -> InlineKeyboardMarkup:
             ]
         ]
     )
+
+
+def please_wait_button() -> InlineKeyboardMarkup:
+    """Returns markup for `please wait` button"""
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Please wait...", callback_data="pls_wit"),  # pyright: ignore[reportArgumentType]
+            ]
+        ]
+    )

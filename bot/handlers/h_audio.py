@@ -6,7 +6,7 @@ from aiogram.utils.exceptions import FileIsTooBig, TelegramAPIError
 
 from bot import db
 from bot.config import config
-from bot.keyboards.k_public import public_buttons
+from bot.keyboards.k_public import please_wait_button, public_buttons
 from bot.keyboards.k_share import share_button
 from bot.utils import u_audio
 from bot.utils.u_brand import get_branded_file_name, get_caption
@@ -72,6 +72,7 @@ async def slowing_down_task(message: types.Message) -> bool:
     info_message = await message.reply(
         "💿 Start recording at 33 rpm for you...",
         disable_notification=True,
+        reply_markup=please_wait_button(),
     )
 
     if not (downloaded := await download_file(message.audio)):
@@ -88,7 +89,8 @@ async def slowing_down_task(message: types.Message) -> bool:
             (
                 "⚠ I have some issues with processing your audio. "
                 "Please send me another file or try again later."
-            )
+            ),
+            reply_markup=None,
         )
         await queue.dec_user_queue(message.from_user.id)
         return False
@@ -109,8 +111,8 @@ async def slowing_down_task(message: types.Message) -> bool:
             "title": audio_info.get("title"),
             "thumb": types.InputFile(config.ALBUM_ART) if thumb_file_exists else None,
         }
-        uploaded = await message.answer_audio(
-            types.InputFile(slowed, filename=file_name),
+        uploaded = await message.reply_audio(
+            audio=types.InputFile(slowed, filename=file_name),
             caption=await get_caption(),
             reply_markup=share_button(
                 str(match_id),
@@ -119,6 +121,7 @@ async def slowing_down_task(message: types.Message) -> bool:
             ),
             **tags,
         )
+        await info_message.delete()
         await db.update_match(
             match_id,
             message.audio.file_unique_id,
