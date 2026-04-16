@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+dist/
+build/
+
+# Виртуальное окружение uv
+.venv/
+
+# Кэш инструментов
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# Окружение
+.env

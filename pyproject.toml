@@ -1,0 +1,18 @@
+[project]
+name = "slow-tunes-bot"
+version = "2.0.0"
+description = "Telegram Bot that slows down audio tracks yo 33/45 RPM vinyl ratio for dubious aesthetic pleasure"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "aiogram>=3.27.0",
+    "redis>=7.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.10",
+]
+
+[tool.ruff]
+format.preview = true
