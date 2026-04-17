@@ -1,0 +1,30 @@
+name: slow-tunes-bot
+
+services:
+  bot:
+    image: slow-tunes-bot:2-alpha
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    container_name: bot
+    restart: unless-stopped
+    volumes:
+      - bot-data:/app/data
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+
+  redis:
+    container_name: redis
+    image: redis:8-alpine
+    init: true
+    mem_limit: 16m
+    restart: unless-stopped
+    command: redis-server --save 300 1 --loglevel warning
+    volumes:
+      - bot-cache:/data
+volumes:
+  bot-data:
+  bot-cache:

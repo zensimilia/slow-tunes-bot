@@ -1,0 +1,15 @@
+.git/
+.gitignore
+
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+.ruff_cache/
+.python-version
