@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "aiogram>=3.27.0",
+    "pydantic-settings>=2.13.1",
     "redis>=7.4.0",
 ]
 
@@ -16,3 +17,11 @@ dev = [
 
 [tool.ruff]
 format.preview = true
+
+[[tool.uv.index]]
+name = "china"
+url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+
+[[tool.uv.index]]
+name = "russia"
+url = "https://mirror.yandex.ru/pypi/web/simple"
