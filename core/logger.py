@@ -46,7 +46,7 @@ def setup_logging() -> None:
 
     logging.basicConfig(
         handlers=[InterceptHandler()],
-        level=0,
+        level=logging.DEBUG,
         force=True,
     )  # logging -> loguru
 
