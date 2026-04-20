@@ -34,6 +34,7 @@ RUN uv sync --locked
 ENTRYPOINT []
 
 # Use the non-root user to run our application
+RUN mkdir -p /app/data && chown -R nonroot:nonroot /app/data
 USER nonroot
 
 # Run bot

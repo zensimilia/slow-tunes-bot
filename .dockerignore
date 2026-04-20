@@ -8,7 +8,8 @@ __pycache__/
 *.pyd
 
 Dockerfile
-docker-compose.yml
+compose.yml
+compose.*.yml
 .dockerignore
 
 .ruff_cache/
