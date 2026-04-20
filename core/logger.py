@@ -62,3 +62,5 @@ def setup_logging() -> None:
         level="ERROR",
         colorize=True,
     )
+
+    logger.info("Loguru: logger configured and intercepts standart logging messages")
