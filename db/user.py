@@ -9,6 +9,10 @@ from .schemas import GetUser, NewUser
 
 async def create_user(db: Database, user_schema: NewUser) -> GetUser:
     async with db.get_session() as session:
+        query = select(User).filter_by(tg_id=user_schema.tg_id).limit(1)
+        if existing := await session.scalar(query):
+            return GetUser.model_validate(existing)
+
         new_user = User(**user_schema.model_dump())
         session.add(new_user)
         await session.flush()
