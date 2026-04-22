@@ -9,6 +9,7 @@ from redis.asyncio import Redis
 
 from db.base import Database
 from router.admin import admin_router
+from router.audio import audio_router
 from router.common import common_router
 
 from .config import config
@@ -23,9 +24,9 @@ queue = TaskQueue(maxsize=32)
 async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -> None:
     if commands is None:
         commands = [
-            BotCommand(command="about", description="about"),
-            BotCommand(command="help", description="help"),
-            BotCommand(command="start", description="start"),
+            BotCommand(command="about", description="useful information"),
+            BotCommand(command="help", description="if you stuck"),
+            BotCommand(command="start", description="say hello"),
         ]
     await bot.set_my_commands(commands)
 
@@ -55,14 +56,12 @@ def setup_dispatcher() -> Dispatcher:
     dispatcher["queue"] = queue  # inject task queue
 
     dispatcher.include_router(admin_router)
+    dispatcher.include_router(audio_router)
     dispatcher.include_router(common_router)
 
     return dispatcher
 
 
 def setup_bot() -> Bot:
-    properties = DefaultBotProperties(
-        parse_mode=ParseMode.HTML,
-        link_preview_is_disabled=True,
-    )
+    properties = DefaultBotProperties(parse_mode=ParseMode.HTML, link_preview_is_disabled=True)
     return Bot(token=config.BOT_TOKEN, default=properties)
