@@ -23,7 +23,7 @@ class TaskQueue:
         while self.__running:
             try:
                 func, args, kwargs = await self.__queue.get()
-                logger.debug("Processing task #%d", self.count)
+                logger.debug(f"Processing task #{self.count}")
                 await func(*args, **kwargs)
                 self.count += 1
             except asyncio.QueueShutDown:
@@ -31,8 +31,8 @@ class TaskQueue:
                 message = f"Queue worker stopped. Tasks in the queue: {self.size}. Tasks completed: {self.count}"
                 logger.warning(message)
                 break
-            except Exception as e:
-                logger.error("Task #%d failed: %s", self.count, e)
+            except Exception as err:
+                logger.error(f"Task #{self.count} failed: {err}")
             finally:
                 self.__queue.task_done()
 
@@ -41,7 +41,7 @@ class TaskQueue:
             self.__queue.put_nowait((func, args, kwargs))
             return self.__queue.qsize()
         except (asyncio.QueueFull, asyncio.QueueShutDown) as err:
-            logger.warning("Failed to enqueue task: queue is full")
+            logger.warning(f"Failed to enqueue task #{self.count}: queue is full")
             raise TaskQueueError from err
 
     @property
