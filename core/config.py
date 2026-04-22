@@ -31,6 +31,8 @@ class Settings(BaseSettings):
 
     # defaults
     DEBUG: bool = False
+    LICENSE_URL: str = "https://github.com/zensimilia/slow-tunes-bot/blob/master/LICENSE"
+    SOURCE_URL: str = "https://github.com/zensimilia/slow-tunes-bot"
 
     # redis
     REDIS_HOST: str = "redis"
@@ -40,9 +42,6 @@ class Settings(BaseSettings):
 try:
     config = Settings()  # type: ignore
 except ValidationError as e:
-    message = "; ".join([
-        f"{err['loc'][0]}: {err['msg']}"
-        for err in e.errors(include_input=False, include_url=False)
-    ])
+    message = "; ".join([f"{err['loc'][0]}: {err['msg']}" for err in e.errors(include_input=False, include_url=False)])
     logger.critical(f"Configuration error: {message}")
     sys.exit(1)

@@ -12,14 +12,16 @@ from router.common import common_router
 from .config import config
 
 db = Database(f"sqlite+aiosqlite:///{config.DB_FILE.as_posix()}")
+redis_fsm = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=0)
+redis_storage = RedisStorage(redis_fsm)
 
 
 async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -> None:
     if commands is None:
         commands = [
-            BotCommand(command="start", description="start"),
+            BotCommand(command="about", description="about"),
             BotCommand(command="help", description="help"),
-            BotCommand(command="admin", description="admin"),
+            BotCommand(command="start", description="start"),
         ]
     await bot.set_my_commands(commands)
 
@@ -40,9 +42,6 @@ async def on_shutdown(bot: Bot, dispatcher: Dispatcher):
 
 
 def setup_dispatcher() -> Dispatcher:
-    redis_fsm = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=0)
-    redis_storage = RedisStorage(redis_fsm)
-
     dispatcher = Dispatcher(storage=redis_storage)
     dispatcher.startup.register(on_startup)
     dispatcher.shutdown.register(on_shutdown)
