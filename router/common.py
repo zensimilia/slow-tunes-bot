@@ -34,7 +34,7 @@ async def cmd_about(message: types.Message, bot: Bot, db: Database):
     keyboard.row(types.InlineKeyboardButton(text=f"💾 Version {get_version()}", url=config.SOURCE_URL))
 
     if admin_user_link := await get_user_link(bot, config.BOT_ADMIN_ID):
-        keyboard.row(types.InlineKeyboardButton(text="👨‍💻 Admin support", url=admin_user_link))
+        keyboard.row(types.InlineKeyboardButton(text="👨‍💻 Admin & Support", url=admin_user_link))
 
     users_count = await get_users_count(db)
     text = messages.ABOUT_TEXT.format(users_count=users_count)
