@@ -14,12 +14,11 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = [
-    "ruff>=0.15.10",
-]
+dev = ["ruff>=0.15.10"]
 
 [tool.ruff]
 format.preview = true
+line-length = 120
 
 [[tool.uv.index]]
 name = "china"
