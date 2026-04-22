@@ -43,4 +43,4 @@ async def cmd_about(message: types.Message, bot: Bot, db: Database):
 
 common_router.message.register(cmd_start, CommandStart())
 common_router.message.register(cmd_help, Command("help"))
-common_router.message.register(cmd_about, Command("about"))
+common_router.message.register(cmd_about, Command("about", "developer_info", "info"))
