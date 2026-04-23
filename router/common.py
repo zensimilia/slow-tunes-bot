@@ -15,7 +15,7 @@ common_router = Router()
 
 @common_router.message(CommandStart())
 @flags.rate_limit(rate=10, key="start")
-async def cmd_start(message: types.Message, db: Database):
+async def cmd_start(message: types.Message, db: Database) -> None:
     if not message.from_user:
         return
 
@@ -28,13 +28,13 @@ async def cmd_start(message: types.Message, db: Database):
 
 @common_router.message(Command("help"))
 @flags.rate_limit(rate=10, key="help")
-async def cmd_help(message: types.Message):
+async def cmd_help(message: types.Message) -> None:
     await message.answer(messages.HELP_TEXT, disable_notification=True)
 
 
 @common_router.message(Command("about", "developer_info", "info"))
 @flags.rate_limit(rate=10, key="about")
-async def cmd_about(message: types.Message, bot: Bot, db: Database):
+async def cmd_about(message: types.Message, bot: Bot, db: Database) -> None:
     keyboard = InlineKeyboardBuilder()
     keyboard.row(types.InlineKeyboardButton(text="📜 License", url=config.LICENSE_URL))
     keyboard.row(types.InlineKeyboardButton(text=f"💾 Version {get_version()}", url=config.SOURCE_URL))

@@ -41,3 +41,5 @@ START_TEXT = (
 THROTTLING_TEXT = (
     "⏳ Too many requests! Calm bro! Please <code>wait {ttl} seconds</code> before sending the same message."
 )
+
+QUEUE_POSITION_TEXT = "🕙 Added your request to the queue. Your position: {task}."

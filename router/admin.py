@@ -9,5 +9,5 @@ admin_router.message.filter(IsAdmin([config.BOT_ADMIN_ID]))
 
 
 @admin_router.message(Command("all"))
-async def cmd_all(message: types.Message):
+async def cmd_all(message: types.Message) -> None:
     await message.answer("There will be a list of all audios...")
