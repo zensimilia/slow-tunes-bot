@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any, Callable
 
 from loguru import logger
 
@@ -36,7 +37,7 @@ class TaskQueue:
             finally:
                 self.__queue.task_done()
 
-    def enqueue(self, func, *args, **kwargs) -> int:
+    def enqueue(self, func: Callable[..., Any], *args, **kwargs) -> int:
         try:
             self.__queue.put_nowait((func, args, kwargs))
             return self.__queue.qsize()
