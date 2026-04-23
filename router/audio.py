@@ -1,6 +1,6 @@
 import asyncio
 
-from aiogram import F, Router, types
+from aiogram import F, Router, flags, types
 
 from core.queue import TaskQueue
 from db.base import Database
@@ -8,6 +8,8 @@ from db.base import Database
 audio_router = Router()
 
 
+@audio_router.message(F.audio)
+@flags.rate_limit(rate=3, key="audio")
 async def audio_handler(message: types.Message, db: Database, queue: TaskQueue):
     # Example of enqueuing a task
     async def process_audio():
@@ -17,6 +19,3 @@ async def audio_handler(message: types.Message, db: Database, queue: TaskQueue):
         await message.answer("Audio processing complete!")
 
     queue.enqueue(process_audio)
-
-
-audio_router.message.register(audio_handler, F.audio)

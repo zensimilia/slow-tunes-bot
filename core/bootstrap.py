@@ -10,6 +10,7 @@ from redis.asyncio import Redis
 
 from db.base import Database
 from middlewares.retry import RetryRequestMiddleware
+from middlewares.throttling import RateLimitMiddleware
 from router.admin import admin_router
 from router.audio import audio_router
 from router.common import common_router
@@ -18,8 +19,8 @@ from .config import config
 from .queue import TaskQueue
 
 db = Database(f"sqlite+aiosqlite:///{config.DB_FILE.as_posix()}")
-redis_fsm = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=0)
-redis_storage = RedisStorage(redis_fsm)
+redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=0)
+redis_storage = RedisStorage(redis)
 queue = TaskQueue(maxsize=32)
 
 
@@ -60,6 +61,8 @@ def setup_dispatcher() -> Dispatcher:
     dispatcher.include_router(admin_router)
     dispatcher.include_router(audio_router)
     dispatcher.include_router(common_router)
+
+    dispatcher.message.middleware(RateLimitMiddleware(redis=redis))
 
     return dispatcher
 

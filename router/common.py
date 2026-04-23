@@ -1,4 +1,4 @@
-from aiogram import Bot, Router, types
+from aiogram import Bot, Router, flags, types
 from aiogram.filters import Command, CommandStart
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -13,6 +13,8 @@ from utils.version import get_version
 common_router = Router()
 
 
+@common_router.message(CommandStart())
+@flags.rate_limit(rate=10, key="start")
 async def cmd_start(message: types.Message, db: Database):
     if not message.from_user:
         return
@@ -24,10 +26,14 @@ async def cmd_start(message: types.Message, db: Database):
     await message.answer(text, disable_notification=True)
 
 
+@common_router.message(Command("help"))
+@flags.rate_limit(rate=10, key="help")
 async def cmd_help(message: types.Message):
     await message.answer(messages.HELP_TEXT, disable_notification=True)
 
 
+@common_router.message(Command("about", "developer_info", "info"))
+@flags.rate_limit(rate=10, key="about")
 async def cmd_about(message: types.Message, bot: Bot, db: Database):
     keyboard = InlineKeyboardBuilder()
     keyboard.row(types.InlineKeyboardButton(text="📜 License", url=config.LICENSE_URL))
@@ -39,8 +45,3 @@ async def cmd_about(message: types.Message, bot: Bot, db: Database):
     users_count = await get_users_count(db)
     text = messages.ABOUT_TEXT.format(users_count=users_count)
     await message.answer(text, reply_markup=keyboard.as_markup(), disable_notification=True)
-
-
-common_router.message.register(cmd_start, CommandStart())
-common_router.message.register(cmd_help, Command("help"))
-common_router.message.register(cmd_about, Command("about", "developer_info", "info"))

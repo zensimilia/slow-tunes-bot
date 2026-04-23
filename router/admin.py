@@ -8,8 +8,6 @@ admin_router = Router()
 admin_router.message.filter(IsAdmin([config.BOT_ADMIN_ID]))
 
 
+@admin_router.message(Command("all"))
 async def cmd_all(message: types.Message):
-    await message.answer("Привет от админ роутера!")
-
-
-admin_router.message.register(cmd_all, Command("all"))
+    await message.answer("There will be a list of all audios...")

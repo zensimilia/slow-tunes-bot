@@ -33,7 +33,11 @@ HELP_TEXT = (
 )
 
 START_TEXT = (
-    "Hello, {username} 👋\n"
+    "👋 Hello, {username}\n"
     "Send me an <code>MP3</code> file to process your audio, or try /random to discover a tracks "
     "shared by another users. Use /help to view all commands. <b>Enjoy!</b>"
+)
+
+THROTTLING_TEXT = (
+    "⏳ Too many requests! Calm bro! Please <code>wait {ttl} seconds</code> before sending the same message."
 )
