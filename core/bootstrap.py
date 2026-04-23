@@ -2,12 +2,14 @@ import asyncio
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import BotCommand
 from redis.asyncio import Redis
 
 from db.base import Database
+from middlewares.retry import RetryRequestMiddleware
 from router.admin import admin_router
 from router.audio import audio_router
 from router.common import common_router
@@ -63,5 +65,7 @@ def setup_dispatcher() -> Dispatcher:
 
 
 def setup_bot() -> Bot:
+    session = AiohttpSession()
+    session.middleware.register(RetryRequestMiddleware())
     properties = DefaultBotProperties(parse_mode=ParseMode.HTML, link_preview_is_disabled=True)
-    return Bot(token=config.BOT_TOKEN, default=properties)
+    return Bot(token=config.BOT_TOKEN, default=properties, session=session)
