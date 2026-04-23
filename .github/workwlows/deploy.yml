@@ -1,0 +1,37 @@
+name: Deploy to production
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - ".github/**"
+      - "README.md"
+      - "LICENSE"
+      - ".*"
+    branches:
+      - master
+
+jobs:
+  pull_n_build:
+    name: Run script by SSH
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull, build and up
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          SHA: ${{ github.sha }}
+          APP_PATH: ${{ secrets.APP_PATH }}
+        with:
+          host: ${{ secrets.HOST }}
+          port: ${{ secrets.PORT }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          key: ${{ secrets.KEY }}
+          envs: SHA, APP_PATH
+          script_stop: true
+          script: |
+            cd $APP_PATH
+            git fetch
+            git reset --hard $SHA
+            docker compose up -d --build
+            docker system prune -f
