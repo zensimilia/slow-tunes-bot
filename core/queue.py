@@ -35,7 +35,8 @@ class TaskQueue:
             except Exception as err:
                 logger.error(f"Task #{self.count} failed: {err}")
             finally:
-                self.__queue.task_done()
+                if self.size > 0:
+                    self.__queue.task_done()
 
     def enqueue(self, func: Callable[..., Any], *args, **kwargs) -> int:
         try:
