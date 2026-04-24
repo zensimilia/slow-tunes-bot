@@ -1,16 +1,27 @@
 .git/
 .gitignore
+*.log
 
 .venv/
+env/
+venv/
+.uv/
+.cache/
+
+.env
+.vscode/
+.idea/
+.github/
+
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
 Dockerfile
+.dockerignore
 compose.yml
 compose.*.yml
-.dockerignore
 
 .ruff_cache/
 .python-version
