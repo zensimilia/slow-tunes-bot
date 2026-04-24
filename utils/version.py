@@ -9,7 +9,9 @@ FALLBACK_VERSION = "latest"
 
 
 @cache
-def get_version() -> str:
+def get_app_version() -> str:
+    """Return the application version from pyproject.toml or fallback to a default value."""
+
     toml_path = config.BASE_DIR / "pyproject.toml"
     try:
         with open(toml_path, "rb") as file:

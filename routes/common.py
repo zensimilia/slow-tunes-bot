@@ -7,8 +7,8 @@ from core.config import config
 from db.base import Database
 from db.schemas import NewUser
 from db.user import create_user, get_users_count
-from utils.tg import get_user_link
-from utils.version import get_version
+from utils.tg import get_user_url
+from utils.version import get_app_version
 
 common_router = Router()
 
@@ -35,13 +35,18 @@ async def cmd_help(message: types.Message) -> None:
 @common_router.message(Command("about", "developer_info", "info"))
 @flags.rate_limit(rate=10, key="about")
 async def cmd_about(message: types.Message, bot: Bot, db: Database) -> None:
-    keyboard = InlineKeyboardBuilder()
-    keyboard.row(types.InlineKeyboardButton(text="📜 License", url=config.LICENSE_URL))
-    keyboard.row(types.InlineKeyboardButton(text=f"💾 Version {get_version()}", url=config.SOURCE_URL))
-
-    if admin_user_link := await get_user_link(bot, config.BOT_ADMIN_ID):
-        keyboard.row(types.InlineKeyboardButton(text="👨‍💻 Admin & Support", url=admin_user_link))
-
+    admin_url = await get_user_url(bot, config.BOT_ADMIN_ID)
     users_count = await get_users_count(db)
-    text = messages.ABOUT_TEXT.format(users_count=users_count)
+    app_version = get_app_version()
+
+    keyboard = InlineKeyboardBuilder()
+    keyboard.row(types.InlineKeyboardButton(text=f"💾 Version {app_version}", url=config.SOURCE_URL))
+    keyboard.row(types.InlineKeyboardButton(text="👨‍💻 Admin & Support", url=admin_url))
+    keyboard.row(types.InlineKeyboardButton(text="📜 License", url=config.LICENSE_URL))
+
+    text = messages.ABOUT_TEXT.format(
+        users_count=users_count,
+        slowed_count=0,
+        shared_count=0,
+    )  # TODO: add real counts of slowed and shared tunes
     await message.answer(text, reply_markup=keyboard.as_markup(), disable_notification=True)

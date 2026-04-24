@@ -11,9 +11,9 @@ from redis.asyncio import Redis
 from db.base import Database
 from middlewares.retry import RetryRequestMiddleware
 from middlewares.throttling import RateLimitMiddleware
-from router.admin import admin_router
-from router.audio import audio_router
-from router.common import common_router
+from routes.admin import admin_router
+from routes.audio import audio_router
+from routes.common import common_router
 
 from .config import config
 from .queue import TaskQueue
@@ -40,14 +40,18 @@ async def on_startup(bot: Bot, queue: TaskQueue):
 
     await bot.delete_webhook(drop_pending_updates=True)  # drop pending updates woraround
     await set_bot_commands(bot)  # register bot commands
-    await bot.send_message(config.BOT_ADMIN_ID, "🟢 I'M ONLINE!")
+
+    if not config.DEBUG:
+        await bot.send_message(config.BOT_ADMIN_ID, "🟢 I'M ONLINE!")
 
 
 async def on_shutdown(bot: Bot, dispatcher: Dispatcher):
     await dispatcher.storage.close()  # close storage
     await set_bot_commands(bot, [])  # clear bot commands
     await db.close_all()  # close all db sessions
-    await bot.send_message(config.BOT_ADMIN_ID, "🔴 I'M OFFLINE!")
+
+    if not config.DEBUG:
+        await bot.send_message(config.BOT_ADMIN_ID, "🔴 I'M OFFLINE!")
 
 
 def setup_dispatcher() -> Dispatcher:
