@@ -17,12 +17,12 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
-        frozen=True,
     )
 
     # required settings
     BOT_ADMIN_ID: int
     BOT_TOKEN: str
+    BOT_MENTION: str | None = None
 
     # pathes
     BASE_DIR: Path = Path(__file__).resolve().parent.parent

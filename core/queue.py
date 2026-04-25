@@ -19,32 +19,35 @@ class TaskQueue:
             return
 
         self.__running = True
-        logger.info("Queue worker started")
+
+        maxsize = self.__queue.maxsize if self.__queue.maxsize > 0 else "infinite"
+        logger.info(f"Queue worker started with maxsize={maxsize}")
 
         while self.__running:
-            try:
+            try:  # get task from the queue
                 func, args, kwargs = await self.__queue.get()
-                logger.debug(f"Processing task #{self.count}")
-                await func(*args, **kwargs)
-                self.count += 1
             except asyncio.QueueShutDown:
                 self.__running = False
-                message = f"Queue worker stopped. Tasks in the queue: {self.size}. Tasks completed: {self.count}"
-                logger.warning(message)
                 break
+
+            try:  # execute the task
+                self.count += 1
+                logger.debug(f"Processing task #{self.count}")
+                await func(*args, **kwargs)
             except Exception as err:
                 logger.error(f"Task #{self.count} failed: {err}")
+                raise TaskQueueError from err
             finally:
-                if self.size > 0:
-                    self.__queue.task_done()
+                self.__queue.task_done()
 
     def enqueue(self, func: Callable[..., Any], *args, **kwargs) -> int:
-        try:
+        try:  # add task to the queue
             self.__queue.put_nowait((func, args, kwargs))
-            return self.__queue.qsize()
         except (asyncio.QueueFull, asyncio.QueueShutDown) as err:
-            logger.warning(f"Failed to enqueue task #{self.count}: queue is full")
+            reason = "full" if isinstance(err, asyncio.QueueFull) else "shut down"
+            logger.warning(f"Failed to enqueue task #{self.count}: queue is {reason}")
             raise TaskQueueError from err
+        return self.__queue.qsize()
 
     @property
     def size(self):
@@ -52,3 +55,5 @@ class TaskQueue:
 
     def stop(self):
         self.__queue.shutdown(True)
+        message = f"Queue worker stopped. Tasks in the queue: {self.size}. Tasks completed: {self.count}"
+        logger.warning(message)

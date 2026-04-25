@@ -1,8 +1,9 @@
 import io
-from functools import cache
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramAPIError
+
+from core.config import config
 
 
 async def get_user_url(bot: Bot, tg_user_id: int) -> str:
@@ -15,12 +16,15 @@ async def get_user_url(bot: Bot, tg_user_id: int) -> str:
     return member.user.url
 
 
-@cache
 async def get_bot_mention(bot: Bot) -> str:
     """Return string of mention to the Bot."""
 
+    if config.BOT_MENTION:
+        return config.BOT_MENTION
+
     me = await bot.get_me()
-    return f"@{me.username}"
+    config.BOT_MENTION = f"@{me.username}"
+    return config.BOT_MENTION
 
 
 async def download_file_to_buffer(bot: Bot, file_id: str) -> io.BytesIO:

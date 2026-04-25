@@ -7,13 +7,13 @@ from core.exceptions import DownloadError, FileIsTooBig, NoAudio
 from core.messages import QUEUE_POSITION_TEXT
 from core.queue import TaskQueue
 from db.base import Database
+from keyboards.public import please_wait_button
 from utils.sox import SoxException, proceed_audio
 from utils.tg import download_file_to_buffer, get_caption_mention
 
 audio_router = Router()
 
 AUDIO_SIZE_LIMIT = 20 * 1024 * 1024  # 20 MB
-CHUNK_SIZE = 64 * 1024  # 64 KB
 
 
 @audio_router.message(F.audio)
@@ -34,10 +34,16 @@ async def audio_handler(message: types.Message, db: Database, queue: TaskQueue) 
 
 async def slowing_down_task(message: types.Message) -> None:
     if not message.bot:
-        raise Exception(f"Message object #{message.message_id} does not have a bot instance")
+        return
 
     if not message.audio or not message.audio.file_name:
         raise NoAudio(f"No audio file found in the message #{message.message_id}")
+
+    info_message = await message.reply(
+        "💿 Start slowing down...",
+        disable_notification=True,
+        reply_markup=please_wait_button(),
+    )
 
     slowed_filename = f"{Path(message.audio.file_name).stem}_slowed.mp3"
 
@@ -45,14 +51,16 @@ async def slowing_down_task(message: types.Message) -> None:
         buffer_audio = await download_file_to_buffer(message.bot, message.audio.file_id)
         slowed_audio = await proceed_audio(buffer_audio)
         upload_audio = types.BufferedInputFile(slowed_audio, filename=slowed_filename)
-        await message.answer_audio(
-            audio=upload_audio,
-            message_effect_id="5104841245755180586",
-            title=f"{message.audio.title} (Slowed)",
-            performer=message.audio.performer,
-            caption=await get_caption_mention(message.bot),
-        )
     except TelegramAPIError as err:
         raise DownloadError(f"Failed to download/upload audio file: {err}") from err
     except SoxException as err:
         raise Exception(f"Failed to process audio file: {err}") from err
+
+    slowed = await message.reply_audio(
+        audio=upload_audio,
+        message_effect_id="5104841245755180586",
+        title=f"{message.audio.title} (Slowed)",
+        performer=message.audio.performer,
+        caption=await get_caption_mention(message.bot),
+    )
+    await info_message.delete()
