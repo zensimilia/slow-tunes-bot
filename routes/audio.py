@@ -2,6 +2,7 @@ from pathlib import Path
 
 from aiogram import F, Router, flags, types
 from aiogram.exceptions import TelegramAPIError
+from aiogram.utils.chat_action import ChatActionSender
 
 from core.exceptions import DownloadError, FileIsTooBig, NoAudio
 from core.messages import QUEUE_POSITION_TEXT
@@ -48,19 +49,21 @@ async def slowing_down_task(message: types.Message) -> None:
     slowed_filename = f"{Path(message.audio.file_name).stem}_slowed.mp3"
 
     try:
-        buffer_audio = await download_file_to_buffer(message.bot, message.audio.file_id)
-        slowed_audio = await proceed_audio(buffer_audio)
-        upload_audio = types.BufferedInputFile(slowed_audio, filename=slowed_filename)
+        async with ChatActionSender.record_voice(bot=message.bot, chat_id=message.chat.id):
+            buffer_audio = await download_file_to_buffer(message.bot, message.audio.file_id)
+            slowed_audio = await proceed_audio(buffer_audio)
+            upload_audio = types.BufferedInputFile(slowed_audio, filename=slowed_filename)
     except TelegramAPIError as err:
         raise DownloadError(f"Failed to download/upload audio file: {err}") from err
     except SoxException as err:
         raise Exception(f"Failed to process audio file: {err}") from err
 
-    slowed = await message.reply_audio(
-        audio=upload_audio,
-        message_effect_id="5104841245755180586",
-        title=f"{message.audio.title} (Slowed)",
-        performer=message.audio.performer,
-        caption=await get_caption_mention(message.bot),
-    )
+    async with ChatActionSender.upload_voice(bot=message.bot, chat_id=message.chat.id):
+        slowed = await message.reply_audio(
+            audio=upload_audio,
+            message_effect_id="5104841245755180586",
+            title=f"{message.audio.title} (Slowed)",
+            performer=message.audio.performer,
+            caption=await get_caption_mention(message.bot),
+        )
     await info_message.delete()
