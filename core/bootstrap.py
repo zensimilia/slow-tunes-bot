@@ -18,10 +18,13 @@ from routes.common import common_router
 from .config import config
 from .queue import TaskQueue
 
-db = Database(f"sqlite+aiosqlite:///{config.DB_FILE.as_posix()}")
-redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=0)
+QUEUE_MAXSIZE = 32
+DB_URL = f"sqlite+aiosqlite:///{config.DB_FILE.as_posix()}"
+
+db = Database(DB_URL)
+redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=0, decode_responses=True)
 redis_storage = RedisStorage(redis)
-queue = TaskQueue(maxsize=32)
+queue = TaskQueue(maxsize=QUEUE_MAXSIZE)
 
 
 async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -> None:
@@ -38,7 +41,7 @@ async def on_startup(bot: Bot, queue: TaskQueue):
     await db.create_tables()  # create tables if not exist
     asyncio.create_task(queue.start())  # start task queue worker
 
-    await bot.delete_webhook(drop_pending_updates=True)  # drop pending updates woraround
+    await bot.delete_webhook(drop_pending_updates=True)  # drop pending updates workaround
     await set_bot_commands(bot)  # register bot commands
 
     if not config.DEBUG:
@@ -47,8 +50,8 @@ async def on_startup(bot: Bot, queue: TaskQueue):
 
 async def on_shutdown(bot: Bot, dispatcher: Dispatcher):
     await dispatcher.storage.close()  # close storage
-    await set_bot_commands(bot, [])  # clear bot commands
     await db.close_all()  # close all db sessions
+    await set_bot_commands(bot, [])  # clear bot commands
 
     if not config.DEBUG:
         await bot.send_message(config.BOT_ADMIN_ID, "🔴 I'M OFFLINE!")
