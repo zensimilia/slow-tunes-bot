@@ -55,9 +55,9 @@ class RateLimitMiddleware(BaseMiddleware):
     async def __call__(
         self,
         handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
-        event: Message,
+        event: Message | CallbackQuery,
         data: dict[str, Any],
-    ):
+    ) -> Any:
         if not event.from_user:
             return await handler(event, data)
 
