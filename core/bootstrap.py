@@ -9,6 +9,7 @@ from aiogram.types import BotCommand
 from redis.asyncio import Redis
 
 from db.base import Database
+from middlewares.auth import UserMiddleware
 from middlewares.retry import RetryRequestMiddleware
 from middlewares.throttling import RateLimitMiddleware
 from routes.admin import admin_router
@@ -69,7 +70,8 @@ def setup_dispatcher() -> Dispatcher:
     dispatcher.include_router(audio_router)
     dispatcher.include_router(common_router)
 
-    dispatcher.message.middleware(RateLimitMiddleware(redis=redis))
+    dispatcher.message.middleware(RateLimitMiddleware(redis))
+    dispatcher.update.outer_middleware(UserMiddleware(db, redis))
 
     return dispatcher
 
