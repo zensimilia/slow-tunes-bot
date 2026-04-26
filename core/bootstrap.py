@@ -71,6 +71,7 @@ def setup_dispatcher() -> Dispatcher:
     dispatcher.include_router(common_router)
 
     dispatcher.message.middleware(RateLimitMiddleware(redis))
+    dispatcher.callback_query.middleware(RateLimitMiddleware(redis))
     dispatcher.update.outer_middleware(UserMiddleware(db, redis))
 
     return dispatcher

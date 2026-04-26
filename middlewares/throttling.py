@@ -79,14 +79,13 @@ class RateLimitMiddleware(BaseMiddleware):
                 ttl = await self._cache.ttl(redis_key)
                 text = THROTTLING_TEXT.format(ttl=ttl)
 
-                if isinstance(event, Message):
-                    await event.reply(text, disable_notification=True)
-                elif isinstance(event, CallbackQuery):
-                    await event.answer(text, show_alert=True)
-
                 logger.debug(f'Prevent flooding <user_id={user_id} key="{rate_key}" rate={rate}s ttl={ttl}s>')
-            return
+
+                if isinstance(event, Message):
+                    return await event.reply(text, disable_notification=True)
+                elif isinstance(event, CallbackQuery):
+                    return await event.answer(text, show_alert=True)
 
         await self._cache.set(redis_key, 1, ex=rate, nx=True)
 
-        return await handler(event, data)
+        await handler(event, data)
