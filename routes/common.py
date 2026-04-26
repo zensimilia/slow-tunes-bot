@@ -20,7 +20,7 @@ async def cmd_start(message: types.Message, db: Database) -> None:
         return
 
     new_user = NewUser(tg_id=message.from_user.id, username=message.from_user.username)
-    user = await create_user(db, new_user)
+    user = await db.execute(create_user, new_user)
 
     text = messages.START_TEXT.format(username=user.username)
     await message.answer(text, disable_notification=True)
@@ -36,7 +36,7 @@ async def cmd_help(message: types.Message) -> None:
 @flags.rate_limit(rate=10, key="about")
 async def cmd_about(message: types.Message, bot: Bot, db: Database) -> None:
     admin_url = await get_user_url(bot, config.BOT_ADMIN_ID)
-    users_count = await get_users_count(db)
+    users_count = await db.execute(get_users_count)
     app_version = get_app_version()
 
     keyboard = InlineKeyboardBuilder()

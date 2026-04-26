@@ -1,6 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, Awaitable, Callable, TypeVar
 
 from sqlalchemy import Engine, event
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -14,6 +14,8 @@ from .exceptions import DataError, OperationalError
 from .models import BaseModel
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 class Database:
@@ -40,7 +42,6 @@ class Database:
         async with self._session_factory() as session:
             try:
                 yield session
-                await session.commit()
             except IntegrityError as err:
                 await session.rollback()
                 logger.warning(err.orig)
@@ -49,8 +50,10 @@ class Database:
                 await session.rollback()
                 logger.error(err)
                 raise OperationalError from err
-            finally:
-                await session.close()
+
+    async def execute(self, func: Callable[..., Awaitable[T]], *args: Any, **kwargs: Any) -> T:
+        async with self.get_session() as session:
+            return await func(session, *args, **kwargs)
 
     async def close_all(self) -> None:
         await self.engine.dispose()

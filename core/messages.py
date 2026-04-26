@@ -43,3 +43,7 @@ THROTTLING_TEXT = (
 )
 
 QUEUE_POSITION_TEXT = "🕙 Added your request to the queue. Your position: {task}."
+
+PLS_SEND_START_CMD = (
+    "You must start a conversation with the bot before using its features. Please send /start command to the bot."
+)

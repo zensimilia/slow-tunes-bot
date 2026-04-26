@@ -51,7 +51,7 @@ class UserMiddleware(BaseMiddleware):
             user_obj = GetUser.model_validate(user_data)
         else:
             try:
-                user_obj = await get_user_by_tg_id(self.__db, user_id)
+                user_obj = await self.__db.execute(get_user_by_tg_id, user_id)
             except DoesNotExist:
                 if isinstance(event_obj, Message):
                     return await event_obj.answer(PLS_SEND_START_CMD)

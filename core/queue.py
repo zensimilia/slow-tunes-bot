@@ -36,7 +36,6 @@ class TaskQueue:
                 await func(*args, **kwargs)
             except Exception as err:
                 logger.error(f"Task #{self.count} failed: {err}")
-                raise TaskQueueError from err
             finally:
                 self.__queue.task_done()
 
