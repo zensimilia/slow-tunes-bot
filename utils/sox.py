@@ -19,7 +19,7 @@ def get_sox_cli_args(in_fmt: str = "mp3") -> list[str]:
     speed = ["speed", str(33 / 45)]  # Adjust the speed of the audio
     norm = ["norm", "-1"]  # Normalize the audio to -1 dB to prevent clipping after speed change
 
-    return ["-q", *io, *speed, *highpass, *reverb, *bass, *pad, *norm]
+    return ["-V1", *io, *speed, *highpass, *reverb, *bass, *pad, *norm]
 
 
 async def proceed_audio(input_buffer: io.BytesIO, fmt: str = "mp3") -> bytes:
