@@ -17,7 +17,8 @@ async def audio_handler(
     queue: TaskQueue,
     user: GetUser,
 ) -> None:
-    task = queue.enqueue(slowing_down_task, message, db, user.pk)
+    queue.enqueue(slowing_down_task, message, db, user.pk)
 
-    if task > 1:
-        await message.reply(QUEUE_POSITION_TEXT.format(task=task), disable_notification=True)
+    position = queue.total_pending
+    if position > 1:
+        await message.reply(QUEUE_POSITION_TEXT.format(position=position), disable_notification=True)

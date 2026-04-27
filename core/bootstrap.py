@@ -19,13 +19,12 @@ from routes.common import common_router
 from .config import config
 from .queue import TaskQueue
 
-QUEUE_MAXSIZE = 32
 DB_URL = f"sqlite+aiosqlite:///{config.DB_FILE.as_posix()}"
 
 db = Database(DB_URL)
 redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=0, decode_responses=True)
 redis_storage = RedisStorage(redis)
-queue = TaskQueue(maxsize=QUEUE_MAXSIZE)
+queue = TaskQueue(maxsize=config.QUEUE_MAXSIZE)
 
 
 async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -> None:

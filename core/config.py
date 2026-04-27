@@ -31,6 +31,7 @@ class Settings(BaseSettings):
 
     # defaults
     DEBUG: bool = False
+    QUEUE_MAXSIZE: int = 2
     LICENSE_URL: str = "https://github.com/zensimilia/slow-tunes-bot/blob/master/LICENSE"
     SOURCE_URL: str = "https://github.com/zensimilia/slow-tunes-bot"
 
