@@ -9,7 +9,7 @@ class SoxException(Exception):
 
 
 def get_sox_cli_args(in_fmt: str = "mp3") -> list[str]:
-    io = ["-t", in_fmt, "-", "-t", "mp3", "-C", "320.2", "-"]  # Output to MP3 directly in sox
+    io = ["-t", in_fmt, "-", "-t", "mp3", "-C", "-0.9", "-"]  # Output to MP3 directly in sox
     # Reverberence, HF damping, Room scale, Stereo depth, Pre delay, Wet gain
     reverb = ["reverb", "70", "30", "100", "50"]
     bass = ["bass", "+3"]  # Gain bass in dB
