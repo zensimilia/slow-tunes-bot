@@ -47,3 +47,7 @@ QUEUE_POSITION_TEXT = "🕙 Added your request to the queue. Your position: {tas
 PLS_SEND_START_CMD = (
     "🤚 You must start a conversation with the bot before using it. Please send /start command to the bot."
 )
+
+FILE_IS_TOO_BIG = "💾 File is too big. Max file size is 20 MB."
+
+START_SLOWING_DOWN = "💿 Start slowing down..."
