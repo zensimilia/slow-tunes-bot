@@ -22,7 +22,7 @@ async def slowing_down_task(message: types.Message, db: Database, user_pk: int) 
 
     fmt = Path(message.audio.file_name).suffix.lstrip(".").lower()
     if fmt not in (SOX_FMT):
-        await message.reply("🔇 Unsupported audio format. Please check /help")
+        await message.reply(txt.UNSUPPORTED_FMT)
         return
 
     try:  # send already slowed audio if it exists

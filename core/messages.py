@@ -3,7 +3,7 @@ ABOUT_TEXT = (
     "For feedback or issues — contact via Telegram. Enjoy!\n\n"
     "<b>Users</b>: {users_count}\n"
     "<b>Slowed tunes</b>: {slowed_count}\n"
-    "<b>Shared tunes</b>: {shared_count}\n\n"
+    "<b>Shared tunes</b>: {public_count}\n\n"
     "<b>Copyrights Notice:</b>\n"
     "All audio tracks and media files belong to their respective owners. "
     "The author of this bot does not claim any ownership "
@@ -21,15 +21,15 @@ ABOUT_TEXT = (
 )
 
 HELP_TEXT = (
-    "Send me an <code>MP3</code> audio file "
-    "or use one of the following commands:\n\n"
+    "Send me an <code>audio file</code> or use one of the following commands:\n\n"
     "/random to get and listen shared tunes.\n"
     "/about additional info and author contacts.\n"
     "/help this help message.\n\n"
     "<b>How it works:</b>\n"
     "This bot adds a vinyl vibe to your audio by adjusting playback speed from 45 to 33 RPM. "
     "You can publish your processed tracks for other users, support their uploads with likes, "
-    "or report any content that shouldn’t remain publicly available."
+    "or report any content that shouldn’t remain publicly available.\n\n"
+    "<b>Supported audio formats:</b> <i>{fmt}</i>."
 )
 
 START_TEXT = (
@@ -51,3 +51,5 @@ PLS_SEND_START_CMD = (
 FILE_IS_TOO_BIG = "💾 File is too big. Max file size is 20 MB."
 
 START_SLOWING_DOWN = "💿 Start slowing down..."
+
+UNSUPPORTED_FMT = "🔇 Unsupported audio format. Please check /help command."
