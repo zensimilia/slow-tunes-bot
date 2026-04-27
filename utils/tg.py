@@ -1,5 +1,6 @@
 import io
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 
 from aiogram import Bot, types
@@ -90,6 +91,23 @@ async def get_caption_mention(bot: Bot, text: str | None = None) -> str:
         text = "Slowed by "
     mention = await get_bot_mention(bot)
     return f"{text} {mention}"
+
+
+async def get_filename_mention(bot: Bot, filename: str) -> str:
+    """
+    Generates a branded filename with '.mp3' extension by appending the bot's mention.
+
+    Args:
+        bot (Bot): The Telegram Bot instance used to retrieve the mention.
+        filename (str): The original filename or path to process.
+
+    Returns:
+        str: A formatted string suitable for a file name
+            (e.g., "track_name @my_bot.mp3").
+
+    """
+    mention = await get_bot_mention(bot)
+    return f"{Path(filename).stem} {mention}.mp3"
 
 
 async def reply_audio(audio: types.InputFileUnion, message: types.Message, effect: bool = True) -> types.Message:

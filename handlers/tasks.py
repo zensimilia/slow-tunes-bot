@@ -11,7 +11,7 @@ from db.exceptions import DoesNotExist
 from db.match import create_match, get_match_by_original_id
 from db.schemas import NewMatch
 from utils.sox import SoxException, proceed_audio
-from utils.tg import download_file_to_buffer, reply_audio, temp_message
+from utils.tg import download_file_to_buffer, get_filename_mention, reply_audio, temp_message
 
 
 async def slowing_down_task(message: types.Message, db: Database, user_pk: int) -> None:
@@ -29,23 +29,24 @@ async def slowing_down_task(message: types.Message, db: Database, user_pk: int) 
     except (TelegramAPIError, ValueError) as err:
         raise UploadError(f"Failed to upload audio file: {err}") from err
 
-    async with temp_message(txt.START_SLOWING_DOWN, message) as _:
-        try:  # download and slow down the audio file
-            async with ChatActionSender.record_voice(bot=message.bot, chat_id=message.chat.id):
-                buffer_audio = await download_file_to_buffer(message.bot, message.audio.file_id)
-                slowed_audio = await proceed_audio(buffer_audio)
+    async with temp_message(txt.START_SLOWING_DOWN, message):
+        try:  # download the audio
+            buffer_audio = await download_file_to_buffer(message.bot, message.audio.file_id)
         except TelegramBadRequest as err:
             await message.reply(txt.FILE_IS_TOO_BIG, disable_notification=True)
             raise FileIsTooBig("File is too big") from err
         except TelegramAPIError as err:
             raise DownloadError(f"Failed to download audio file: {err}") from err
+
+        try:  # slow down the audio
+            async with ChatActionSender.record_voice(bot=message.bot, chat_id=message.chat.id):
+                slowed_audio = await proceed_audio(buffer_audio)
         except SoxException as err:
             raise Exception(f"Failed to process audio file: {err}") from err
 
-        slowed_filename = f"{Path(message.audio.file_name).stem}_slowed.mp3"
-
         try:  # upload the slowed audio file to the user
             async with ChatActionSender.upload_voice(bot=message.bot, chat_id=message.chat.id):
+                slowed_filename = await get_filename_mention(message.bot, message.audio.file_name)
                 upload_audio = types.BufferedInputFile(slowed_audio, filename=slowed_filename)
                 slowed = await reply_audio(upload_audio, message)
         except (TelegramAPIError, OSError, ValueError) as err:
