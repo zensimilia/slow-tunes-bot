@@ -10,7 +10,7 @@ from db.base import Database
 from db.exceptions import DoesNotExist
 from db.match import create_match, get_match_by_original_id
 from db.schemas import NewMatch
-from utils.sox import SoxException, proceed_audio
+from utils.sox import SOX_FMT, SoxException, proceed_audio
 from utils.tg import download_file_to_buffer, get_filename_mention, reply_audio, temp_message
 
 
@@ -18,6 +18,11 @@ async def slowing_down_task(message: types.Message, db: Database, user_pk: int) 
     if not message.bot or not message.from_user:  # hello Optional
         return
     if not message.audio or not message.audio.file_name:  # hello fucking Optional
+        return
+
+    fmt = Path(message.audio.file_name).suffix.lstrip(".").lower()
+    if fmt not in (SOX_FMT):
+        await message.reply("🔇 Unsupported audio format. Please check /help")
         return
 
     try:  # send already slowed audio if it exists
@@ -40,7 +45,7 @@ async def slowing_down_task(message: types.Message, db: Database, user_pk: int) 
 
         try:  # slow down the audio
             async with ChatActionSender.record_voice(bot=message.bot, chat_id=message.chat.id):
-                slowed_audio = await proceed_audio(buffer_audio)
+                slowed_audio = await proceed_audio(buffer_audio, fmt)
         except SoxException as err:
             raise Exception(f"Failed to process audio file: {err}") from err
 
@@ -51,6 +56,8 @@ async def slowing_down_task(message: types.Message, db: Database, user_pk: int) 
                 slowed = await reply_audio(upload_audio, message)
         except (TelegramAPIError, OSError, ValueError) as err:
             raise UploadError(f"Failed to upload audio file: {err}") from err
+        finally:
+            del slowed_audio
 
     if slowed.audio:  # save the match to the database
         new_match = NewMatch(

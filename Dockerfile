@@ -15,7 +15,7 @@ RUN groupadd --system --gid 999 nonroot \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Install dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends sox libsox-fmt-mp3 \
+RUN apt-get update && apt-get install -y --no-install-recommends sox libsox-fmt-all \
     && apt-get purge -y --auto-remove && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create directories

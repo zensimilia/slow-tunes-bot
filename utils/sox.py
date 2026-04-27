@@ -1,13 +1,15 @@
 import asyncio
 import io
 
+SOX_FMT: list[str] = ["aif", "aifc", "aiff", "aiffc", "flac", "mp2", "mp3", "ogg", "opus", "vorbis"]
+
 
 class SoxException(Exception):
     """Base exception for sox-related errors."""
 
 
-def get_sox_cli_args() -> list[str]:
-    io = ["-t", "mp3", "-", "-t", "mp3", "-C", "320.2", "-"]  # Output to MP3 directly in sox
+def get_sox_cli_args(in_fmt: str = "mp3") -> list[str]:
+    io = ["-t", in_fmt, "-", "-t", "mp3", "-C", "320.2", "-"]  # Output to MP3 directly in sox
     # Reverberence, HF damping, Room scale, Stereo depth, Pre delay, Wet gain
     reverb = ["reverb", "70", "30", "100", "50"]
     bass = ["bass", "+3"]  # Gain bass in dB
@@ -20,21 +22,21 @@ def get_sox_cli_args() -> list[str]:
     return ["-q", *io, *speed, *highpass, *reverb, *bass, *pad, *norm]
 
 
-async def proceed_audio(input_buffer: io.BytesIO) -> bytes:
+async def proceed_audio(input_buffer: io.BytesIO, fmt: str = "mp3") -> bytes:
     """This function slow down audio file and convert it to MP3 using sox."""
-
-    input_buffer.seek(0)
-    data = input_buffer.read()
 
     sox_process = await asyncio.create_subprocess_exec(
         "sox",
-        *get_sox_cli_args(),
+        *get_sox_cli_args(fmt),
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.DEVNULL,
+        stderr=asyncio.subprocess.PIPE,
     )
 
-    sox_output, sox_err = await sox_process.communicate(data)
+    input_buffer.seek(0)
+    sox_output, sox_err = await sox_process.communicate(input_buffer.read())
+    input_buffer.close()
+    del input_buffer
 
     if sox_err:
         raise SoxException(f"Sox error: {sox_err.decode()}")
