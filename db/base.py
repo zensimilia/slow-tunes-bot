@@ -45,11 +45,11 @@ class Database:
             except IntegrityError as err:
                 await session.rollback()
                 logger.warning(err.orig)
-                raise DataError from err
+                raise DataError(err._message) from err
             except SQLAlchemyError as err:
                 await session.rollback()
                 logger.error(err)
-                raise OperationalError from err
+                raise OperationalError(err._message) from err
 
     async def execute(self, func: Callable[..., Awaitable[T]], *args: Any, **kwargs: Any) -> T:
         async with self.get_session() as session:

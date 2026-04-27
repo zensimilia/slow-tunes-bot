@@ -8,7 +8,7 @@ from core.exceptions import DownloadError, FileIsTooBig, UploadError
 from core.messages import QUEUE_POSITION_TEXT
 from core.queue import TaskQueue
 from db.base import Database
-from db.match import create_match
+from db.match import create_match, get_match_by_original_id
 from db.schemas import GetUser, NewMatch
 from keyboards.public import please_wait_button
 from utils.sox import SoxException, proceed_audio
@@ -44,6 +44,13 @@ async def slowing_down_task(message: types.Message, db: Database, user: GetUser)
     if not message.audio or not message.audio.file_name:  # hello fucking Optional
         return
 
+    try:  # send already slowed audio if it exists
+        if saved_match := await db.execute(get_match_by_original_id, message.audio.file_id):
+            await reply_audio(saved_match.slowed_id, message)
+            return
+    except (TelegramAPIError, ValueError) as err:
+        raise UploadError(f"Failed to upload audio file: {err}") from err
+
     info_message = await message.reply(
         "💿 Start slowing down...",
         disable_notification=True,
@@ -63,14 +70,8 @@ async def slowing_down_task(message: types.Message, db: Database, user: GetUser)
         async with ChatActionSender.upload_voice(bot=message.bot, chat_id=message.chat.id):
             slowed_filename = f"{Path(message.audio.file_name).stem}_slowed.mp3"
             upload_audio = types.BufferedInputFile(slowed_audio, filename=slowed_filename)
-            slowed = await message.reply_audio(
-                audio=upload_audio,
-                message_effect_id="5104841245755180586",
-                title=f"{message.audio.title} (Slowed)",
-                performer=message.audio.performer,
-                caption=await get_caption_mention(message.bot),
-            )
-    except (TelegramAPIError, OSError) as err:
+            slowed = await reply_audio(upload_audio, message)
+    except (TelegramAPIError, OSError, ValueError) as err:
         raise UploadError(f"Failed to upload audio file: {err}") from err
     finally:
         await info_message.delete()
@@ -82,3 +83,16 @@ async def slowing_down_task(message: types.Message, db: Database, user: GetUser)
             user_pk=user.pk,
         )
         await db.execute(create_match, new_match)
+
+
+async def reply_audio(audio: types.InputFileUnion, message: types.Message, effect: bool = True) -> types.Message:
+    if not message.bot or not message.audio:  # hello fucking fucking Optional
+        raise ValueError("There is no required objects in the Message")
+
+    return await message.reply_audio(
+        audio=audio,
+        message_effect_id="5104841245755180586" if effect else None,
+        title=f"{message.audio.title} (Slowed)",
+        performer=message.audio.performer,
+        caption=await get_caption_mention(message.bot),
+    )

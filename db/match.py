@@ -31,6 +31,13 @@ async def get_match(session: AsyncSession, pk: int) -> GetMatch:
     raise DoesNotExist(f"Match with pk={pk} doesn't exist")
 
 
+async def get_match_by_original_id(session: AsyncSession, original_id: str) -> GetMatch:
+    query = select(Match).where(Match.original_id == original_id)
+    if match := await session.scalar(query):
+        return GetMatch.model_validate(match)
+    raise DoesNotExist(f"Match with original_id={original_id} doesn't exist")
+
+
 async def get_random_match(session: AsyncSession) -> GetMatch:
     query = select(Match).order_by(func.random()).limit(1)
     if match := await session.scalar(query):
