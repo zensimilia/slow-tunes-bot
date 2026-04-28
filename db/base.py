@@ -1,6 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Awaitable, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from sqlalchemy import Engine, event
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -10,8 +10,13 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from models.base import BaseModel
+
 from .exceptions import DataError, OperationalError
-from .models import BaseModel
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, Awaitable, Callable
+    from sqlite3 import Connection
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +30,7 @@ class Database:
 
         # SQLite PRAGMA fix
         @event.listens_for(Engine, "connect")
-        def _set_sqlite_pragma(dbapi_connection, _connection_record):
+        def _set_sqlite_pragma(dbapi_connection: Connection, _connection_record: Any) -> None:
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.close()
@@ -48,7 +53,7 @@ class Database:
                 raise DataError(err._message) from err
             except SQLAlchemyError as err:
                 await session.rollback()
-                logger.error(err)
+                logger.exception("Database error")
                 raise OperationalError(err._message) from err
 
     async def execute(self, func: Callable[..., Awaitable[T]], *args: Any, **kwargs: Any) -> T:

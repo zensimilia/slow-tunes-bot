@@ -1,12 +1,18 @@
 import asyncio
-import io
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import io
 
 SUPPORTED_FMT = ["aif", "aifc", "aiff", "aiffc", "flac", "mp2", "mp3", "ogg", "opus", "vorbis"]
 OUTPUT_MP3_QUALITY = "-0.9"
 
 
-class SoxException(Exception):
+class SoxError(Exception):
     """Base exception for sox-related errors."""
+
+    def __init__(self, msg: str) -> None:
+        super().__init__(f"Sox error: {msg}")
 
 
 def get_sox_cli_args(in_fmt: str = "mp3") -> list[str]:
@@ -39,6 +45,6 @@ async def proceed_audio(input_buffer: io.BytesIO, fmt: str = "mp3") -> bytes:
     sox_output, sox_err = await sox_process.communicate(input_buffer.read())
 
     if sox_err:
-        raise SoxException(f"Sox error: {sox_err.decode()}")
+        raise SoxError(sox_err.decode())
 
     return sox_output

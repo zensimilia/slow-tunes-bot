@@ -1,11 +1,14 @@
 import asyncio
 import inspect
 from functools import partial
-from typing import Any, Awaitable, Callable, Union
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
-TaskFunc = Union[Callable[..., Any], Callable[..., Awaitable[Any]]]
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
+    TaskFunc = Callable[..., Any] | Callable[..., Awaitable[Any]]
 
 
 class TaskQueueError(Exception): ...
@@ -73,6 +76,7 @@ class TaskQueue:
                     await loop.run_in_executor(None, pfunc)
             except Exception as err:
                 logger.error(f"Task #{self.count} failed: {err}")
+                raise TaskQueueError from err
             finally:
                 self.__busy = False
                 self.__queue.task_done()
@@ -96,18 +100,18 @@ class TaskQueue:
             logger.warning(f"Failed to enqueue task #{self.count}: queue is {reason}")
             raise TaskQueueError from err
 
-    def stop(self):
+    def stop(self) -> None:
         """
         Gracefully shuts down the queue and stops the worker.
 
         This method triggers a QueueShutDown exception in the worker loop.
         """
-        self.__queue.shutdown(True)
+        self.__queue.shutdown(immediate=True)
         message = f"Queue worker stopped. Tasks in the queue: {self.size}. Tasks completed: {self.count}"
         logger.warning(message)
 
     @property
-    def size(self):
+    def size(self) -> int:
         """Returns the current number of tasks waiting in the queue."""
         return self.__queue.qsize()
 

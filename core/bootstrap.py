@@ -10,6 +10,7 @@ from redis.asyncio import Redis
 
 from db.base import Database
 from middlewares.auth import UserMiddleware
+from middlewares.db import DbSessionMiddleware
 from middlewares.retry import RetryRequestMiddleware
 from middlewares.throttling import RateLimitMiddleware
 from routes.admin import admin_router
@@ -37,9 +38,10 @@ async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -
     await bot.set_my_commands(commands)
 
 
-async def on_startup(bot: Bot, queue: TaskQueue):
+async def on_startup(bot: Bot, queue: TaskQueue) -> None:
     await db.create_tables()  # create tables if not exist
-    asyncio.create_task(queue.start())  # start task queue worker
+    queue_task = asyncio.create_task(queue.start())  # start task queue worker
+    queue_task.set_name("queue")  # RUF006
 
     await bot.delete_webhook(drop_pending_updates=True)  # drop pending updates workaround
     await set_bot_commands(bot)  # register bot commands
@@ -48,7 +50,7 @@ async def on_startup(bot: Bot, queue: TaskQueue):
         await bot.send_message(config.BOT_ADMIN_ID, "🟢 I'M ONLINE!")
 
 
-async def on_shutdown(bot: Bot, dispatcher: Dispatcher):
+async def on_shutdown(bot: Bot, dispatcher: Dispatcher) -> None:
     await dispatcher.storage.close()  # close storage
     await db.close_all()  # close all db sessions
     await set_bot_commands(bot, [])  # clear bot commands
@@ -71,7 +73,8 @@ def setup_dispatcher() -> Dispatcher:
 
     dispatcher.message.middleware(RateLimitMiddleware(redis))
     dispatcher.callback_query.middleware(RateLimitMiddleware(redis))
-    dispatcher.update.outer_middleware(UserMiddleware(db, redis))
+    dispatcher.update.outer_middleware(DbSessionMiddleware(db))
+    dispatcher.update.outer_middleware(UserMiddleware(redis))
 
     return dispatcher
 

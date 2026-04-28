@@ -1,14 +1,20 @@
 import io
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncGenerator
+from typing import TYPE_CHECKING
 
 from aiogram import Bot, types
 from aiogram.exceptions import TelegramAPIError
 from loguru import logger
 
 from core.config import config
+from core.exceptions import MissingRequiredError
 from keyboards.public import please_wait_button
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
+REPLY_AUDIO_FX = "5104841245755180586"  # fire
 
 
 async def get_user_url(bot: Bot, tg_user_id: int) -> str:
@@ -110,7 +116,7 @@ async def get_filename_mention(bot: Bot, filename: str) -> str:
     return f"{Path(filename).stem} {mention}.mp3"
 
 
-async def reply_audio(audio: types.InputFileUnion, message: types.Message, effect: bool = True) -> types.Message:
+async def reply_audio(audio: types.InputFileUnion, message: types.Message, *, effect: bool = True) -> types.Message:
     """
     Sends the audio file as a reply to the original message.
 
@@ -133,11 +139,11 @@ async def reply_audio(audio: types.InputFileUnion, message: types.Message, effec
             or an audio object.
     """
     if not message.bot or not message.audio:  # hello fucking Optional
-        raise ValueError("There is no required objects in the Message")
+        raise MissingRequiredError
 
     return await message.reply_audio(
         audio=audio,
-        message_effect_id="5104841245755180586" if effect else None,
+        message_effect_id=REPLY_AUDIO_FX if effect else None,
         title=f"{message.audio.title} (Slowed)",
         performer=message.audio.performer,
         caption=await get_caption_mention(message.bot),
@@ -148,9 +154,10 @@ async def reply_audio(audio: types.InputFileUnion, message: types.Message, effec
 async def temp_message(
     text: str,
     message: types.Message,
+    *,
     reply: bool = True,
     please_wait: bool = True,
-) -> AsyncGenerator[types.Message, None]:
+) -> AsyncGenerator[types.Message]:
     """
     Asynchronous context manager that creates a temporary service message.
 
@@ -191,10 +198,36 @@ def get_audio_file_extension(audio: types.Audio) -> str:
     Returns:
         str: The audio file extension without `dot`.
     """
-    if audio.file_name:
-        if ext := Path(audio.file_name).suffix.lstrip(".").lower():
-            return ext
-    if audio.mime_type:
-        ext = audio.mime_type.split("/")[-1].replace("mpeg", "mp3").replace("x-", "")
+    if audio.file_name and (ext := Path(audio.file_name).suffix.lstrip(".").lower()):
         return ext
+    if audio.mime_type:
+        return audio.mime_type.split("/")[-1].replace("mpeg", "mp3").replace("x-", "")
     return "mp3"
+
+
+async def answer_from_update(obj: types.TelegramObject, text: str, *, is_reply: bool = False) -> None:
+    """
+    Universal responder for different types of Telegram updates.
+
+    Depending on the input object type, it either sends a message to the chat
+    or answers a callback query with an alert. This is useful for unified
+    error handling or status notifications across various handlers.
+
+    Args:
+        obj (types.TelegramObject): The incoming update, typically a
+            Message or a CallbackQuery.
+        text (str): The response text to be displayed to the user.
+        is_reply (bool): Relevant only for Messages. If True, sends the
+            response as a reply to the original message. Defaults to False.
+
+    Returns:
+        None
+
+    Note:
+        For CallbackQuery, 'show_alert=True' is used, which displays
+        a modal popup instead of a top-bar notification.
+    """
+    if isinstance(obj, types.Message):
+        await obj.answer(text, reply_to_message_id=obj.message_id if is_reply else None)
+    elif isinstance(obj, types.CallbackQuery):
+        await obj.answer(text, show_alert=True)

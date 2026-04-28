@@ -1,13 +1,17 @@
-from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from aiogram import BaseMiddleware
 from aiogram.dispatcher.flags import get_flag
-from aiogram.types import CallbackQuery, Message, TelegramObject
 from loguru import logger
-from redis.asyncio import Redis
 
 from core.messages import THROTTLING_TEXT
+from utils.tg import answer_from_update
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
+    from aiogram.types import CallbackQuery, Message, TelegramObject
+    from redis.asyncio import Redis
 
 
 class RateLimitMiddleware(BaseMiddleware):
@@ -47,7 +51,7 @@ class RateLimitMiddleware(BaseMiddleware):
     :param default_key: Default scope key if 'key' flag is missing.
     """
 
-    def __init__(self, redis: Redis, default_rate: int = 1, default_key: str = "common"):
+    def __init__(self, redis: Redis, default_rate: int = 1, default_key: str = "common") -> None:
         self._cache = redis
         self._rate = default_rate
         self._rate_key = default_key
@@ -68,8 +72,8 @@ class RateLimitMiddleware(BaseMiddleware):
         rate = int(rate_limit.get("rate", self._rate))
         rate_key = rate_limit.get("key", self._rate_key)
 
-        user_id = event.from_user.id
-        redis_key = f"throttle:{rate_key}:{user_id}"
+        user_tg_id = event.from_user.id
+        redis_key = f"throttle:{rate_key}:{user_tg_id}"
 
         if await self._cache.get(redis_key):
             flood_key = f"flood:{redis_key}"
@@ -78,14 +82,10 @@ class RateLimitMiddleware(BaseMiddleware):
                 await self._cache.expire(flood_key, rate, nx=True)
                 ttl = await self._cache.ttl(redis_key)
                 text = THROTTLING_TEXT.format(ttl=ttl)
-
-                logger.debug(f'Prevent flooding <user_id={user_id} key="{rate_key}" rate={rate}s ttl={ttl}s>')
-
-                if isinstance(event, Message):
-                    return await event.reply(text, disable_notification=True)
-                elif isinstance(event, CallbackQuery):
-                    return await event.answer(text, show_alert=True)
+                logger.debug(f'Prevent flooding <user_id={user_tg_id} key="{rate_key}" rate={rate}s ttl={ttl}s>')
+                return await answer_from_update(event, text, is_reply=True)
+            return 0
 
         await self._cache.set(redis_key, 1, ex=rate, nx=True)
 
-        await handler(event, data)
+        return await handler(event, data)

@@ -1,11 +1,15 @@
 import asyncio
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
-from aiogram import Bot
 from aiogram.client.session.middlewares.base import BaseRequestMiddleware
 from aiogram.exceptions import TelegramRetryAfter
-from aiogram.methods import Response, TelegramMethod
-from aiogram.methods.base import TelegramType
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from aiogram import Bot
+    from aiogram.methods import Response, TelegramMethod
+    from aiogram.methods.base import TelegramType
 
 
 class RetryRequestMiddleware(BaseRequestMiddleware):

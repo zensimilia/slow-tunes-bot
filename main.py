@@ -4,7 +4,7 @@ from core.bootstrap import setup_bot, setup_dispatcher
 from core.logger import setup_logging
 
 
-async def main():
+async def main() -> int:
     """Here we go again"""
 
     setup_logging()
@@ -15,8 +15,11 @@ async def main():
 
     try:
         await dispatcher.start_polling(bot, allowed_updates=allowed_updates)
+    except Exception:  # noqa: BLE001
+        return 1
     finally:
         await bot.session.close()  # just in case
+    return 0
 
 
 if __name__ == "__main__":

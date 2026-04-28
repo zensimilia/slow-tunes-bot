@@ -17,8 +17,11 @@ dependencies = [
 dev = ["ruff>=0.15.10"]
 
 [tool.ruff]
+exclude = ["venv", ".venv", "env", ".env"]
 format.preview = true
 line-length = 120
+lint.select = ["ALL"]
+lint.ignore = ["D", "ANN401", "SLF001", "INP001"]
 
 [[tool.uv.index]]
 name = "china"

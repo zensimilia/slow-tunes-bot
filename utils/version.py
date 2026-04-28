@@ -1,5 +1,6 @@
 import tomllib
 from functools import cache
+from pathlib import Path
 
 from loguru import logger
 
@@ -14,7 +15,7 @@ def get_app_version() -> str:
 
     toml_path = config.BASE_DIR / "pyproject.toml"
     try:
-        with open(toml_path, "rb") as file:
+        with Path.open(toml_path, "rb") as file:
             data = tomllib.load(file)
         return data["project"]["version"]
     except (OSError, ValueError, KeyError) as err:
