@@ -8,7 +8,7 @@ from db.base import Database
 from db.match import get_matches_count
 from db.schemas import NewUser
 from db.user import create_user, get_users_count
-from utils.sox import SOX_FMT
+from utils.sox import SUPPORTED_FMT
 from utils.tg import get_user_url
 from utils.version import get_app_version
 
@@ -31,7 +31,7 @@ async def cmd_start(message: types.Message, db: Database) -> None:
 @common_router.message(Command("help"))
 @flags.rate_limit(rate=10, key="help")
 async def cmd_help(message: types.Message) -> None:
-    text = txt.HELP_TEXT.format(fmt=", ".join(SOX_FMT))
+    text = txt.HELP_TEXT.format(fmt=", ".join(SUPPORTED_FMT))
     await message.answer(text, disable_notification=True)
 
 

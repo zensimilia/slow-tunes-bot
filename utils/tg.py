@@ -178,3 +178,23 @@ async def temp_message(
             await msg.delete()
         except TelegramAPIError as err:
             logger.warning(f"Failed to delete temporary message: {err}")
+
+
+def get_audio_file_extension(audio: types.Audio) -> str:
+    """
+    Extracts the audio file extension from file_name or mime_type,
+    defaults to 'mp3' if no data is available.
+
+    Args:
+        audio (str): The Audio object.
+
+    Returns:
+        str: The audio file extension without `dot`.
+    """
+    if audio.file_name:
+        if ext := Path(audio.file_name).suffix.lstrip(".").lower():
+            return ext
+    if audio.mime_type:
+        ext = audio.mime_type.split("/")[-1].replace("mpeg", "mp3").replace("x-", "")
+        return ext
+    return "mp3"

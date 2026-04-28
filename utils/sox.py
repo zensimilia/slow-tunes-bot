@@ -1,7 +1,7 @@
 import asyncio
 import io
 
-SOX_FMT = ["aif", "aifc", "aiff", "aiffc", "flac", "mp2", "mp3", "ogg", "opus", "vorbis"]
+SUPPORTED_FMT = ["aif", "aifc", "aiff", "aiffc", "flac", "mp2", "mp3", "ogg", "opus", "vorbis"]
 OUTPUT_MP3_QUALITY = "-0.9"
 
 
