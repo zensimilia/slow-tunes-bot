@@ -37,8 +37,6 @@ async def proceed_audio(input_buffer: io.BytesIO, fmt: str = "mp3") -> bytes:
 
     input_buffer.seek(0)
     sox_output, sox_err = await sox_process.communicate(input_buffer.read())
-    input_buffer.close()
-    del input_buffer
 
     if sox_err:
         raise SoxException(f"Sox error: {sox_err.decode()}")
