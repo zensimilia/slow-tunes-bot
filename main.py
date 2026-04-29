@@ -1,11 +1,12 @@
 import asyncio
+import sys
 
 from core.bootstrap import setup_bot, setup_dispatcher
-from core.logger import setup_logging
+from core.logger import logger, setup_logging
 
 
-async def main() -> int:
-    """Here we go again"""
+async def main() -> None:
+    """Here we go again (c)."""
 
     setup_logging()
 
@@ -15,11 +16,13 @@ async def main() -> int:
 
     try:
         await dispatcher.start_polling(bot, allowed_updates=allowed_updates)
-    except Exception:  # noqa: BLE001
-        return 1
+    except KeyboardInterrupt:
+        sys.exit(0)
+    except Exception as err:  # noqa: BLE001
+        logger.critical(err)
+        sys.exit(1)
     finally:
         await bot.session.close()  # just in case
-    return 0
 
 
 if __name__ == "__main__":
