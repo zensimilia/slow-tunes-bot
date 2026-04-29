@@ -52,7 +52,7 @@ class MatchStore:
             return MatchRead.model_validate(match)
         raise DoesNotExistError
 
-    async def get_list(self, limit: int = 10, offset: int = 0, *, sort_by_desc: bool = False) -> list[MatchRead]:
+    async def get_list(self, *, limit: int = 10, offset: int = 0, sort_by_desc: bool = False) -> list[MatchRead]:
         direction = desc if sort_by_desc else asc
         query = select(self.model).order_by(direction(self.model.pk)).limit(limit).offset(offset)
         matches = list(await self.session.scalars(query))

@@ -2,7 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any, TypeVar
 
-from sqlalchemy import Engine, event
+from sqlalchemy import event
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -24,23 +24,27 @@ T = TypeVar("T")
 
 
 class Database:
-    def __init__(self, url: str) -> None:
+    def __init__(self, url: str, **kwargs: Any) -> None:
         self._url = url
         self.engine = create_async_engine(url=self._url)
 
-        # SQLite PRAGMA fix
-        @event.listens_for(Engine, "connect")
-        def _set_sqlite_pragma(dbapi_connection: Connection, _connection_record: Any) -> None:
-            cursor = dbapi_connection.cursor()
-            cursor.execute("PRAGMA foreign_keys=ON")
-            cursor.close()
-            logger.info("PRAGMA foreign_keys=ON")
+        session_opts: dict[str, Any] = {"expire_on_commit": False}
+        session_opts.update(**kwargs)
 
         self._session_factory = async_sessionmaker(
             self.engine,
             class_=AsyncSession,
-            expire_on_commit=False,
+            **session_opts,
         )
+
+        # SQLite PRAGMA fix
+        @event.listens_for(self.engine.sync_engine, "connect")
+        def set_sqlite_pragma(connection: Connection, _record: Any) -> None:
+            sql = "PRAGMA foreign_keys=ON"
+            cursor = connection.cursor()
+            cursor.execute(sql)
+            cursor.close()
+            logger.info(sql)
 
     @asynccontextmanager
     async def get_session(self) -> AsyncGenerator[AsyncSession, Any]:
