@@ -6,8 +6,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from core import messages as txt
 from core.config import config
-from db.exceptions import AlreadyExistsError
-from schemas.user import UserNew
+from models.user import UserNew
 from utils.sox import SUPPORTED_FMT
 from utils.tg import get_user_url
 from utils.version import get_app_version
@@ -25,13 +24,10 @@ async def cmd_start(message: types.Message, user_store: UserStore) -> None:
     if not message.from_user:
         return
 
-    new_user = UserNew(tg_id=message.from_user.id, username=message.from_user.username or "Private Person")
-    try:
-        user = await user_store.create(new_user)
-        await user_store.session.commit()
-        username = user.username
-    except AlreadyExistsError:
-        username = new_user.username
+    user_new = UserNew(tg_id=message.from_user.id, username=message.from_user.username)
+    user = await user_store.create(user_new)
+    await user_store.session.commit()
+    username = user.username
 
     text = txt.START_TEXT.format(username=username)
     await message.answer(text, disable_notification=True)

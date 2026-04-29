@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from contextlib import AbstractAsyncContextManager
 
     from aiogram.types import TelegramObject
-    from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlmodel.ext.asyncio.session import AsyncSession
 
 from storage.match import MatchStore
 from storage.user import UserStore

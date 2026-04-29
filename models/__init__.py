@@ -1,5 +1,5 @@
-from .like import LikeModel
-from .match import MatchModel
-from .user import UserModel
+from .like import Like
+from .match import Match
+from .user import User
 
-__all__ = ["LikeModel", "MatchModel", "UserModel"]
+__all__ = ["Like", "Match", "User"]

@@ -1,21 +1,24 @@
-# ruff: noqa: UP037
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlmodel import Field, Relationship, SQLModel
 
 from .base import BaseModel
 
 if TYPE_CHECKING:
-    from .match import MatchModel
-    from .user import UserModel
+    from .match import Match
+    from .user import User
 
 
-class LikeModel(BaseModel):
-    __tablename__ = "likes"
+class Like(BaseModel, table=True):
+    __tablename__: str = "likes"
 
-    user_pk: Mapped[int] = mapped_column(ForeignKey("users.pk", ondelete="CASCADE"))
-    match_pk: Mapped[int] = mapped_column(ForeignKey("matches.pk", ondelete="CASCADE"))
+    user_pk: int = Field(foreign_key="users.pk", ondelete="CASCADE")
+    match_pk: int = Field(foreign_key="matches.pk", ondelete="CASCADE")
 
-    user: Mapped["UserModel"] = relationship(back_populates="likes")
-    match: Mapped["MatchModel"] = relationship(back_populates="likes")
+    user: User = Relationship(back_populates="likes")
+    match: Match = Relationship(back_populates="likes")
+
+
+class LikeNew(SQLModel):
+    user_pk: int
+    match_pk: int

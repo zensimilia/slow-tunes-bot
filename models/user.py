@@ -1,21 +1,28 @@
-# ruff: noqa: UP037
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlmodel import Field, Relationship, SQLModel
 
 from .base import BaseModel
 
 if TYPE_CHECKING:
-    from .like import LikeModel
-    from .match import MatchModel
+    from .like import Like
+    from .match import Match
 
 
-class UserModel(BaseModel):
-    __tablename__ = "users"
+class User(BaseModel, table=True):
+    __tablename__: str = "users"
 
-    tg_id: Mapped[int] = mapped_column(BigInteger, nullable=False, unique=True)
-    username: Mapped[str] = mapped_column(String, nullable=True)
+    tg_id: int = Field(unique=True, index=True, nullable=False)
+    username: str = Field(nullable=True)
 
-    matches: Mapped[list["MatchModel"]] = relationship(back_populates="user", cascade="all, delete-orphan")
-    likes: Mapped[list["LikeModel"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    matches: list[Match] = Relationship(back_populates="user")
+    likes: list[Like] = Relationship(back_populates="user", cascade_delete=True)
+
+
+class UserNew(SQLModel):
+    tg_id: int
+    username: str | None = None
+
+
+class UserUpdate(SQLModel):
+    username: str

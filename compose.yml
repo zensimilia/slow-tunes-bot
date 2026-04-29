@@ -15,6 +15,8 @@ services:
       - ./.env
     depends_on:
       - redis
+    environment:
+      - TZ=Europe/Moscow
 
   redis:
     container_name: redis
@@ -25,6 +27,8 @@ services:
     command: redis-server --save 300 1 --loglevel warning
     volumes:
       - bot-cache:/data
+    environment:
+      - TZ=Europe/Moscow
 volumes:
   bot-data:
   bot-cache:

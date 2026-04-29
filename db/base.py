@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from sqlalchemy import event
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
-    AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from models.base import BaseModel
 

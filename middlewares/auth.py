@@ -6,14 +6,15 @@ from aiogram.types import CallbackQuery, Message, TelegramObject, Update
 
 from core.exceptions import MissingRequiredError
 from core.messages import PLS_SEND_START_CMD
-from db.exceptions import DoesNotExistError
-from schemas.user import UserRead
+from models.user import User
 from utils.tg import answer_from_update
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
     from redis.asyncio import Redis
+
+    from storage.user import UserStore
 
 
 USER_KEY = "user_cache"
@@ -51,17 +52,16 @@ class UserMiddleware(BaseMiddleware):
 
         if cached_user:
             user_data = json.loads(cached_user)
-            user_obj = UserRead.model_validate(user_data)
+            user_obj = User.model_validate(user_data)
         else:
-            try:
-                user_store = data.get("user_store")
-                if not user_store:
-                    raise MissingRequiredError
-                user_obj = await user_store.get_by(tg_id=user_tg_id)
-            except DoesNotExistError:
+            user_store: UserStore | None = data.get("user_store")
+            if not user_store:
+                raise MissingRequiredError
+            user_obj = await user_store.get_by(tg_id=user_tg_id)
+            if not user_obj:
                 return await answer_from_update(event_obj, PLS_SEND_START_CMD, is_reply=True)
 
-            await self.__redis.set(user_key, user_obj.model_dump_json(), ex=self.__expire)
+        await self.__redis.set(user_key, user_obj.model_dump_json(), ex=self.__expire)
 
         data["user"] = user_obj
         return await handler(event, data)

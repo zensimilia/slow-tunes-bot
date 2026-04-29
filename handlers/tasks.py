@@ -7,7 +7,7 @@ from aiogram.utils.chat_action import ChatActionSender
 from core import messages as txt
 from core.exceptions import DownloadError, FileIsTooBigError, UploadError
 from db.exceptions import DoesNotExistError
-from schemas.match import MatchNew
+from models.match import MatchNew
 from utils import sox, tg
 
 if TYPE_CHECKING:
