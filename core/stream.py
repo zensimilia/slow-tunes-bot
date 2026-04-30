@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Any
 
 from redis.exceptions import ResponseError
 
+from core.exceptions import NoStreamsError
+
 from .logger import logger
 
 if TYPE_CHECKING:
@@ -41,28 +43,41 @@ class TaskStream:
             )
 
     async def __run(self, func: TaskFunc, payload: dict) -> None:
-        if inspect.iscoroutinefunction(func):
-            await func(**payload, bot=self.__bot)
-        else:
-            pfunc = partial(func, **payload, bot=self.__bot)
-            loop = asyncio.get_running_loop()
-            await loop.run_in_executor(None, pfunc)
+        sig = inspect.signature(func)
+        data = {k: v for k, v in payload.items() if k in sig.parameters}
 
-    async def __react(self, events: list[tuple]) -> None:
+        if "bot" in sig.parameters:
+            data["bot"] = self.__bot
+
+        if inspect.iscoroutinefunction(func):
+            await func(**data)
+        else:
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(None, partial(func, **data))
+
+    async def __process_task(self, stream: str, msg_id: str, payload: dict) -> None:
+        try:
+            funcs = self.__streams.get(stream, [])
+            await asyncio.gather(*(self.__run(f, payload) for f in funcs))
+
+            await self.__r.xack(stream, self.__groupname, msg_id)
+            await self.__r.xdel(stream, msg_id)
+        except Exception as err:  # noqa: BLE001
+            logger.error(f"Failed to process task {msg_id} from {stream}: {err}")
+
+    async def __react(self, events: list[tuple] | None) -> None:
+        if not events:
+            return
+
         for stream, message in events:
             for msg_id, payload in message:
-                for func in self.__streams.get(stream, []):
-                    try:
-                        logger.debug(f"Processing task #{msg_id}")
-                        await self.__run(func, payload)
-                        await self.__r.xack(stream, self.__groupname, msg_id)
-                        await self.__r.xdel(stream, msg_id)
-                    except ResponseError as err:
-                        logger.warning(err)
+                logger.debug(f"Processing task #{msg_id} from {stream}")
+                task = asyncio.create_task(self.__process_task(stream, msg_id, payload))
+                task.set_name("task")
 
     async def listen(self, consumer_name: str) -> None:
         if not self.__streams:
-            raise ValueError  # TODO
+            raise NoStreamsError
 
         logger.info(f"Stream listener '{self.__groupname}' started")
 
@@ -72,12 +87,12 @@ class TaskStream:
                 events = await self.__r.xreadgroup(
                     groupname=self.__groupname,
                     consumername=consumer_name,
-                    streams=dict.fromkeys(self.__streams, ">"),
-                    count=1,
-                    block=100,
+                    streams=dict.fromkeys(self.__streams, "0"),
+                    count=10,
+                    block=1000,
                 )
                 await self.__react(events)
-            except Exception as err:
+            except Exception as err:  # noqa: BLE001
                 logger.error(err)
                 await asyncio.sleep(3)
 
