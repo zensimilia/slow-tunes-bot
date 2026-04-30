@@ -72,4 +72,3 @@ async def slowing_down_task(message: types.Message, match_store: MatchStore, use
             is_forbidden=False,
         )
         await match_store.create(new_match)
-        await match_store.session.commit()

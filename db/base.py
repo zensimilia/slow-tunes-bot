@@ -1,6 +1,6 @@
 import logging
-from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any, TypeVar
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 from sqlalchemy import event
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -21,6 +21,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
+
+class AsyncDatabaseProtocol(Protocol):
+    def get_session(self) -> AbstractAsyncContextManager[AsyncSession, Any]: ...
+    async def execute(self, func: Callable[..., Awaitable[T]], *args: Any, **kwargs: Any) -> T: ...
 
 
 class Database:

@@ -1,24 +1,21 @@
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any
 
 from aiogram import BaseMiddleware
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
-    from contextlib import AbstractAsyncContextManager
 
     from aiogram.types import TelegramObject
-    from sqlmodel.ext.asyncio.session import AsyncSession
 
+    from db.base import AsyncDatabaseProtocol
+
+from db.storage import DbStorage
 from storage.match import MatchStore
 from storage.user import UserStore
 
 
-class AsyncDatabase(Protocol):
-    def get_session(self) -> AbstractAsyncContextManager[AsyncSession, Any]: ...
-
-
 class DbSessionMiddleware(BaseMiddleware):
-    def __init__(self, db: AsyncDatabase) -> None:
+    def __init__(self, db: AsyncDatabaseProtocol) -> None:
         self.__db = db
 
     async def __call__(
@@ -27,8 +24,8 @@ class DbSessionMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: dict[str, Any],
     ) -> Any:
-        async with self.__db.get_session() as session:
-            data["user_store"] = UserStore(session)
-            data["match_store"] = MatchStore(session)
+        storage = DbStorage(self.__db)
+        data["user_store"] = UserStore(storage)
+        data["match_store"] = MatchStore(storage)
 
-            return await handler(event, data)
+        return await handler(event, data)

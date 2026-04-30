@@ -26,10 +26,8 @@ async def cmd_start(message: types.Message, user_store: UserStore) -> None:
 
     user_new = UserNew(tg_id=message.from_user.id, username=message.from_user.username)
     user = await user_store.create(user_new)
-    await user_store.session.commit()
-    username = user.username
 
-    text = txt.START_TEXT.format(username=username)
+    text = txt.START_TEXT.format(username=user.username)
     await message.answer(text, disable_notification=True)
 
 
