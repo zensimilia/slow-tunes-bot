@@ -19,6 +19,7 @@ from routes.common import common_router
 
 from .config import config
 from .queue import TaskQueue
+from .stream import TaskStream
 
 DB_URL = f"sqlite+aiosqlite:///{config.DB_FILE.as_posix()}"
 
@@ -38,13 +39,19 @@ async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -
     await bot.set_my_commands(commands)
 
 
-async def on_startup(bot: Bot, queue: TaskQueue) -> None:
+async def on_startup(bot: Bot, queue: TaskQueue, dispatcher: Dispatcher) -> None:
     await db.create_tables()  # create tables if not exist
     queue_task = asyncio.create_task(queue.start())  # start task queue worker
     queue_task.set_name("queue")  # RUF006
 
     await bot.delete_webhook(drop_pending_updates=True)  # drop pending updates workaround
     await set_bot_commands(bot)  # register bot commands
+
+    stream = TaskStream(redis=redis, bot=bot)
+    stream_task = asyncio.create_task(stream.listen("main"))
+    stream_task.set_name("stream")  # RUF006
+
+    dispatcher["stream"] = stream
 
     if not config.DEBUG:
         await bot.send_message(config.BOT_ADMIN_ID, "🟢 I'M ONLINE!")
