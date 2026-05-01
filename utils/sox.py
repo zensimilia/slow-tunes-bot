@@ -1,11 +1,11 @@
 import asyncio
-from typing import TYPE_CHECKING
+import shlex
+from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
     import io
 
 SUPPORTED_FMT = ["aif", "aifc", "aiff", "aiffc", "flac", "mp2", "mp3", "ogg", "opus", "vorbis"]
-OUTPUT_MP3_QUALITY = "-0.9"
 
 
 class SoxError(Exception):
@@ -15,36 +15,110 @@ class SoxError(Exception):
         super().__init__(f"Sox error: {msg}")
 
 
-def get_sox_cli_args(in_fmt: str = "mp3") -> list[str]:
-    io = ["-t", in_fmt, "-", "-t", "mp3", "-C", OUTPUT_MP3_QUALITY, "-"]  # Output to MP3 directly in sox
-    bass = ["bass", "+3"]  # Gain bass in dB
-    pad = ["pad", "0", "2"]  # Add silence at the end of the track
-    highpass = ["highpass", "50"]  # High-pass filter
-    gain = ["gain", "-1"]  # Reduce the overall gain to prevent clipping
-    speed = ["speed", str(33 / 45)]  # Adjust the speed of the audio
-    norm = ["norm", "-1"]  # Normalize the audio
-
-    # Reverberence, HF damping, Room scale, Stereo depth, Pre delay, Wet gain
-    reverb = ["reverb", "70", "30", "100", "50"]
-
-    return ["-V1", *io, *speed, *gain, *highpass, *reverb, *bass, *pad, *norm]
+def is_supported_format(fmt: str) -> bool:
+    return fmt in (SUPPORTED_FMT)
 
 
-async def proceed_audio(input_buffer: io.BytesIO, fmt: str = "mp3") -> bytes:
-    """This function slow down audio file and convert it to MP3 using sox."""
+async def proceed_audio(input_buffer: io.BytesIO, sox_command: list[str]) -> bytes:
+    """
+    This Python async function processes audio data using SoX command and returns the output.
 
-    sox_process = await asyncio.create_subprocess_exec(
-        "sox",
-        *get_sox_cli_args(fmt),
+    :param input_buffer: `input_buffer` is a BytesIO object that contains audio data
+    :type input_buffer: io.BytesIO
+    :param sox_command: A list of strings representing the SoX command and its arguments that will be executed
+    :type sox_command: list[str]
+    :return: the output of processing the input audio data as bytes.
+    """
+
+    subprocess = await asyncio.create_subprocess_exec(
+        *sox_command,
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
 
     input_buffer.seek(0)
-    sox_output, sox_err = await sox_process.communicate(input_buffer.read())
+    result, error = await subprocess.communicate(input_buffer.read())
 
-    if sox_err:
-        raise SoxError(sox_err.decode())
+    if error:
+        raise SoxError(error.decode())
 
-    return sox_output
+    return result
+
+
+class SoxCommandBuilder:
+    def __init__(self, *, input_format: str, output_quality: str) -> None:
+        self.args = ["sox", "-V1"]
+        self.effects = []
+        self.io = ["-t", input_format, "-", "-t", "mp3", "-C", output_quality, "-"]
+
+    def __str__(self) -> str:
+        return self.build_string()
+
+    def speed(self, ratio: float) -> Self:
+        self.effects.extend(["speed", str(ratio)])
+        return self
+
+    def reverb(  # noqa: PLR0913
+        self,
+        *,
+        reverberance: int = 50,  # %
+        hf_damping: int = 50,  # %
+        scale: int = 100,  # %
+        stereo_depth: int = 100,  # %
+        pre_delay: int = 0,  # ms
+        wet_gain: int = 0,  # db
+        wet_only: bool = False,
+    ) -> Self:
+        self.effects.extend([
+            "reverb",
+            *(["-w"] if wet_only else []),
+            self._percent(reverberance),
+            self._percent(hf_damping),
+            self._percent(scale),
+            self._percent(stereo_depth),
+            str(pre_delay),
+            self._db(wet_gain),
+        ])
+        return self
+
+    def bass(self, gain: int) -> Self:
+        self.effects.extend(["bass", self._db(gain)])
+        return self
+
+    def filters(self, *, lowpass_freq: int | None = None, highpass_freq: int | None = None) -> Self:
+        if lowpass_freq is not None:
+            self.effects.extend(["lowpass", self._freq(lowpass_freq)])
+        if highpass_freq is not None:
+            self.effects.extend(["highpass", self._freq(highpass_freq)])
+        return self
+
+    def gain(self, db: int) -> Self:
+        self.effects.extend(["gain", self._db(db)])
+        return self
+
+    def normalize(self, db: int = -1) -> Self:
+        self.effects.extend(["norm", self._db(db)])
+        return self
+
+    def padding(self, start: int, end: int) -> Self:
+        self.effects.extend(["pad", str(start), str(end)])
+        return self
+
+    def build_list(self) -> list[str]:
+        return [*self.args, *self.io, *self.effects]
+
+    def build_string(self) -> str:
+        return shlex.join(self.build_list())
+
+    @classmethod
+    def _db(cls, value: int) -> str:
+        return f"{value:+}"
+
+    @classmethod
+    def _percent(cls, value: int) -> str:
+        return str(max(0, min(value, 100)))
+
+    @classmethod
+    def _freq(cls, value: int) -> str:
+        return str(max(0, value))

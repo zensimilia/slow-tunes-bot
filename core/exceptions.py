@@ -1,6 +1,9 @@
 class FileIsTooBigError(Exception): ...
 
 
+class UnsupportedFormatError(Exception): ...
+
+
 class DownloadError(Exception): ...
 
 
