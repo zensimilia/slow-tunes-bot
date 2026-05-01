@@ -5,7 +5,7 @@ from aiogram.exceptions import TelegramAPIError
 from aiogram.utils.chat_action import ChatActionSender
 
 from core import messages as txt
-from core.exceptions import DownloadError, UnsupportedFormatError, UploadError
+from core.exceptions import DownloadError, UploadError
 from models.match import MatchNew
 from utils import sox, tg
 
