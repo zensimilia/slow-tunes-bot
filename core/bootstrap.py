@@ -13,20 +13,19 @@ from middlewares.auth import UserMiddleware
 from middlewares.db import DbSessionMiddleware
 from middlewares.retry import RetryRequestMiddleware
 from middlewares.throttling import RateLimitMiddleware
-from routes.admin import admin_router
-from routes.audio import audio_router
-from routes.common import common_router
+from routes import admin_router, audio_router, common_router
 
 from .config import config
 from .queue import TaskQueue
 from .stream import TaskStream
 
 DB_URL = f"sqlite+aiosqlite:///{config.DB_FILE.as_posix()}"
+STREAM_CONSUMER_NAME = "main"
 
 db = Database(DB_URL)
 redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=0, decode_responses=True)
 redis_storage = RedisStorage(redis)
-queue = TaskQueue(maxsize=config.QUEUE_MAXSIZE)
+tasks_set = set()
 
 
 async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -> None:
@@ -39,19 +38,25 @@ async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -
     await bot.set_my_commands(commands)
 
 
-async def on_startup(bot: Bot, queue: TaskQueue, dispatcher: Dispatcher) -> None:
-    await db.create_tables()  # create tables if not exist
-    queue_task = asyncio.create_task(queue.start())  # start task queue worker
-    queue_task.set_name("queue")  # RUF006
-
+async def on_startup(bot: Bot, dispatcher: Dispatcher) -> None:
     await bot.delete_webhook(drop_pending_updates=True)  # drop pending updates workaround
     await set_bot_commands(bot)  # register bot commands
 
-    stream = TaskStream(redis=redis, bot=bot)
-    stream_task = asyncio.create_task(stream.listen("main"))
-    stream_task.set_name("stream")  # RUF006
+    await db.create_tables()  # create tables if not exist
+    dispatcher["db"] = db  # inject database
 
-    dispatcher["stream"] = stream
+    queue = TaskQueue(maxsize=config.QUEUE_MAXSIZE)
+    queue_task = asyncio.create_task(queue.start())  # start task queue worker
+    tasks_set.add(queue_task)
+    dispatcher["queue"] = queue  # inject task queue
+
+    stream = TaskStream(redis=redis, bot=bot)
+    stream_task = asyncio.create_task(stream.listen(STREAM_CONSUMER_NAME))  # listen streams
+    tasks_set.add(stream_task)
+    dispatcher["stream"] = stream  # inject streams
+
+    setup_routes(dispatcher)
+    setup_middlewares(dispatcher)
 
     if not config.DEBUG:
         await bot.send_message(config.BOT_ADMIN_ID, "🟢 I'M ONLINE!")
@@ -62,27 +67,30 @@ async def on_shutdown(bot: Bot, dispatcher: Dispatcher) -> None:
     await db.close_all()  # close all db sessions
     await set_bot_commands(bot, [])  # clear bot commands
 
+    dispatcher["queue"].stop()
+    await dispatcher["stream"].stop()
+
     if not config.DEBUG:
         await bot.send_message(config.BOT_ADMIN_ID, "🔴 I'M OFFLINE!")
+
+
+def setup_routes(dispatcher: Dispatcher) -> None:
+    dispatcher.include_router(admin_router)
+    dispatcher.include_router(audio_router)
+    dispatcher.include_router(common_router)
+
+
+def setup_middlewares(dispatcher: Dispatcher) -> None:
+    dispatcher.message.middleware(RateLimitMiddleware(redis))
+    dispatcher.callback_query.middleware(RateLimitMiddleware(redis))
+    dispatcher.update.outer_middleware(DbSessionMiddleware(db))
+    dispatcher.update.outer_middleware(UserMiddleware(redis))
 
 
 def setup_dispatcher() -> Dispatcher:
     dispatcher = Dispatcher(storage=redis_storage)
     dispatcher.startup.register(on_startup)
     dispatcher.shutdown.register(on_shutdown)
-
-    dispatcher["db"] = db  # inject database
-    dispatcher["queue"] = queue  # inject task queue
-
-    dispatcher.include_router(admin_router)
-    dispatcher.include_router(audio_router)
-    dispatcher.include_router(common_router)
-
-    dispatcher.message.middleware(RateLimitMiddleware(redis))
-    dispatcher.callback_query.middleware(RateLimitMiddleware(redis))
-    dispatcher.update.outer_middleware(DbSessionMiddleware(db))
-    dispatcher.update.outer_middleware(UserMiddleware(redis))
-
     return dispatcher
 
 
