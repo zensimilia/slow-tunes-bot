@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING, Any
 
 from redis.exceptions import ResponseError
 
-from core.exceptions import NoStreamsError
-
 from .logger import logger
 
 if TYPE_CHECKING:
@@ -26,6 +24,7 @@ class TaskStream:
         self.__bot = bot
         self.__groupname = groupname
         self.__streams = {}
+        self.__streams_ready = asyncio.Event()
         self.__running = False
         self.__tasks = set()
 
@@ -33,6 +32,7 @@ class TaskStream:
         with contextlib.suppress(ResponseError):
             await self.__r.xgroup_create(name, self.__groupname, id=streamid, mkstream=True)
         self.__streams.setdefault(name, []).append(func)
+        self.__streams_ready.set()
 
     async def publish(self, name: str, payload: dict, *, maxlen: int = 1000) -> None:
         with contextlib.suppress(ResponseError):
@@ -85,7 +85,8 @@ class TaskStream:
 
     async def listen(self, consumer_name: str) -> None:
         if not self.__streams:
-            raise NoStreamsError
+            logger.warning("No streams to listen. Call subscribe() first")
+            await self.__streams_ready.wait()
 
         logger.info(f"Stream listener '{self.__groupname}' started")
 
