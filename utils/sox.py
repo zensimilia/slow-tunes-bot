@@ -48,7 +48,7 @@ async def proceed_audio(input_buffer: io.BytesIO, sox_command: list[str]) -> byt
 
 class SoxCommandBuilder:
     def __init__(self, *, input_format: str, output_quality: str) -> None:
-        self.args = ["sox", "-V1"]
+        self.args = ["sox", "-V1", "-q"]
         self.effects = []
         self.io = ["-t", input_format, "-", "-t", "mp3", "-C", output_quality, "-"]
 

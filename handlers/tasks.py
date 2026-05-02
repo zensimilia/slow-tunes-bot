@@ -12,7 +12,7 @@ from utils import sox, tg
 if TYPE_CHECKING:
     from storage.match import MatchStore
 
-OUTPUT_MP3_QUALITY = "-0.9"  # VBR
+OUTPUT_MP3_QUALITY = "-0"  # best VBR
 
 
 async def slowing_down_task(message: types.Message, match_store: MatchStore, user_pk: int, fmt: str) -> None:
