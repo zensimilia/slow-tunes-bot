@@ -67,7 +67,7 @@ class SoxCommandBuilder:
         scale: int = 100,  # %
         stereo_depth: int = 100,  # %
         pre_delay: int = 0,  # ms
-        wet_gain: int = 0,  # db
+        wet_gain: float = 0,  # db
         wet_only: bool = False,
     ) -> Self:
         self.effects.extend([
@@ -82,8 +82,8 @@ class SoxCommandBuilder:
         ])
         return self
 
-    def bass(self, gain: int) -> Self:
-        self.effects.extend(["bass", self._db(gain)])
+    def bass(self, gain_db: float) -> Self:
+        self.effects.extend(["bass", self._db(gain_db)])
         return self
 
     def filters(self, *, lowpass_freq: int | None = None, highpass_freq: int | None = None) -> Self:
@@ -93,11 +93,11 @@ class SoxCommandBuilder:
             self.effects.extend(["highpass", self._freq(highpass_freq)])
         return self
 
-    def gain(self, db: int) -> Self:
+    def gain(self, db: float) -> Self:
         self.effects.extend(["gain", self._db(db)])
         return self
 
-    def normalize(self, db: int = -1) -> Self:
+    def normalize(self, db: float = -1) -> Self:
         self.effects.extend(["norm", self._db(db)])
         return self
 
@@ -112,7 +112,7 @@ class SoxCommandBuilder:
         return shlex.join(self.build_list())
 
     @classmethod
-    def _db(cls, value: int) -> str:
+    def _db(cls, value: float) -> str:
         return f"{value:+}"
 
     @classmethod
