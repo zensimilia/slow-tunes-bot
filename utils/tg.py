@@ -226,3 +226,9 @@ async def answer_from_update(obj: types.TelegramObject, text: str, *, is_reply: 
         await obj.answer(text, reply_to_message_id=obj.message_id if is_reply else None)
     elif isinstance(obj, types.CallbackQuery):
         await obj.answer(text, show_alert=True)
+
+
+def get_file_download_url(file: types.File) -> str:
+    if not file.bot or not file.file_path:
+        raise ValueError
+    return f"https://api.telegram.org/file/bot{file.bot.token}/{file.file_path}"
