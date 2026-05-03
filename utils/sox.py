@@ -20,9 +20,9 @@ def is_supported_format(fmt: str) -> bool:
     Checks if a given format is supported by SOX.
 
     Args:
-      fmt (str): a string representing a format that you want to check.
+      fmt: a string representing a format that you want to check.
     Returns:
-      bool: A boolean value indicating whether the input format `fmt` is supported.
+      A boolean value indicating whether the input format `fmt` is supported.
     """
     return fmt in (SUPPORTED_FMT)
 
@@ -32,10 +32,10 @@ async def proceed_audio(input_buffer: io.BytesIO, sox_command: list[str]) -> byt
     Process audio data using the specified SoX command and returns the result.
 
     Args:
-      input_buffer (io.BytesIO): An object that contains audio data in bytes format.
-      sox_command (list[str]): A list of strings representing the SoX command and its arguments.
+      input_buffer: An object that contains audio data in bytes format.
+      sox_command: A list of strings representing the SoX command and its arguments.
     Returns:
-      bytes: An audio data as bytes.
+      An audio data as bytes.
     """
 
     subprocess = await asyncio.create_subprocess_exec(
@@ -63,9 +63,9 @@ class SoxCommandBuilder:
     string serialization.
 
     Attributes:
-        args (list[str]): Base SoX flags (verbosity, quiet mode).
-        effects (list[str]): Accumulated list of audio effects and their parameters.
-        io (list[str]): Input/output specifications including formats and piping.
+        args: Base SoX flags (verbosity, quiet mode).
+        effects: Accumulated list of audio effects and their parameters.
+        io: Input/output specifications including formats and piping.
     """
 
     def __init__(self, *, input_format: str, output_quality: str) -> None:
@@ -73,8 +73,8 @@ class SoxCommandBuilder:
         Initialize the builder with stream formats.
 
         Args:
-            input_format (str): Format of the input stream (e.g., 'wav', 'flac', 'mp3').
-            output_quality (str): Compression factor for MP3 output (SoX -C flag).
+            input_format: Format of the input stream (e.g., 'wav', 'flac', 'mp3').
+            output_quality: Compression factor for MP3 output (SoX -C flag).
         """
         self.args = ["sox", "-V1", "-q"]
         self.effects = []
@@ -89,9 +89,9 @@ class SoxCommandBuilder:
         Adjust the playback speed (affects both pitch and tempo).
 
         Args:
-            ratio (float): Speed multiplier (e.g., 2.0 to double speed, 0.5 to halve it).
+            ratio: Speed multiplier (e.g., 2.0 to double speed, 0.5 to halve it).
         Returns:
-            self: SoxCommandBuilder instance.
+            Self instance.
         """
         self.effects.extend(["speed", str(ratio)])
         return self
@@ -111,22 +111,22 @@ class SoxCommandBuilder:
         Add a reverberation effect.
 
         Args:
-            reverberance (int, optional): Percentage of "wet" essence [0-100].
+            reverberance (optional): Percentage of "wet" essence [0-100].
                 Defaults to 50.
-            hf_damping (int, optional): High-frequency damping percentage [0-100].
+            hf_damping (optional): High-frequency damping percentage [0-100].
                 Defaults to 50.
-            scale (int, optional): Room size percentage [0-100].
+            scale (optional): Room size percentage [0-100].
                 Defaults to 100.
-            stereo_depth(int, optional): Stereo width percentage [0-100].
+            stereo_depth(optional): Stereo width percentage [0-100].
                 Defaults to 100.
-            pre_delay (int, optional): Delay before the reverb starts in milliseconds.
+            pre_delay (optional): Delay before the reverb starts in milliseconds.
                 Defaults to 0.
-            wet_gain (float, optional): Volume adjustment for the processed signal in dB.
+            wet_gain (optional): Volume adjustment for the processed signal in dB.
                 Defaults to 0.
-            wet_only (bool, optional): If True, output only the reverb artifacts without the dry signal.
+            wet_only (optional): If True, output only the reverb artifacts without the dry signal.
                 Defaults to False.
         Returns:
-            self: SoxCommandBuilder instance.
+            Self instance.
         """
         self.effects.extend([
             "reverb",
@@ -145,9 +145,9 @@ class SoxCommandBuilder:
         Boost or cut the bass frequencies using a shelving filter.
 
         Args:
-            gain_db (float): Gain in decibels.
+            gain_db: Gain in decibels.
         Returns:
-            self: SoxCommandBuilder instance.
+            Self instance.
         """
         self.effects.extend(["bass", self._db(gain_db)])
         return self
@@ -157,10 +157,10 @@ class SoxCommandBuilder:
         Apply frequency-based filters.
 
         Args:
-            lowpass_freq (int, optional): Cutoff frequency for the low-pass filter (Hz).
-            highpass_freq (int, optional): Cutoff frequency for the high-pass filter (Hz).
+            lowpass_freq (optional): Cutoff frequency for the low-pass filter (Hz).
+            highpass_freq (optional): Cutoff frequency for the high-pass filter (Hz).
         Returns:
-            self: SoxCommandBuilder instance.
+            Self instance.
         """
         if lowpass_freq is not None:
             self.effects.extend(["lowpass", self._freq(lowpass_freq)])
@@ -173,9 +173,9 @@ class SoxCommandBuilder:
         Adjust the overall volume of the signal.
 
         Args:
-            db (float): Gain adjustment in decibels.
+            db: Gain adjustment in decibels.
         Returns:
-            self: SoxCommandBuilder instance.
+            Self instance.
         """
         self.effects.extend(["gain", self._db(db)])
         return self
@@ -185,10 +185,10 @@ class SoxCommandBuilder:
         Normalize the audio to a specific peak level.
 
         Args:
-            db (float): Target peak level in decibels.
+            db (optional): Target peak level in decibels.
                 Defaults to -1.
         Returns:
-            self: SoxCommandBuilder instance.
+            Self instance.
         """
         self.effects.extend(["norm", self._db(db)])
         return self
@@ -198,10 +198,10 @@ class SoxCommandBuilder:
         Add silence to the beginning and/or end of the audio.
 
         Args:
-            start (int): Duration of silence at the start (seconds).
-            end (int): Duration of silence at the end (seconds).
+            start: Duration of silence at the start (seconds).
+            end: Duration of silence at the end (seconds).
         Returns:
-            self: SoxCommandBuilder instance.
+            Self instance.
         """
         self.effects.extend(["pad", str(start), str(end)])
         return self
@@ -211,7 +211,7 @@ class SoxCommandBuilder:
         Compile all components into a flat list of arguments for subprocess.
 
         Returns:
-            list[str]: List of arguments.
+            List of arguments.
         """
         return [*self.args, *self.io, *self.effects]
 
@@ -220,7 +220,7 @@ class SoxCommandBuilder:
         Compile the command into a shell-ready string with proper escaping.
 
         Returns:
-            str: Shell-ready string with arguments for subprocess.
+            Shell-ready string with arguments for subprocess.
         """
         return shlex.join(self.build_list())
 

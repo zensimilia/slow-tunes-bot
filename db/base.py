@@ -29,7 +29,28 @@ class AsyncDatabaseProtocol(Protocol):
 
 
 class Database:
+    """
+    Async database manager for SQLAlchemy with session lifecycle control.
+
+    This class provides an interface for managing database connections,
+    executing functions within session contexts, and handling SQLite-specific
+    configurations like foreign key constraints.
+
+    Attributes:
+        engine (AsyncEngine): SQLAlchemy async engine instance.
+    """
+
     def __init__(self, url: str, **kwargs: Any) -> None:
+        """
+        Initialize the database manager and setup the session factory.
+
+        Args:
+            url: Database connection URL (e.g., 'sqlite+aiosqlite:///db.sqlite3').
+            **kwargs: Additional arguments passed to `async_sessionmaker`.
+
+        Notes:
+            `expire_on_commit` is set to False by default.
+        """
         self._url = url
         self.engine = create_async_engine(url=self._url)
 
@@ -53,6 +74,16 @@ class Database:
 
     @asynccontextmanager
     async def get_session(self) -> AsyncGenerator[AsyncSession, Any]:
+        """
+        Provide an async context manager for database sessions.
+
+        Yields:
+            An active `AsyncSession` instance.
+
+        Raises:
+            DataError: If an integrity constraint is violated.
+            OperationalError: For general SQLAlchemy-related errors.
+        """
         async with self._session_factory() as session:
             try:
                 yield session
@@ -66,14 +97,41 @@ class Database:
                 raise OperationalError(err._message) from err
 
     async def execute(self, func: Callable[..., Awaitable[T]], *args: Any, **kwargs: Any) -> T:
+        """
+        Execute a function within a managed session context.
+
+        The provided function must accept a `session` as its first argument.
+
+        Args:
+            func: An awaitable function to execute.
+            *args: Positional arguments for the function.
+            **kwargs: Keyword arguments for the function.
+
+        Returns:
+            The result of the executed function.
+
+        Examples:
+            ```python
+            async def get_user(session, user_id):
+                return await session.get(User, user_id)
+
+            user = await db.execute(get_user, user_id=1)
+            ```
+        """
         async with self.get_session() as session:
             return await func(session, *args, **kwargs)
 
     async def close_all(self) -> None:
+        """Dispose of the engine and close all active connections."""
         await self.engine.dispose()
         logger.info("All database connections closed")
 
     async def create_tables(self) -> None:
+        """
+        Initialize database tables based on the BaseModel metadata.
+
+        Creates all tables defined in the metadata of the application's models.
+        """
         async with self.engine.begin() as conn:
             await conn.run_sync(BaseModel.metadata.create_all)
             logger.info("Tables for BaseModel created")

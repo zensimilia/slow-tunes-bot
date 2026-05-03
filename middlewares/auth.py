@@ -22,8 +22,10 @@ USER_KEY_EXPIRE = 24 * 60 * 60  # 24 hours in seconds
 
 
 class UserMiddleware(BaseMiddleware):
-    """Middleware to load user data from the database and cache it in Redis.
-    User object will be available in handlers as `user: GetUser` param."""
+    """
+    Middleware to load user data from the database and cache it in Redis.
+    User object will be available in handlers as `user: GetUser` param.
+    """
 
     def __init__(self, redis: Redis, expire: int = USER_KEY_EXPIRE) -> None:
         self.__redis = redis
@@ -68,4 +70,13 @@ class UserMiddleware(BaseMiddleware):
 
     @classmethod
     def get_user_key(cls, tg_id: int) -> str:
+        """
+        Returns a string by concatenating the constant `USER_KEY` with the provided `tg_id`.
+
+        Args:
+          tg_id: An integer representing the Telegram user ID.
+
+        Returns:
+            A result string.
+        """
         return f"{USER_KEY}:{tg_id}"

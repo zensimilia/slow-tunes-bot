@@ -9,9 +9,7 @@ LOG_LEVEL = "DEBUG" if config.DEBUG else "INFO"
 
 
 class InterceptHandler(logging.Handler):
-    """
-    A logging handler that intercepts standard logging messages and redirects them to loguru.
-    """
+    """A logging handler that intercepts standard logging messages and redirects them to loguru."""
 
     def emit(self, record: logging.LogRecord) -> None:
         try:
@@ -40,9 +38,7 @@ class InterceptHandler(logging.Handler):
 
 
 def setup_logging() -> None:
-    """
-    Sets up logging configuration with a specific format and log level.
-    """
+    """Sets up logging configuration with a specific format and log level."""
 
     logging.basicConfig(
         handlers=[InterceptHandler()],

@@ -19,7 +19,24 @@ DEFAULT_GROUPNAME = "bot"
 
 
 class TaskStream:
+    """
+    Asynchronous task manager based on Redis Streams and Consumer Groups.
+
+    This class provides a reliable way to distribute tasks between multiple workers,
+    supporting both coroutines and synchronous functions with automatic
+    dependency injection (Bot instance).
+    """
+
     def __init__(self, *, redis: Redis, bot: Bot, groupname: str = DEFAULT_GROUPNAME) -> None:
+        """
+        Initialize the task stream manager.
+
+        Args:
+            redis: An instance of `redis.asyncio.Redis`.
+            bot: An instance of `aiogram.Bot` to be injected into task functions.
+            groupname (optional): The name of the Redis consumer group.
+                Defaults to `DEFAULT_GROUPNAME`.
+        """
         self.__r = redis
         self.__bot = bot
         self.__groupname = groupname
@@ -29,12 +46,32 @@ class TaskStream:
         self.__tasks = set()
 
     async def subscribe(self, name: str, func: TaskFunc, *, streamid: str = "$") -> None:
+        """
+        Subscribe a function to a specific stream.
+
+        Creates a consumer group if it doesn't exist and registers the handler.
+
+        Args:
+            name: The name of the stream to subscribe to.
+            func: The handler function (can be sync or async).
+            streamid (optional): The ID to start reading from.
+                Defaults to "$" (new messages).
+        """
         with contextlib.suppress(ResponseError):
             await self.__r.xgroup_create(name, self.__groupname, id=streamid, mkstream=True)
         self.__streams.setdefault(name, []).append(func)
         self.__streams_ready.set()
 
     async def publish(self, name: str, payload: dict, *, maxlen: int = 1000) -> None:
+        """
+        Publish a task payload to a stream.
+
+        Args:
+            name: The name of the target stream.
+            payload: Data dictionary representing the task.
+            maxlen (optional): Maximum length of the stream (approximate).
+                Defaults to 1000.
+        """
         with contextlib.suppress(ResponseError):
             await self.__r.xadd(
                 name=name,
@@ -44,6 +81,14 @@ class TaskStream:
             )
 
     async def __run(self, func: TaskFunc, payload: dict) -> None:
+        """
+        Take a task function and a payload, prepares the data based on the function's signature,
+        and then executes the function either as a coroutine or in an executor.
+
+        Args:
+            func (TaskFunc): A function that will be executed asynchronously.
+            payload: A dictionary containing data that will be passed as arguments to the `func` function.
+        """
         sig = inspect.signature(func)
         has_kwargs = any(p.kind == p.VAR_KEYWORD for p in sig.parameters.values())
 
@@ -59,6 +104,16 @@ class TaskStream:
             await loop.run_in_executor(None, partial(func, **data))
 
     async def __process_task(self, stream: str, msg_id: str, payload: dict) -> None:
+        """
+        Process a task by running multiple functions concurrently, acknowledging and deleting
+        the message from a stream, and logging any errors that occur.
+
+        Args:
+            stream: S string that represents the stream from which a task is being processed.
+            msg_id: A unique identifier for the message being processed in the stream.
+            payload: A dictionary containing data that needs to be processed by the functions
+                associated with the specified stream.
+        """
         try:
             funcs = self.__streams.get(stream, [])
             await asyncio.gather(*(self.__run(f, payload) for f in funcs))
@@ -69,6 +124,13 @@ class TaskStream:
             logger.error(f"Failed to process task {msg_id} from {stream}: {err}")
 
     async def __react(self, events: list[tuple] | None) -> None:
+        """
+        Process a list of events by decoding payloads and creating tasks to process each event asynchronously.
+
+        Args:
+            events (optional): A list of tuples where each tuple contains a stream and a message.
+                Defaults to None.
+        """
         if not events:
             return
 
@@ -84,6 +146,19 @@ class TaskStream:
                 task.add_done_callback(self.__tasks.discard)
 
     async def listen(self, consumer_name: str) -> None:
+        """
+        Start the infinite loop to listen for and process incoming tasks.
+
+        Args:
+            consumer_name: Unique identifier for this consumer instance.
+
+        Examples:
+            ```python
+            stream = TaskStream(redis=redis, bot=bot)
+            await stream.subscribe("orders", process_order)
+            await stream.listen("worker-1")
+            ```
+        """
         if not self.__streams:
             logger.warning("No streams to listen. Call subscribe() first")
             await self.__streams_ready.wait()
@@ -108,6 +183,13 @@ class TaskStream:
         logger.info(f"Stream listener '{self.__groupname}' stopped")
 
     async def stop(self, *, purge: bool = False) -> None:
+        """
+        Gracefully stop the listener and wait for pending tasks.
+
+        Args:
+            purge (optional): If True, destroys consumer groups for all subscribed streams.
+                Defaults to False.
+        """
         self.__running = False
         if self.__tasks:
             await asyncio.wait(self.__tasks, timeout=5)
@@ -115,5 +197,11 @@ class TaskStream:
             [await self.unsubscribe(s) for s in self.__streams]
 
     async def unsubscribe(self, name: str) -> None:
+        """
+        Remove the consumer group from a specific stream.
+
+        Args:
+            name: The name of the stream to unsubscribe from.
+        """
         await self.__r.xgroup_destroy(name, self.__groupname)
         logger.info(f"Unsubscribe '{name}' from '{self.__groupname}'")

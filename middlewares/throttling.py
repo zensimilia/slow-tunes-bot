@@ -21,34 +21,40 @@ class RateLimitMiddleware(BaseMiddleware):
     This middleware restricts the frequency of requests from a single user based on
     specific flags set on handlers. It prevents spam and excessive load on "heavy" tasks.
 
-    Usage:
-        1. Register the middleware in your Dispatcher:
-           > redis = Redis()
-           > dp.message.middleware(RateLimitMiddleware(redis))
-           > dp.callback_query.middleware(RateLimitMiddleware(redis))
+    Args:
+        redis: An instance of `redis.asyncio.Redis` for state storage.
+        default_rate: Default cooldown time in seconds if 'rate' flag is missing.
+            Defaults to 1.
+        default_key: Default scope key if 'key' flag is missing.
+            Defaults to "common".
 
-        2. Apply flags to your handlers:
-           > @router.message(CommandStart())
-           > @flags.rate_limit(rate=5, key="start_command")
-           > async def cmd_start(message: Message): ...
+    Examples:
+        Register the middleware in your Dispatcher:
+        ```python
+        redis = Redis()
+        dp.message.middleware(RateLimitMiddleware(redis))
+        dp.callback_query.middleware(RateLimitMiddleware(redis))
+        ```
 
-           OR
+        Apply flags to your handlers using decorators:
+        ```python
+        @router.message(CommandStart())
+        @flags.rate_limit(rate=5, key="start_command")
+        async def cmd_start(message: Message):
+            ...
+        ```
 
-           > rate_limit = {"rate_limit": {"rate": 3, "key": "start_command"}}
-           > router.message.register(cmd_start, CommandStart(), flags=rate_limit)
+        Or register manually with flags dictionary:
+        ```python
+        rate_limit = {"rate_limit": {"rate": 3, "key": "start_command"}}
+        router.message.register(cmd_start, CommandStart(), flags=rate_limit)
+        ```
 
-    Configuration Flags:
-        - rate (int): The cooldown period in seconds (default: 1).
-        - key (str): A unique identifier for the limit scope (default: "common").
-          Handlers sharing the same key will share the same rate limit.
-
-    Logic:
-        - If a user sends a request within the cooldown period, the request is ignored.
-        - On the first attempt to exceed the limit, the user receives a notification.
-
-    :param redis: An instance of `redis.asyncio.Redis` for state storage.
-    :param default_rate: Default cooldown time if 'rate' flag is missing.
-    :param default_key: Default scope key if 'key' flag is missing.
+    Notes:
+        - **Rate**: The cooldown period in seconds.
+        - **Key**: A unique identifier. Handlers sharing the same key share the limit.
+        - If a user exceeds the limit, the request is ignored, and a notification
+          is sent on the first attempt.
     """
 
     def __init__(self, redis: Redis, default_rate: int = 1, default_key: str = "common") -> None:

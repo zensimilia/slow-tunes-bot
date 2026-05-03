@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class RetryRequestMiddleware(BaseRequestMiddleware):
+    """Middleware that handles retrying failed requests in a aiogram bot application."""
+
     async def __call__(
         self,
         make_request: Callable[[Bot, TelegramMethod[TelegramType]], Any],

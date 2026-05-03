@@ -11,7 +11,8 @@ if TYPE_CHECKING:
     TaskFunc = Callable[..., Any] | Callable[..., Awaitable[Any]]
 
 
-class TaskQueueError(Exception): ...
+class TaskQueueError(Exception):
+    """Base Task Queue Exception."""
 
 
 class TaskQueue:
@@ -23,7 +24,7 @@ class TaskQueue:
     the event loop, while asynchronous tasks are awaited directly.
 
     Attributes:
-        count (int): Total number of tasks processed since the worker started.
+        count: Total number of tasks processed since the worker started.
     """
 
     def __init__(self, maxsize: int = 0) -> None:
@@ -31,8 +32,8 @@ class TaskQueue:
         Initialize the TaskQueue.
 
         Args:
-            maxsize (int): Maximum number of items allowed in the queue.
-                0 means the queue size is infinite.
+            maxsize (optional): Maximum number of items allowed in the queue.
+                Defaults to 0.
         """
         self.__queue = asyncio.Queue(maxsize=maxsize)
         self.__running = False

@@ -8,8 +8,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """
-    Global application configurations. Variables will be loaded from the .env file.
-    However, if there is a shell environment variable having the same name, that will take precedence.
+    Global application configurations.
+
+    Variables will be loaded from the .env file. However, if there is a shell environment variable
+    having the same name, that will take precedence.
     """
 
     # class config

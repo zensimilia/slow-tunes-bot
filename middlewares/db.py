@@ -15,6 +15,8 @@ from storage.user import UserStore
 
 
 class DbSessionMiddleware(BaseMiddleware):
+    """A middleware component for managing database sessions in a aiogram bot application."""
+
     def __init__(self, db: AsyncDatabaseProtocol) -> None:
         self.__db = db
 
