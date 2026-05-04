@@ -2,14 +2,11 @@ from typing import TYPE_CHECKING
 
 from aiogram import Bot, Router, flags, types
 from aiogram.filters import Command, CommandStart
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from core import messages as txt
-from core.config import config
+from keyboards.public import about_keyboard
 from models.user import UserNew
 from utils.sox import SUPPORTED_FMT
-from utils.tg import get_user_url
-from utils.version import get_app_version
 
 if TYPE_CHECKING:
     from storage.match import MatchStore
@@ -41,20 +38,13 @@ async def cmd_help(message: types.Message) -> None:
 @common_router.message(Command("about", "developer_info", "info"))
 @flags.rate_limit(rate=10, key="about")
 async def cmd_about(message: types.Message, bot: Bot, user_store: UserStore, match_store: MatchStore) -> None:
-    admin_url = await get_user_url(bot, config.BOT_ADMIN_ID)
     users_count = await user_store.count()
     slowed_count = await match_store.count()
     public_count = await match_store.count(public_only=True)
-    app_version = get_app_version()
-
-    keyboard = InlineKeyboardBuilder()
-    keyboard.row(types.InlineKeyboardButton(text="👨‍💻 Admin & Support", url=admin_url))
-    keyboard.row(types.InlineKeyboardButton(text=f"💾 Version {app_version}", url=config.SOURCE_URL))
-    keyboard.row(types.InlineKeyboardButton(text="📜 License", url=config.LICENSE_URL))
-
+    keyboard = await about_keyboard(bot)
     text = txt.ABOUT_TEXT.format(
         users_count=users_count,
         slowed_count=slowed_count,
         public_count=public_count,
     )
-    await message.answer(text, reply_markup=keyboard.as_markup(), disable_notification=True)
+    await message.answer(text, reply_markup=keyboard, disable_notification=True)

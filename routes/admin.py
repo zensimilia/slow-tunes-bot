@@ -1,19 +1,21 @@
-from aiogram import Router, types
+from aiogram import Bot, Router, types
 from aiogram.filters import Command
 
 from core import messages as txt
 from core.config import config
 from core.filters import IsAdmin
+from keyboards.public import support_keyboard
 
 admin_router = Router()
 admin_router.message.filter(IsAdmin([config.BOT_ADMIN_ID]))
 
 
 @admin_router.message(Command("admin"), IsAdmin(None))
-async def cmd_admin(message: types.Message) -> None:
-    check_admin = IsAdmin([config.BOT_ADMIN_ID])
-    if not await check_admin(message):
-        await message.answer(txt.ADMIN_RIGHTS_REQUIRED)
+async def cmd_admin(message: types.Message, bot: Bot) -> None:
+    is_admin = IsAdmin([config.BOT_ADMIN_ID])
+    if not await is_admin(message):
+        keyboard = await support_keyboard(bot)
+        await message.answer(txt.ADMIN_RIGHTS_REQUIRED, reply_markup=keyboard)
     # TODO @me: add admin message
     await message.answer("Hello, Master! There will be a list of all admin commands...")
 
