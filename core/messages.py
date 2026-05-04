@@ -53,3 +53,5 @@ FILE_IS_TOO_BIG = "💾 File is too big. Max file size is 20 MB."
 START_SLOWING_DOWN = "💿 Start slowing down..."
 
 UNSUPPORTED_FMT = "🔇 Unsupported audio format. Please check /help command."
+
+ADMIN_RIGHTS_REQUIRED = "⛔ Nice try! You need admin rights to use this command."

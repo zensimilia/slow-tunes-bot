@@ -21,7 +21,7 @@ exclude = ["venv", ".venv", "env", ".env"]
 format.preview = true
 line-length = 120
 lint.select = ["ALL"]
-lint.ignore = ["D", "ANN401", "SLF001", "INP001"]
+lint.ignore = ["D", "ANN401", "SLF001", "INP001", "TD003"]
 
 [[tool.uv.index]]
 name = "china"
