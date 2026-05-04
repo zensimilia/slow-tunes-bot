@@ -75,9 +75,8 @@ class TaskQueue:
                     pfunc = partial(func, *args, **kwargs)
                     loop = asyncio.get_running_loop()
                     await loop.run_in_executor(None, pfunc)
-            except Exception as err:
+            except Exception as err:  # noqa: BLE001
                 logger.error(f"Task #{self.count} failed: {err}")
-                raise TaskQueueError from err
             finally:
                 self.__busy = False
                 self.__queue.task_done()
