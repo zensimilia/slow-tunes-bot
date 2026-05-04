@@ -95,7 +95,7 @@ def setup_dispatcher() -> Dispatcher:
 
 
 def setup_bot() -> Bot:
-    session = AiohttpSession()
+    session = AiohttpSession(proxy=config.TELEGRAM_PROXY_URL)
     session.middleware.register(RetryRequestMiddleware())
     properties = DefaultBotProperties(parse_mode=ParseMode.HTML, link_preview_is_disabled=True)
     return Bot(token=config.BOT_TOKEN, default=properties, session=session)

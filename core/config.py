@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     BOT_TOKEN: str = Field(default=...)
     BOT_MENTION: str | None = Field(default=None)
 
+    # network
+    TELEGRAM_PROXY_URL: str | None = Field(default=None)
+
     # pathes
     BASE_DIR: Path = Path(__file__).resolve().parent.parent
     DATA_DIR: Path = BASE_DIR / "data"
