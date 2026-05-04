@@ -6,7 +6,7 @@ from core.logger import logger, setup_logging
 
 
 async def main() -> None:
-    """Here we go again (c)."""
+    """Ah s**t, here we go again."""
 
     setup_logging()
 
@@ -16,13 +16,11 @@ async def main() -> None:
 
     try:
         await dispatcher.start_polling(bot, allowed_updates=allowed_updates)
-    except KeyboardInterrupt:
-        sys.exit(0)
-    except Exception as err:  # noqa: BLE001
-        logger.critical(err)
-        sys.exit(1)
+    except (KeyboardInterrupt, SystemExit) as exc:
+        logger.critical(exc)
+        sys.exit(getattr(exc, "code", 0))
     finally:
-        await bot.session.close()  # just in case
+        logger.critical("Bot stopped")
 
 
 if __name__ == "__main__":

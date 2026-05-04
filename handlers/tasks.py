@@ -5,6 +5,7 @@ import aiohttp
 from aiogram import types
 from aiogram.exceptions import TelegramAPIError
 from aiogram.utils.chat_action import ChatActionSender
+from loguru import logger
 
 from core import messages as txt
 from core.exceptions import DownloadError, UploadError
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 
     from storage.match import MatchStore
 
-OUTPUT_MP3_QUALITY = "-0"  # best VBR
+OUTPUT_MP3_QUALITY = "320"  # best CBR
 CHUNK_SIZE = 64 * 1024  # 64 kb
 PIPE_ERROR_MSG = "Process was created without stdin or stderr PIPE"
 
@@ -24,9 +25,10 @@ PIPE_ERROR_MSG = "Process was created without stdin or stderr PIPE"
 async def feed_process(process: Process, file_url: str) -> None:
     if not process.stdin or not process.stderr:
         raise RuntimeError(PIPE_ERROR_MSG)
+
     try:
-        async with aiohttp.ClientSession() as s:
-            resp = await s.get(file_url)
+        async with aiohttp.ClientSession() as session:
+            resp = await session.get(file_url)
             resp.raise_for_status()
             async for chunk in resp.content.iter_chunked(CHUNK_SIZE):
                 process.stdin.write(chunk)
@@ -34,9 +36,9 @@ async def feed_process(process: Process, file_url: str) -> None:
     except aiohttp.ClientResponseError as err:
         raise DownloadError from err
     except (BrokenPipeError, ConnectionResetError) as err:
-        raw_errors = await process.stderr.read()
-        if raw_errors:
-            raise sox.SoxError(raw_errors.decode()) from err
+        await process.wait()
+        if process.returncode and (raw_stderr := await process.stderr.read()):
+            raise sox.SoxError(raw_stderr.decode().strip()) from err
         raise RuntimeError from err
     finally:
         if process.stdin:
@@ -50,25 +52,25 @@ async def read_process(process: Process) -> bytes:
     return await process.stdout.read()
 
 
-async def slowing_down_task(message: types.Message, match_store: MatchStore, user_pk: int, fmt: str) -> None:
-    if not message.bot or not message.from_user:  # hello Optional
-        return
-    if not message.audio or not message.audio.file_name:  # hello fucking Optional
-        return
+async def proceed_audio(message: types.Message) -> bytes:
+    if not message.bot or not message.audio:
+        raise ValueError
 
     file = await message.bot.get_file(message.audio.file_id)
     file_url = tg.get_file_download_url(file)
+    fmt = get_audiofile_format(message.audio)
 
     sox_command = (
         sox
         .SoxCommandBuilder(input_format=fmt, output_quality=OUTPUT_MP3_QUALITY)
-        .speed(33 / 45)
-        .padding(0, 2)
         .gain(-3)
+        .speed(33 / 45)
+        .filters(highpass_freq=100, lowpass_freq=15000)
+        .padding(0, 2)
         .reverb(reverberance=70, hf_damping=50, scale=100, stereo_depth=100)
-        .filters(highpass_freq=50)
         .bass(3)
         .normalize(-1)
+        .dither()
         .build_list()
     )
 
@@ -79,17 +81,32 @@ async def slowing_down_task(message: types.Message, match_store: MatchStore, use
         stderr=asyncio.subprocess.PIPE,
     )
 
+    _, processed_audio = await asyncio.gather(feed_process(process, file_url), read_process(process))
+    await process.wait()
+    if process.stderr:
+        raw_stderr = await process.stderr.read()
+        msg_stderr = raw_stderr.decode().strip()
+        if process.returncode != 0:
+            raise sox.SoxError(msg_stderr)
+        [logger.debug(line) for line in msg_stderr.splitlines()]
+
+    return processed_audio
+
+
+async def slowing_down_task(message: types.Message, match_store: MatchStore, user_pk: int) -> None:
+    if not message.bot or not message.from_user:  # hello Optional
+        return
+    if not message.audio or not message.audio.file_name:  # hello fucking Optional
+        return
+
     async with tg.temp_message(txt.START_SLOWING_DOWN, message):
         async with ChatActionSender.record_voice(bot=message.bot, chat_id=message.chat.id):
-            _, processed_audio = await asyncio.gather(feed_process(process, file_url), read_process(process))
-            await process.wait()
-            if process.returncode != 0:
-                raise RuntimeError
+            slowed_audio = await proceed_audio(message)
 
         async with ChatActionSender.upload_voice(bot=message.bot, chat_id=message.chat.id):
             try:  # upload the slowed audio file to the user
                 slowed_filename = await tg.get_filename_mention(message.bot, message.audio.file_name)
-                input_audio_file = types.BufferedInputFile(processed_audio, filename=slowed_filename)
+                input_audio_file = types.BufferedInputFile(slowed_audio, filename=slowed_filename)
                 upload_message = await tg.reply_audio(input_audio_file, message)
             except (TelegramAPIError, OSError, ValueError) as err:
                 raise UploadError from err

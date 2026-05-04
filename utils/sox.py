@@ -1,9 +1,5 @@
-import asyncio
 import shlex
-from typing import TYPE_CHECKING, Self
-
-if TYPE_CHECKING:
-    import io
+from typing import Self
 
 SUPPORTED_FMT = ["aif", "aifc", "aiff", "aiffc", "flac", "mp2", "mp3", "ogg", "opus", "vorbis"]
 
@@ -27,33 +23,6 @@ def is_supported_format(fmt: str) -> bool:
     return fmt in (SUPPORTED_FMT)
 
 
-async def proceed_audio(input_buffer: io.BytesIO, sox_command: list[str]) -> bytes:
-    """
-    Process audio data using the specified SoX command and returns the result.
-
-    Args:
-      input_buffer: An object that contains audio data in bytes format.
-      sox_command: A list of strings representing the SoX command and its arguments.
-    Returns:
-      An audio data as bytes.
-    """
-
-    subprocess = await asyncio.create_subprocess_exec(
-        *sox_command,
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-
-    input_buffer.seek(0)
-    result, error = await subprocess.communicate(input_buffer.read())
-
-    if error:
-        raise SoxError(error.decode())
-
-    return result
-
-
 class SoxCommandBuilder:
     """
     A fluent interface for building SoX (Sound eXchange) command-line arguments.
@@ -63,7 +32,7 @@ class SoxCommandBuilder:
     string serialization.
 
     Attributes:
-        args: Base SoX flags (verbosity, quiet mode).
+        args: Base SoX flags (verbosity, quiet mode, etc.).
         effects: Accumulated list of audio effects and their parameters.
         io: Input/output specifications including formats and piping.
     """
@@ -76,7 +45,7 @@ class SoxCommandBuilder:
             input_format: Format of the input stream (e.g., 'wav', 'flac', 'mp3').
             output_quality: Compression factor for MP3 output (SoX -C flag).
         """
-        self.args = ["sox", "-V1", "-q"]
+        self.args = ["-V1"]
         self.effects = []
         self.io = ["-t", input_format, "-", "-t", "mp3", "-C", output_quality, "-"]
 
@@ -206,6 +175,16 @@ class SoxCommandBuilder:
         self.effects.extend(["pad", str(start), str(end)])
         return self
 
+    def dither(self) -> Self:
+        """
+        Add the "dither" effect to a list of effects.
+
+        Returns:
+            Self instance.
+        """
+        self.effects.extend(["dither"])
+        return self
+
     def build_list(self) -> list[str]:
         """
         Compile all components into a flat list of arguments for subprocess.
@@ -213,7 +192,7 @@ class SoxCommandBuilder:
         Returns:
             List of arguments.
         """
-        return [*self.args, *self.io, *self.effects]
+        return ["sox", *self.args, *self.io, *self.effects]
 
     def build_string(self) -> str:
         """

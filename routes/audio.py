@@ -35,7 +35,7 @@ async def audio_handler(
     if await send_match_if_exist(message, match_store):
         return
 
-    queue.enqueue(slowing_down_task, message, match_store, user.pk, fmt)
+    queue.enqueue(slowing_down_task, message, match_store, user.pk)
 
     position = queue.total_pending
     if position > 1:

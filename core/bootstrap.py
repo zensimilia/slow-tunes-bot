@@ -24,8 +24,7 @@ STREAM_CONSUMER_NAME = "main"
 
 db = Database(DB_URL)
 redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=0, decode_responses=True)
-redis_storage = RedisStorage(redis)
-tasks_set = set()
+background_tasks = set()
 
 
 async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -> None:
@@ -47,19 +46,18 @@ async def on_startup(bot: Bot, dispatcher: Dispatcher) -> None:
 
     queue = TaskQueue(maxsize=config.QUEUE_MAXSIZE)
     queue_task = asyncio.create_task(queue.start())  # start task queue worker
-    tasks_set.add(queue_task)
+    background_tasks.add(queue_task)
     dispatcher["queue"] = queue  # inject task queue
 
     stream = TaskStream(redis=redis, bot=bot)
     stream_task = asyncio.create_task(stream.listen(STREAM_CONSUMER_NAME))  # listen streams
-    tasks_set.add(stream_task)
+    background_tasks.add(stream_task)
     dispatcher["stream"] = stream  # inject streams
 
     setup_routes(dispatcher)
     setup_middlewares(dispatcher)
 
-    if not config.DEBUG:
-        await bot.send_message(config.BOT_ADMIN_ID, "🟢 I'M ONLINE!")
+    await bot.send_message(config.BOT_ADMIN_ID, "🟢 I'M ONLINE!")
 
 
 async def on_shutdown(bot: Bot, dispatcher: Dispatcher) -> None:
@@ -70,8 +68,9 @@ async def on_shutdown(bot: Bot, dispatcher: Dispatcher) -> None:
     dispatcher["queue"].stop()
     await dispatcher["stream"].stop()
 
-    if not config.DEBUG:
-        await bot.send_message(config.BOT_ADMIN_ID, "🔴 I'M OFFLINE!")
+    await bot.send_message(config.BOT_ADMIN_ID, "🔴 I'M OFFLINE!")
+
+    await bot.session.close()
 
 
 def setup_routes(dispatcher: Dispatcher) -> None:
@@ -88,7 +87,7 @@ def setup_middlewares(dispatcher: Dispatcher) -> None:
 
 
 def setup_dispatcher() -> Dispatcher:
-    dispatcher = Dispatcher(storage=redis_storage)
+    dispatcher = Dispatcher(storage=RedisStorage(redis))
     dispatcher.startup.register(on_startup)
     dispatcher.shutdown.register(on_shutdown)
     return dispatcher
