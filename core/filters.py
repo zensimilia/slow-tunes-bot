@@ -14,12 +14,15 @@ class IsAdmin(BaseFilter):
     triggered the callback with a predefined list of admin IDs.
     """
 
-    def __init__(self, admin_ids: list[int]) -> None:
+    def __init__(self, admin_ids: list[int] | None = None) -> None:
         """
         Initialize the filter with a list of allowed IDs.
 
         Args:
-            admin_ids: A list of user IDs that should have admin access.
+            admin_ids (optional): A list of user IDs that should have admin access.
+
+        Notes:
+            If `admin_ids` is None then filter always return True.
         """
         self._admin_ids = admin_ids
 
@@ -33,6 +36,9 @@ class IsAdmin(BaseFilter):
         Returns:
             True if the user is an admin, False otherwise.
         """
+        if self._admin_ids is None:
+            return True
+
         if obj.from_user:
             return obj.from_user.id in self._admin_ids
         return False
