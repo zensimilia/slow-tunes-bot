@@ -115,7 +115,13 @@ async def get_filename_mention(bot: Bot, filename: str) -> str:
     return f"{Path(filename).stem} {mention}.mp3"
 
 
-async def reply_audio(audio: types.InputFileUnion, message: types.Message, *, effect: bool = True) -> types.Message:
+async def reply_audio(
+    audio: types.InputFileUnion,
+    message: types.Message,
+    *,
+    effect: bool = True,
+    reply_markup: types.ReplyMarkupUnion | None = None,
+) -> types.Message:
     """
     Sends the audio file as a reply to the original message.
 
@@ -127,6 +133,8 @@ async def reply_audio(audio: types.InputFileUnion, message: types.Message, *, ef
         message: The original message containing the source audio and context.
         effect (optional): If True, applies a specific Telegram message effect.
             Defaults to True.
+        reply_markup (optional): ReplyMarkup object for message.
+            Defaults to None.
 
     Returns:
         The message object sent by the bot.
@@ -143,6 +151,7 @@ async def reply_audio(audio: types.InputFileUnion, message: types.Message, *, ef
         title=f"{message.audio.title} (Slowed)",
         performer=message.audio.performer,
         caption=await get_caption_mention(message.bot),
+        reply_markup=reply_markup,
     )
 
 
