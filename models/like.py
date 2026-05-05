@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 from .base import BaseModel
 
@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 class Like(BaseModel, table=True):
     __tablename__: str = "likes"
+    __table_args__ = (UniqueConstraint("user_pk", "match_pk", name="unique_user_match_like"),)
 
     user_pk: int = Field(foreign_key="users.pk", ondelete="CASCADE")
     match_pk: int = Field(foreign_key="matches.pk", ondelete="CASCADE")

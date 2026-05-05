@@ -26,5 +26,5 @@ class MatchNew(SQLModel):
     user_pk: int
     original_id: str
     slowed_id: str
-    is_private: bool | None = True
-    is_forbidden: bool | None = False
+    is_private: bool = True
+    is_forbidden: bool = False

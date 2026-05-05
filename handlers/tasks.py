@@ -9,6 +9,7 @@ from loguru import logger
 
 from core import messages as txt
 from core.exceptions import DownloadError, UploadError
+from keyboards.cbd import MatchAction, MatchCbd
 from models.match import MatchNew
 from utils import sox, tg
 
@@ -103,30 +104,47 @@ async def slowing_down_task(message: types.Message, match_store: MatchStore, use
         async with ChatActionSender.record_voice(bot=message.bot, chat_id=message.chat.id):
             slowed_audio = await proceed_audio(message)
 
-        async with ChatActionSender.upload_voice(bot=message.bot, chat_id=message.chat.id):
-            try:  # upload the slowed audio file to the user
-                slowed_filename = await tg.get_filename_mention(message.bot, message.audio.file_name)
-                input_audio_file = types.BufferedInputFile(slowed_audio, filename=slowed_filename)
-                upload_message = await tg.reply_audio(input_audio_file, message)
-            except (TelegramAPIError, OSError, ValueError) as err:
-                raise UploadError from err
-
-    if upload_message.audio:  # save the match to the database
         new_match = MatchNew(
             original_id=message.audio.file_id,
-            slowed_id=upload_message.audio.file_id,
+            slowed_id=str(0),
             user_pk=user_pk,
             is_private=True,
             is_forbidden=False,
         )
+        cb = MatchCbd(action=MatchAction.NONE)
+        reply_markup = cb.get_keyboard(
+            match_pk=0,
+            is_private=new_match.is_private,
+            is_owner=True,
+            is_liked=False,
+            is_random=False,
+        )
+
+        async with ChatActionSender.upload_voice(bot=message.bot, chat_id=message.chat.id):
+            try:  # upload the slowed audio file to the user
+                slowed_filename = await tg.get_filename_mention(message.bot, message.audio.file_name)
+                input_audio_file = types.BufferedInputFile(slowed_audio, filename=slowed_filename)
+                upload_message = await tg.reply_audio(input_audio_file, message, reply_markup=reply_markup)
+            except (TelegramAPIError, OSError, ValueError) as err:
+                raise UploadError from err
+
+    if upload_message.audio:  # save the match to the database
+        new_match.slowed_id = upload_message.audio.file_id
         await match_store.create(new_match)
 
 
 async def send_match_if_exist(message: types.Message, match_store: MatchStore) -> bool:
     if not message.audio:
         return False
+    cb = MatchCbd(action=MatchAction.NONE)
     if saved_match := await match_store.get_by_original_id(message.audio.file_id):
-        await tg.reply_audio(saved_match.slowed_id, message)
+        reply_markup = cb.get_keyboard(
+            match_pk=saved_match.pk or 0,
+            is_private=saved_match.is_private,
+            is_owner=True,
+            is_random=False,
+        )
+        await tg.reply_audio(saved_match.slowed_id, message, reply_markup=reply_markup)
         return True
     return False
 
