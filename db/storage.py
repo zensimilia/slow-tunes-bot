@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 from sqlmodel import SQLModel, delete, func, select
 
+from db.exceptions import DoesNotExistError
+
 if TYPE_CHECKING:
     from .base import AsyncDatabaseProtocol
 
@@ -115,29 +117,17 @@ class DbStorage:
             query = select(model).offset(offset).limit(limit).filter_by(**filters)
             return list(await s.scalars(query))
 
-    async def patch(self, obj: SQLModel, data: dict[str, Any]) -> None:
-        """
-        Update specific fields of an existing object.
-
-        Args:
-            obj: The model instance to update.
-            data: A dictionary containing field names and their new values.
-
-        Returns:
-            The updated and refreshed model instance.
-
-        Examples:
-            ```python
-            update_data = {"is_active": False, "username": "new_name"}
-            await storage.patch(user_obj, update_data)
-            ```
-        """
+    async def patch(self, model: type[T], pk: int, data: dict[str, Any]) -> T:
         async with self.db.get_session() as s:
+            obj = await s.get(model, pk)
+            if not obj:
+                raise DoesNotExistError
             for key, value in data.items():
                 setattr(obj, key, value)
             s.add(obj)
             await s.commit()
-            return await s.refresh(obj)
+            await s.refresh(obj)
+            return obj
 
     async def count(self, model: type[T], **filters: Any) -> int:
         """
