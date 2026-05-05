@@ -241,3 +241,18 @@ def get_file_download_url(file: types.File) -> str:
     if not file.bot or not file.file_path:
         raise ValueError
     return f"https://api.telegram.org/file/bot{file.bot.token}/{file.file_path}"
+
+
+def get_audio(message: types.Message) -> types.Audio:
+    """
+    Take a message as input and returns the audio from the message if it exists, otherwise raises a ValueError.
+
+    Args:
+      message: Represents a message object in the Bot.
+
+    Returns:
+      Audio: The audio object from the message.
+    """
+    if not message.audio:
+        raise ValueError
+    return message.audio
