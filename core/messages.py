@@ -29,7 +29,8 @@ HELP_TEXT = (
     "This bot adds a vinyl vibe to your audio by adjusting playback speed from 45 to 33 RPM. "
     "You can publish your processed tracks for other users, support their uploads with likes, "
     "or report any content that shouldn't remain publicly available.\n\n"
-    "<b>Supported audio formats:</b> <i>{fmt}</i>."
+    "<b>Supported audio formats:</b>\n"
+    "<i>{fmt}</i>."
 )
 
 START_TEXT = (

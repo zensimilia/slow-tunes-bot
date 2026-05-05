@@ -1,56 +1,22 @@
-import asyncio
 from typing import TYPE_CHECKING
 
-import aiohttp
 from aiogram import types
 from aiogram.exceptions import TelegramAPIError
 from aiogram.utils.chat_action import ChatActionSender
-from loguru import logger
 
 from core import messages as txt
-from core.exceptions import DownloadError, UploadError
+from core.exceptions import UploadError
 from keyboards.cbd import MatchAction, MatchCbd
 from models.match import MatchNew
+from services.audio_processor import AudioProcessor
 from utils import sox, tg
 
 if TYPE_CHECKING:
-    from asyncio.subprocess import Process
-
     from storage.match import MatchStore
 
 OUTPUT_MP3_QUALITY = "320"  # best CBR
 CHUNK_SIZE = 64 * 1024  # 64 kb
 PIPE_ERROR_MSG = "Process was created without stdin or stderr PIPE"
-
-
-async def feed_process(process: Process, file_url: str) -> None:
-    if not process.stdin or not process.stderr:
-        raise RuntimeError(PIPE_ERROR_MSG)
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            resp = await session.get(file_url)
-            resp.raise_for_status()
-            async for chunk in resp.content.iter_chunked(CHUNK_SIZE):
-                process.stdin.write(chunk)
-                await process.stdin.drain()
-    except aiohttp.ClientResponseError as err:
-        raise DownloadError from err
-    except (BrokenPipeError, ConnectionResetError) as err:
-        await process.wait()
-        if process.returncode and (raw_stderr := await process.stderr.read()):
-            raise sox.SoxError(raw_stderr.decode().strip()) from err
-        raise RuntimeError from err
-    finally:
-        if process.stdin:
-            process.stdin.close()
-            await process.stdin.wait_closed()
-
-
-async def read_process(process: Process) -> bytes:
-    if not process.stdout:
-        raise RuntimeError(PIPE_ERROR_MSG)
-    return await process.stdout.read()
 
 
 async def proceed_audio(message: types.Message) -> bytes:
@@ -74,24 +40,9 @@ async def proceed_audio(message: types.Message) -> bytes:
         .dither()
         .build_list()
     )
+    audio_processor = AudioProcessor(sox_command)
 
-    process = await asyncio.create_subprocess_exec(
-        *sox_command,
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-
-    _, processed_audio = await asyncio.gather(feed_process(process, file_url), read_process(process))
-    await process.wait()
-    if process.stderr:
-        raw_stderr = await process.stderr.read()
-        msg_stderr = raw_stderr.decode().strip()
-        if process.returncode != 0:
-            raise sox.SoxError(msg_stderr)
-        [logger.debug(line) for line in msg_stderr.splitlines()]
-
-    return processed_audio
+    return await audio_processor.process_url(file_url)
 
 
 async def slowing_down_task(message: types.Message, match_store: MatchStore, user_pk: int) -> None:
