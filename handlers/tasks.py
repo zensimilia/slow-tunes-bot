@@ -9,7 +9,8 @@ from core.exceptions import UploadError
 from keyboards.cbd import MatchAction, MatchCbd
 from models.match import MatchNew
 from services.audio_processor import AudioProcessor
-from utils import sox, tg
+from services.sox import SoxCommandBuilder
+from utils import tg
 
 if TYPE_CHECKING:
     from storage.match import MatchStore
@@ -19,17 +20,10 @@ CHUNK_SIZE = 64 * 1024  # 64 kb
 PIPE_ERROR_MSG = "Process was created without stdin or stderr PIPE"
 
 
-async def proceed_audio(message: types.Message) -> bytes:
-    if not message.bot or not message.audio:
-        raise ValueError
-
-    file = await message.bot.get_file(message.audio.file_id)
-    file_url = tg.get_file_download_url(file)
-    fmt = get_audiofile_format(message.audio)
-
+async def proceed_audio(file_url: str) -> bytes:
+    fmt = tg.get_file_fmt_from_url(file_url)
     sox_command = (
-        sox
-        .SoxCommandBuilder(input_format=fmt, output_quality=OUTPUT_MP3_QUALITY)
+        SoxCommandBuilder(input_format=fmt, output_quality=OUTPUT_MP3_QUALITY)
         .gain(-3)
         .speed(33 / 45)
         .filters(highpass_freq=100, lowpass_freq=15000)
@@ -38,25 +32,26 @@ async def proceed_audio(message: types.Message) -> bytes:
         .bass(3)
         .normalize(-1)
         .dither()
-        .build_list()
     )
+
     audio_processor = AudioProcessor(sox_command)
 
     return await audio_processor.process_url(file_url)
 
 
 async def slowing_down_task(message: types.Message, match_store: MatchStore, user_pk: int) -> None:
-    if not message.bot or not message.from_user:  # hello Optional
-        return
-    if not message.audio or not message.audio.file_name:  # hello fucking Optional
-        return
+    audio = tg.get_audio(message)
+    bot = tg.get_bot(message)
+
+    file_obj = await bot.get_file(audio.file_id)
+    file_url = tg.get_file_download_url(file_obj)
 
     async with tg.temp_message(txt.START_SLOWING_DOWN, message):
-        async with ChatActionSender.record_voice(bot=message.bot, chat_id=message.chat.id):
-            slowed_audio = await proceed_audio(message)
+        async with ChatActionSender.record_voice(bot=bot, chat_id=message.chat.id):
+            slowed_audio = await proceed_audio(file_url)
 
         new_match = MatchNew(
-            original_id=message.audio.file_id,
+            original_id=audio.file_id,
             slowed_id=str(0),
             user_pk=user_pk,
             is_private=True,
@@ -71,9 +66,9 @@ async def slowing_down_task(message: types.Message, match_store: MatchStore, use
             is_random=False,
         )
 
-        async with ChatActionSender.upload_voice(bot=message.bot, chat_id=message.chat.id):
+        async with ChatActionSender.upload_voice(bot=bot, chat_id=message.chat.id):
             try:  # upload the slowed audio file to the user
-                slowed_filename = await tg.get_filename_mention(message.bot, message.audio.file_name)
+                slowed_filename = await tg.get_filename_mention(bot, audio.file_name or audio.file_id)
                 input_audio_file = types.BufferedInputFile(slowed_audio, filename=slowed_filename)
                 upload_message = await tg.reply_audio(input_audio_file, message, reply_markup=reply_markup)
             except (TelegramAPIError, OSError, ValueError) as err:
@@ -102,7 +97,3 @@ async def send_match_if_exist(message: types.Message, match_store: MatchStore) -
 
 def get_audiofile_format(audio: types.Audio) -> str:
     return tg.get_audio_file_extension(audio)
-
-
-def is_format_supported(fmt: str) -> bool:
-    return sox.is_supported_format(fmt)

@@ -1,10 +1,7 @@
 import asyncio
 import contextlib
 import logging
-import re
-import subprocess
-from functools import lru_cache
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import aiohttp
 
@@ -16,23 +13,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@lru_cache(maxsize=1)
-def get_sox_supported_formats() -> list[str]:
-    try:
-        output = subprocess.check_output(
-            ["/usr/bin/sox", "--help"],
-            stderr=subprocess.STDOUT,
-            encoding="utf-8",
-            errors="ignore",
-        )
-        match = re.search(r"AUDIO FILE FORMATS:\s*(.*)", output, re.IGNORECASE)
-        if not match:
-            return []
-        return [fmt.lower() for fmt in match.group(1).strip().split()]
-    except subprocess.CalledProcessError, FileNotFoundError:  # Исправлено
-        return []
-
-
 class AudioProcessorError(Exception): ...
 
 
@@ -42,18 +22,33 @@ class DownloadError(AudioProcessorError): ...
 class ProcessError(AudioProcessorError): ...
 
 
+class UnsupportedFormatError(AudioProcessorError):
+    def __init__(self, fmt: str) -> None:
+        super().__init__(f"Format {fmt} is unsupported")
+
+
+class ProcessorBuilderProtocol(Protocol):
+    def __str__(self) -> str: ...
+    def build_list(self) -> list[str]: ...
+    def build_string(self) -> str: ...
+    def get_suported_formats(self) -> list[str]: ...
+    def is_format_supported(self, fmt: str) -> bool: ...
+    def get_format(self) -> str: ...
+
+
 class AudioProcessor:
-    def __init__(self, command: list[str]) -> None:
-        self.command = command
+    def __init__(self, command_builder: ProcessorBuilderProtocol) -> None:
+        self.command_builder = command_builder
         self.__chunk_size = 64 * 1024
+        self.__process_timeout = 30
 
-    async def process_file(self, file_path: str | Path) -> bytes: ...
+    async def process_file(self, file_path: str | Path) -> bytes: ...  # TODO @me: implement
 
-    async def process_bytes(self, data: bytes) -> bytes: ...
+    async def process_bytes(self, data: bytes) -> bytes: ...  # TODO @me: implement
 
     async def process_url(self, input_url: str) -> bytes:
         process = await asyncio.create_subprocess_exec(
-            *self.command,
+            *self.command_builder.build_list(),
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -69,7 +64,7 @@ class AudioProcessor:
                 async for chunk in resp.content.iter_chunked(self.__chunk_size):
                     yield chunk
         except aiohttp.ClientResponseError as err:
-            raise DownloadError(f"Failed to download: {err.status}") from err
+            raise DownloadError(err.message) from err
 
     async def __feed_process(self, process: Process, iterator: AsyncIterator[bytes]) -> None:
         if not process.stdin:
@@ -94,31 +89,37 @@ class AudioProcessor:
         return await process.stdout.read()
 
     async def __execute(self, process: Process, iterator: AsyncIterator[bytes]) -> bytes:
+        fmt = self.command_builder.get_format()
+        if not self.is_supported_format(fmt):
+            process.terminate()
+            raise UnsupportedFormatError(fmt)
+        tasks = [self.__feed_process(process, iterator), self.__read_process(process)]
         try:
-            _, processed_audio = asyncio.gather(
-                self.__feed_process(process, iterator),
-                self.__read_process(process),
-                return_exceptions=True,
+            _, processed_audio = await asyncio.wait_for(
+                asyncio.gather(*tasks),
+                timeout=self.__process_timeout,
             )
             await process.wait()
 
-            if process.returncode != 0 and process.stderr:
-                raw_stderr = await process.stderr.read()
-                msg_stderr = raw_stderr.decode().strip()
-                raise ProcessError(f"AudioProcessor failed with code {process.returncode}: {msg_stderr}")
-
-        except Exception:
+        except Exception as err:
+            logger.exception("Error while processing")
             if process.returncode is None:
                 with contextlib.suppress(BaseException):
                     process.kill()
-            raise
+                    await process.wait()
+            raise ProcessError(err) from err
 
-        else:
-            return processed_audio
+        if process.returncode != 0 and process.stderr:
+            raw_stderr = await process.stderr.read()
+            msg_stderr = raw_stderr.decode().strip()
+            msg_raise = f"AudioProcessor failed with code {process.returncode}: {msg_stderr}"
+            raise ProcessError(msg_raise)
+
+        return processed_audio
 
     @property
     def formats(self) -> list[str]:
-        return get_sox_supported_formats()
+        return self.command_builder.get_suported_formats()
 
     def is_supported_format(self, fmt: str) -> bool:
-        return fmt.lower().removeprefix(".") in self.formats
+        return self.command_builder.is_format_supported(fmt)

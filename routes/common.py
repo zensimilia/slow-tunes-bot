@@ -6,7 +6,6 @@ from aiogram.filters import Command, CommandStart
 from core import messages as txt
 from keyboards.public import about_keyboard
 from models.user import UserNew
-from services.audio_processor import get_sox_supported_formats
 
 if TYPE_CHECKING:
     from storage.match import MatchStore
@@ -31,8 +30,7 @@ async def cmd_start(message: types.Message, user_store: UserStore) -> None:
 @common_router.message(Command("help"))
 @flags.rate_limit(rate=10, key="help")
 async def cmd_help(message: types.Message) -> None:
-    text = txt.HELP_TEXT.format(fmt=", ".join(get_sox_supported_formats()))
-    await message.answer(text, disable_notification=True)
+    await message.answer(txt.HELP_TEXT, disable_notification=True)
 
 
 @common_router.message(Command("about", "developer_info", "info"))

@@ -2,6 +2,7 @@ import io
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
 from aiogram import Bot, types
 from aiogram.exceptions import TelegramAPIError
@@ -256,3 +257,24 @@ def get_audio(message: types.Message) -> types.Audio:
     if not message.audio:
         raise ValueError
     return message.audio
+
+
+def get_bot(message: types.Message) -> Bot:
+    """
+    Take a message as input and returns the Bot object if it exists, otherwise raises a ValueError.
+
+    Args:
+      message: Represents a message object in the Bot.
+
+    Returns:
+      Bot: The Bot object from the message.
+    """
+    if not message.bot:
+        raise ValueError
+    return message.bot
+
+
+def get_file_fmt_from_url(url: str) -> str:
+    """Extract the file format from a given URL determined by the extension (e.g. `jpg`, `mp3`)."""
+    path = urlparse(url).path
+    return Path(path).suffix.removeprefix(".").lower()
