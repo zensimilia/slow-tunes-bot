@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any
 
-from models.user import User, UserNew
+from db.models.user import User, UserNew
 
 if TYPE_CHECKING:
     from .proto import StorageProtocol

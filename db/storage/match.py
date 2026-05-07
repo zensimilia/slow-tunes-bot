@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, Any
 
-from models.match import Match, MatchNew
+from db.models.match import Match, MatchNew
 
 if TYPE_CHECKING:
-    from storage.proto import StorageProtocol
+    from db.storage.proto import StorageProtocol
 
 
 class MatchStore:

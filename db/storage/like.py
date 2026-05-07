@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, Any
 
-from models.like import Like, LikeNew
+from db.models.like import Like, LikeNew
 
 if TYPE_CHECKING:
-    from storage.proto import StorageProtocol
+    from db.storage.proto import StorageProtocol
 
 
 class LikeStore:

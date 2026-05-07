@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING
 from aiogram import types
 from aiogram.exceptions import TelegramAPIError
 from aiogram.utils.chat_action import ChatActionSender
-from core import messages as txt
-from core.exceptions import UploadError
-from keyboards.cbd import MatchAction, MatchCbd
-from services.audio_processor import AudioProcessor
-from services.sox import SoxCommandBuilder
-from utils import tg
 
+from bot.core import messages as txt
+from bot.core.exceptions import UploadError
+from bot.keyboards.cbd import MatchAction, MatchCbd
+from bot.services.audio_processor import AudioProcessor
+from bot.services.sox import SoxCommandBuilder
+from bot.utils import tg
 from db.models.match import MatchNew
 
 if TYPE_CHECKING:

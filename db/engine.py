@@ -2,7 +2,6 @@ import logging
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
-from models.base import BaseModel
 from sqlalchemy import event
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
@@ -13,6 +12,7 @@ from sqlmodel import SQLModel, delete, func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from db.exceptions import DoesNotExistError
+from db.models.base import BaseModel
 
 from .exceptions import DataError, OperationalError
 
@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Awaitable, Callable
     from sqlite3 import Connection
 
-    from .engine import AsyncDatabaseProtocol
 
 logger = logging.getLogger(__name__)
 

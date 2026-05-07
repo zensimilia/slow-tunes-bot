@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     TELEGRAM_PROXY_URL: str | None = Field(default=None)
 
     # pathes
-    BASE_DIR: Path = Path(__file__).resolve().parent.parent
+    BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
     DATA_DIR: Path = BASE_DIR / "data"
     DB_FILE: Path = DATA_DIR / "db.sqlite"
 
