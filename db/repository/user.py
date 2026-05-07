@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 from db.models.user import User, UserNew
 
 if TYPE_CHECKING:
-    from .proto import StorageProtocol
+    from db.storage import StorageProtocol
 
 DEFAULT_USERNAME = "Private Person"
 

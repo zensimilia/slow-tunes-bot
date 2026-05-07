@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 from db.models.match import Match, MatchNew
 
 if TYPE_CHECKING:
-    from db.repository.proto import StorageProtocol
+    from db.storage import StorageProtocol
 
 
 class MatchStore:
