@@ -32,8 +32,8 @@ HELP_TEXT = (
 )
 
 START_TEXT = (
-    "👋 Hello, {username}\n"
-    "Send me an <code>MP3</code> file to process your audio, or try /random to discover a tracks "
+    "👋 Hello, {username}!\n"
+    "Send me an <code>audio</code> file to slow it down, or use /random command to discover some slowed music "
     "shared by another users. Use /help to view all commands. <b>Enjoy!</b>"
 )
 
