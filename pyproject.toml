@@ -5,6 +5,7 @@ description = "Telegram Bot that slows down audio tracks yo 33/45 RPM vinyl rati
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "aiofiles>=25.1.0",
     "aiogram>=3.27.0",
     "aiosqlite>=0.22.1",
     "loguru>=0.7.3",
