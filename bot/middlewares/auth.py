@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
     from redis.asyncio import Redis
 
-    from db.storage.user import UserStore
+    from db.repository.user import UserStore
 
 
 USER_KEY = "user_cache"

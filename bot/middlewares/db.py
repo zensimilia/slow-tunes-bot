@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from db.engine import AsyncDatabaseProtocol
 
 from db.engine import DbStorage
-from db.storage.match import MatchStore
-from db.storage.user import UserStore
+from db.repository.match import MatchStore
+from db.repository.user import UserStore
 
 
 class DbSessionMiddleware(BaseMiddleware):

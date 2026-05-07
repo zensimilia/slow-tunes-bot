@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 from db.models.like import Like, LikeNew
 
 if TYPE_CHECKING:
-    from db.storage.proto import StorageProtocol
+    from db.repository.proto import StorageProtocol
 
 
 class LikeStore:

@@ -13,7 +13,7 @@ from bot.utils import tg
 from db.models.match import MatchNew
 
 if TYPE_CHECKING:
-    from db.storage.match import MatchStore
+    from db.repository.match import MatchStore
 
 OUTPUT_MP3_QUALITY = "320"  # best CBR
 CHUNK_SIZE = 64 * 1024  # 64 kb

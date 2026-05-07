@@ -8,8 +8,8 @@ from bot.keyboards.public import about_keyboard
 from db.models.user import UserNew
 
 if TYPE_CHECKING:
-    from db.storage.match import MatchStore
-    from db.storage.user import UserStore
+    from db.repository.match import MatchStore
+    from db.repository.user import UserStore
 
 common_router = Router()
 
