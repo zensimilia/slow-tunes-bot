@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlmodel import SQLModel, delete, func, select
+from sqlmodel import SQLModel, delete, func, inspect, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from db.exceptions import DoesNotExistError
@@ -150,17 +150,17 @@ class DbStorage:
     persistence and retrieval.
 
     Attributes:
-        db: An instance of `AsyncDatabaseProtocol` used for session management.
+        session: An instance of `AsyncSession` used as a database session.
     """
 
-    def __init__(self, db: AsyncDatabaseProtocol) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         """
-        Initialize the storage with a database provider.
+        Initialize the storage with a database session.
 
         Args:
-            db: An object that provides managed database sessions.
+            session: An object that provides managed database sessions.
         """
-        self.db = db
+        self.session = session
 
     async def save(self, obj: M) -> M:
         """
@@ -172,7 +172,7 @@ class DbStorage:
         Returns:
             The saved and refreshed model instance with updated server-side state.
         """
-        async with self.db.get_session() as s:
+        async with self.session as s:
             s.add(obj)
             await s.commit()
             await s.refresh(obj)
@@ -198,7 +198,7 @@ class DbStorage:
             model: The SQLAlchemy model class to delete from.
             **filters: Filter criteria for the delete query (e.g., id=1).
         """
-        async with self.db.get_session() as s:
+        async with self.session as s:
             query = delete(model).filter_by(**filters)
             await s.exec(query)
 
@@ -213,7 +213,7 @@ class DbStorage:
         Returns:
             The model instance if found, otherwise None.
         """
-        async with self.db.get_session() as s:
+        async with self.session as s:
             return await s.get(model, pk)
 
     async def get_by(self, model: type[M], **filters: Any) -> M | None:
@@ -227,11 +227,11 @@ class DbStorage:
         Returns:
             The first matching model instance or None.
         """
-        async with self.db.get_session() as s:
+        async with self.session as s:
             query = select(model).filter_by(**filters).limit(1)
             return await s.scalar(query)
 
-    async def get_many(self, model: type[M], *, limit: int, offset: int, **filters: Any) -> list[M]:
+    async def get_many(self, model: type[M], *, limit: int, offset: int, order: str = "asc", **filters: Any) -> list[M]:
         """
         Retrieve a list of records with pagination and filtering.
 
@@ -239,17 +239,20 @@ class DbStorage:
             model: The SQLAlchemy model class.
             limit: Maximum number of records to return.
             offset: Number of records to skip.
+            order: Get results by order ("asc" or "desc").
             **filters: Filter criteria for the selection.
 
         Returns:
             A list of matching model instances.
         """
-        async with self.db.get_session() as s:
-            query = select(model).offset(offset).limit(limit).filter_by(**filters)
+        pk = inspect(model).primary_key[0]
+        order_expr = pk.desc() if order.lower() == "desc" else pk.asc()
+        async with self.session as s:
+            query = select(model).offset(offset).limit(limit).filter_by(**filters).order_by(order_expr)
             return list(await s.scalars(query))
 
     async def patch(self, model: type[M], pk: int, data: dict[str, Any]) -> M:
-        async with self.db.get_session() as s:
+        async with self.session as s:
             obj = await s.get(model, pk)
             if not obj:
                 raise DoesNotExistError
@@ -271,6 +274,6 @@ class DbStorage:
         Returns:
             The total count of matching records.
         """
-        async with self.db.get_session() as s:
+        async with self.session as s:
             query = select(func.count()).select_from(model).filter_by(**filters)
             return await s.scalar(query) or 0

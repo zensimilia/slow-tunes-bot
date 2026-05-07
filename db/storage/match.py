@@ -32,7 +32,5 @@ class MatchStore:
         return await self.get_by(original_id=original_id)
 
     async def get_list(self, *, limit: int = 10, offset: int = 0, sort_by_desc: bool = False) -> list[Match]:
-        result = list(await self.storage.get_many(self.model, limit=limit, offset=offset))
-        if sort_by_desc:
-            result.sort(key=lambda k: k.pk or 0, reverse=True)
-        return result
+        order = "desc" if sort_by_desc else "asc"
+        return list(await self.storage.get_many(self.model, limit=limit, offset=offset, order=order))

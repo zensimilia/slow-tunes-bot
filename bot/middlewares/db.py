@@ -26,8 +26,9 @@ class DbSessionMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: dict[str, Any],
     ) -> Any:
-        storage = DbStorage(self.__db)
-        data["user_store"] = UserStore(storage)
-        data["match_store"] = MatchStore(storage)
+        async with self.__db.get_session() as session:
+            storage = DbStorage(session)
+            data["user_store"] = UserStore(storage)
+            data["match_store"] = MatchStore(storage)
 
-        return await handler(event, data)
+            return await handler(event, data)
