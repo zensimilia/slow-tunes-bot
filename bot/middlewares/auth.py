@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Any
 from aiogram import BaseMiddleware
 from aiogram.types import CallbackQuery, Message, TelegramObject, Update
 
+from bot import messages as txt
 from bot.core.exceptions import MissingRequiredError
-from bot.core.messages import PLS_SEND_START_CMD
 from bot.utils.tg import answer_from_update
 from db.models.user import User
 
@@ -61,7 +61,7 @@ class UserMiddleware(BaseMiddleware):
                 raise MissingRequiredError
             user_obj = await user_store.get_by(tg_id=user_tg_id)
             if not user_obj:
-                return await answer_from_update(event_obj, PLS_SEND_START_CMD, is_reply=True)
+                return await answer_from_update(event_obj, txt.PLS_SEND_START_CMD, is_reply=True)
 
         await self.__redis.set(user_key, user_obj.model_dump_json(), ex=self.__expire)
 

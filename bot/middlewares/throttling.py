@@ -4,7 +4,7 @@ from aiogram import BaseMiddleware
 from aiogram.dispatcher.flags import get_flag
 from loguru import logger
 
-from bot.core.messages import THROTTLING_TEXT
+from bot import messages as txt
 from bot.utils.tg import answer_from_update
 
 if TYPE_CHECKING:
@@ -87,7 +87,7 @@ class RateLimitMiddleware(BaseMiddleware):
             if await self._cache.incr(flood_key) <= 1:
                 await self._cache.expire(flood_key, rate, nx=True)
                 ttl = await self._cache.ttl(redis_key)
-                text = THROTTLING_TEXT.format(ttl=ttl)
+                text = txt.THROTTLING_TEXT.format(ttl=ttl)
                 logger.debug(f'Prevent flooding <user_id={user_tg_id} key="{rate_key}" rate={rate}s ttl={ttl}s>')
                 return await answer_from_update(event, text, is_reply=True)
             return 0

@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from aiogram import Bot, types
 
-from bot.core.config import config
+from bot.config import config
 from bot.utils import tg, version
 
 if TYPE_CHECKING:

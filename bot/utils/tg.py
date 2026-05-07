@@ -8,7 +8,7 @@ from aiogram import Bot, types
 from aiogram.exceptions import TelegramAPIError
 from loguru import logger
 
-from bot.core.config import config
+from bot.config import config
 from bot.core.exceptions import MissingRequiredError
 from bot.keyboards.public import please_wait_button
 

@@ -3,7 +3,7 @@ import sys
 
 from loguru import logger
 
-from .config import config
+from bot.config import config
 
 LOG_LEVEL = "DEBUG" if config.DEBUG else "INFO"
 

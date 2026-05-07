@@ -4,7 +4,7 @@ from aiogram import types
 from aiogram.exceptions import TelegramAPIError
 from aiogram.utils.chat_action import ChatActionSender
 
-from bot.core import messages as txt
+from bot import messages as txt
 from bot.core.exceptions import UploadError
 from bot.keyboards.cbd import MatchAction, MatchCbd
 from bot.services.audio_processor import AudioProcessor

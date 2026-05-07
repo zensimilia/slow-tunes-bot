@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from aiogram import Bot, Router, flags, types
 from aiogram.filters import Command, CommandStart
 
-from bot.core import messages as txt
+from bot import messages as txt
 from bot.keyboards.public import about_keyboard
 from db.models.user import UserNew
 

@@ -8,6 +8,7 @@ from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import BotCommand
 from redis.asyncio import Redis
 
+from bot.config import config
 from bot.middlewares.auth import UserMiddleware
 from bot.middlewares.db import DbSessionMiddleware
 from bot.middlewares.retry import RetryRequestMiddleware
@@ -16,8 +17,6 @@ from bot.routes import admin_router, audio_router, common_router
 from bot.services.queue import TaskQueue
 from bot.services.stream import TaskStream
 from db.engine import Database
-
-from .config import config
 
 DB_URL = f"sqlite+aiosqlite:///{config.DB_FILE.as_posix()}"
 STREAM_CONSUMER_NAME = "main"

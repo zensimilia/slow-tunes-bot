@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING
 
 from aiogram import F, Router, flags, types
 
+from bot import messages as txt
 from bot.core.exceptions import FileIsTooBigError
-from bot.core.messages import QUEUE_POSITION_TEXT
 from bot.handlers.tasks import send_match_if_exist, slowing_down_task
 from bot.keyboards.cbd import MatchAction, MatchCbd
 
@@ -36,7 +36,7 @@ async def audio_handler(
 
     position = queue.total_pending
     if position > 1:
-        await message.reply(QUEUE_POSITION_TEXT.format(position=position), disable_notification=True)
+        await message.reply(txt.QUEUE_POSITION_TEXT.format(position=position), disable_notification=True)
 
 
 @audio_router.callback_query(MatchCbd.filter(F.action == MatchAction.SHARE))

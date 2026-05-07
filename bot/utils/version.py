@@ -4,7 +4,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from bot.core.config import config
+from bot.config import config
 
 FALLBACK_VERSION = "latest"
 

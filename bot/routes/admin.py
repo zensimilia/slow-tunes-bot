@@ -1,8 +1,8 @@
 from aiogram import Bot, Router, types
 from aiogram.filters import Command
 
-from bot.core import messages as txt
-from bot.core.config import config
+from bot import messages as txt
+from bot.config import config
 from bot.core.filters import IsAdmin
 from bot.keyboards.public import support_keyboard
 
