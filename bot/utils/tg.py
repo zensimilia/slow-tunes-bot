@@ -8,9 +8,9 @@ from aiogram import Bot, types
 from aiogram.exceptions import TelegramAPIError
 from loguru import logger
 
-from core.config import config
-from core.exceptions import MissingRequiredError
-from keyboards.public import please_wait_button
+from bot.core.config import config
+from bot.core.exceptions import MissingRequiredError
+from bot.keyboards.public import please_wait_button
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator

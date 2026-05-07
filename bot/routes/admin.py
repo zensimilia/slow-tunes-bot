@@ -1,10 +1,10 @@
 from aiogram import Bot, Router, types
 from aiogram.filters import Command
 
-from core import messages as txt
-from core.config import config
-from core.filters import IsAdmin
-from keyboards.public import support_keyboard
+from bot.core import messages as txt
+from bot.core.config import config
+from bot.core.filters import IsAdmin
+from bot.keyboards.public import support_keyboard
 
 admin_router = Router()
 admin_router.message.filter(IsAdmin([config.BOT_ADMIN_ID]))

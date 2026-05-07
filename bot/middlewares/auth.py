@@ -4,17 +4,17 @@ from typing import TYPE_CHECKING, Any
 from aiogram import BaseMiddleware
 from aiogram.types import CallbackQuery, Message, TelegramObject, Update
 
-from core.exceptions import MissingRequiredError
-from core.messages import PLS_SEND_START_CMD
-from models.user import User
-from utils.tg import answer_from_update
+from bot.core.exceptions import MissingRequiredError
+from bot.core.messages import PLS_SEND_START_CMD
+from bot.utils.tg import answer_from_update
+from db.models.user import User
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
     from redis.asyncio import Redis
 
-    from storage.user import UserStore
+    from db.storage.user import UserStore
 
 
 USER_KEY = "user_cache"

@@ -1,8 +1,8 @@
 import asyncio
 import sys
 
-from core.bootstrap import setup_bot, setup_dispatcher
-from core.logger import logger, setup_logging
+from bot.core.bootstrap import setup_bot, setup_dispatcher
+from bot.core.logger import logger, setup_logging
 
 
 async def main() -> None:

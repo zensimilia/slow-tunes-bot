@@ -2,15 +2,16 @@ from typing import TYPE_CHECKING
 
 from aiogram import F, Router, flags, types
 
-from core.exceptions import FileIsTooBigError
-from core.messages import QUEUE_POSITION_TEXT
-from handlers.tasks import send_match_if_exist, slowing_down_task
-from keyboards.cbd import MatchAction, MatchCbd
+from bot.core.exceptions import FileIsTooBigError
+from bot.core.messages import QUEUE_POSITION_TEXT
+from bot.handlers.tasks import send_match_if_exist, slowing_down_task
+from bot.keyboards.cbd import MatchAction, MatchCbd
 
 if TYPE_CHECKING:
     from core.queue import TaskQueue
-    from models.user import User
-    from storage.match import MatchStore
+
+    from db.models.user import User
+    from db.storage.match import MatchStore
 
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 Mb
 

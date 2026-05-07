@@ -7,11 +7,11 @@ if TYPE_CHECKING:
 
     from aiogram.types import TelegramObject
 
-    from db.base import AsyncDatabaseProtocol
+    from db.engine import AsyncDatabaseProtocol
 
-from db.storage import DbStorage
-from storage.match import MatchStore
-from storage.user import UserStore
+from db.engine import DbStorage
+from db.storage.match import MatchStore
+from db.storage.user import UserStore
 
 
 class DbSessionMiddleware(BaseMiddleware):

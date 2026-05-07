@@ -6,14 +6,14 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import BotCommand
-from redis.asyncio import Redis
-
-from db.base import Database
 from middlewares.auth import UserMiddleware
 from middlewares.db import DbSessionMiddleware
 from middlewares.retry import RetryRequestMiddleware
 from middlewares.throttling import RateLimitMiddleware
+from redis.asyncio import Redis
 from routes import admin_router, audio_router, common_router
+
+from db.engine import Database
 
 from .config import config
 from .queue import TaskQueue

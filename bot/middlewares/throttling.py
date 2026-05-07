@@ -4,8 +4,8 @@ from aiogram import BaseMiddleware
 from aiogram.dispatcher.flags import get_flag
 from loguru import logger
 
-from core.messages import THROTTLING_TEXT
-from utils.tg import answer_from_update
+from bot.core.messages import THROTTLING_TEXT
+from bot.utils.tg import answer_from_update
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable

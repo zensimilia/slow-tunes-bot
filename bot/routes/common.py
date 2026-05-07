@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING
 from aiogram import Bot, Router, flags, types
 from aiogram.filters import Command, CommandStart
 
-from core import messages as txt
-from keyboards.public import about_keyboard
-from models.user import UserNew
+from bot.core import messages as txt
+from bot.keyboards.public import about_keyboard
+from db.models.user import UserNew
 
 if TYPE_CHECKING:
-    from storage.match import MatchStore
-    from storage.user import UserStore
+    from db.storage.match import MatchStore
+    from db.storage.user import UserStore
 
 common_router = Router()
 

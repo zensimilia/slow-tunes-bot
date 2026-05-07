@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING
 
 from aiogram import Bot, types
 
-from core.config import config
-from utils import tg, version
+from bot.core.config import config
+from bot.utils import tg, version
 
 if TYPE_CHECKING:
     from aiogram.utils.keyboard import InlineKeyboardBuilder

@@ -3,17 +3,17 @@ from typing import TYPE_CHECKING
 from aiogram import types
 from aiogram.exceptions import TelegramAPIError
 from aiogram.utils.chat_action import ChatActionSender
-
 from core import messages as txt
 from core.exceptions import UploadError
 from keyboards.cbd import MatchAction, MatchCbd
-from models.match import MatchNew
 from services.audio_processor import AudioProcessor
 from services.sox import SoxCommandBuilder
 from utils import tg
 
+from db.models.match import MatchNew
+
 if TYPE_CHECKING:
-    from storage.match import MatchStore
+    from db.storage.match import MatchStore
 
 OUTPUT_MP3_QUALITY = "320"  # best CBR
 CHUNK_SIZE = 64 * 1024  # 64 kb
