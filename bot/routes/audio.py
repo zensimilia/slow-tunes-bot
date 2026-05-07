@@ -4,8 +4,9 @@ from aiogram import F, Router, flags, types
 
 from bot import messages as txt
 from bot.core.exceptions import FileIsTooBigError
-from bot.handlers.tasks import send_match_if_exist, slowing_down_task
+from bot.handlers.tasks import slowing_down_task
 from bot.keyboards.cbd import MatchAction, MatchCbd
+from bot.utils import tg
 
 if TYPE_CHECKING:
     from bot.services.queue import TaskQueue
@@ -29,14 +30,19 @@ async def audio_handler(
     if audio.file_size and audio.file_size >= MAX_FILE_SIZE:
         raise FileIsTooBigError
 
-    if await send_match_if_exist(message, match_store):
-        return
-
-    queue.enqueue(slowing_down_task, message, match_store, user.pk)
-
-    position = queue.total_pending
-    if position > 1:
-        await message.reply(txt.QUEUE_POSITION_TEXT.format(position=position), disable_notification=True)
+    if saved_match := await match_store.get_by_original_id(audio.file_id):
+        reply_markup = MatchCbd(action=MatchAction.NONE).get_keyboard(
+            match_pk=saved_match.pk,
+            is_private=saved_match.is_private,
+            is_owner=user.pk == saved_match.user_pk,
+            is_random=False,
+        )
+        await tg.reply_audio(saved_match.slowed_id, message, reply_markup=reply_markup)
+    else:
+        queue.enqueue(slowing_down_task, message, match_store, user.pk)
+        if (position := queue.total_pending) > 1:
+            text = txt.QUEUE_POSITION_TEXT.format(position=position)
+            await message.reply(text, disable_notification=True)
 
 
 @audio_router.callback_query(MatchCbd.filter(F.action == MatchAction.SHARE))

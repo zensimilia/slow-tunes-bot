@@ -77,23 +77,3 @@ async def slowing_down_task(message: types.Message, match_store: MatchStore, use
     if upload_message.audio:  # save the match to the database
         new_match.slowed_id = upload_message.audio.file_id
         await match_store.create(new_match)
-
-
-async def send_match_if_exist(message: types.Message, match_store: MatchStore) -> bool:
-    if not message.audio:
-        return False
-    cb = MatchCbd(action=MatchAction.NONE)
-    if saved_match := await match_store.get_by_original_id(message.audio.file_id):
-        reply_markup = cb.get_keyboard(
-            match_pk=saved_match.pk or 0,
-            is_private=saved_match.is_private,
-            is_owner=True,
-            is_random=False,
-        )
-        await tg.reply_audio(saved_match.slowed_id, message, reply_markup=reply_markup)
-        return True
-    return False
-
-
-def get_audiofile_format(audio: types.Audio) -> str:
-    return tg.get_audio_file_extension(audio)
