@@ -7,16 +7,25 @@ services:
       context: .
       dockerfile: Dockerfile
     init: true
+    mem_limit: 512m
     container_name: bot
     restart: unless-stopped
-    volumes:
-      - bot-data:/app/data
     env_file:
       - ./.env
     depends_on:
       - redis
     environment:
       - TZ=Europe/Moscow
+      - TMPDIR=/tmp
+    cap_drop:
+      - ALL
+    cap_add:
+      - SYS_RESOURCE
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m
+    volumes:
+      - bot-data:/app/data
 
   redis:
     container_name: redis
@@ -25,10 +34,19 @@ services:
     mem_limit: 16m
     restart: unless-stopped
     command: redis-server --save 300 1 --loglevel warning
-    volumes:
-      - bot-cache:/data
     environment:
       - TZ=Europe/Moscow
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/redis
+    volumes:
+      - bot-cache:/data
 volumes:
   bot-data:
   bot-cache:
