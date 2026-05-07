@@ -1,14 +1,18 @@
 import asyncio
 import contextlib
 import logging
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
+import aiofiles
 import aiohttp
 
 if TYPE_CHECKING:
     from asyncio.subprocess import Process
     from collections.abc import AsyncIterator
     from pathlib import Path
+
+CHUNK_SIZE = 64 * 1024  # 64 kb
+PROCESS_TIMEOUT = 60  # 1 min
 
 logger = logging.getLogger(__name__)
 
@@ -39,32 +43,52 @@ class ProcessorBuilderProtocol(Protocol):
 class AudioProcessor:
     def __init__(self, command_builder: ProcessorBuilderProtocol) -> None:
         self.command_builder = command_builder
-        self.__chunk_size = 64 * 1024
-        self.__process_timeout = 30
+        self.__chunk_size = CHUNK_SIZE
+        self.__process_timeout = PROCESS_TIMEOUT
 
-    async def process_file(self, file_path: str | Path) -> bytes: ...  # TODO @me: implement
-
-    async def process_bytes(self, data: bytes) -> bytes: ...  # TODO @me: implement
-
-    async def process_url(self, input_url: str) -> bytes:
-        process = await asyncio.create_subprocess_exec(
+    async def create_process(self) -> Process:
+        return await asyncio.create_subprocess_exec(
             *self.command_builder.build_list(),
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        bytes_iterator = self.__download_by_chunks(input_url)
 
-        return await self.__execute(process, bytes_iterator)
+    async def process_file(self, file_path: str | Path) -> bytes:
+        file_iterator = self.__read_by_chunks(file_path, self.__chunk_size)
+        return await self.__execute(await self.create_process(), file_iterator)
 
-    async def __download_by_chunks(self, url: str) -> AsyncIterator[bytes]:
+    async def process_bytes(self, data: bytes) -> bytes:
+        bytes_iterator = self.__cut_by_chunks(data, self.__chunk_size)
+        return await self.__execute(await self.create_process(), bytes_iterator)
+
+    async def process_url(self, input_url: str, **kwargs: Any) -> bytes:
+        download_iterator = self.__download_by_chunks(input_url, **kwargs)
+        return await self.__execute(await self.create_process(), download_iterator)
+
+    async def __download_by_chunks(self, url: str, **kwargs: Any) -> AsyncIterator[bytes]:
         try:
-            async with aiohttp.ClientSession() as session, session.get(url) as resp:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.request(kwargs.pop("method", "GET"), url, **kwargs) as resp,
+            ):
                 resp.raise_for_status()
                 async for chunk in resp.content.iter_chunked(self.__chunk_size):
                     yield chunk
         except aiohttp.ClientResponseError as err:
             raise DownloadError(err.message) from err
+
+    async def __cut_by_chunks(self, data: bytes, chunk_size: int) -> AsyncIterator[bytes]:
+        for i in range(0, len(data), chunk_size):
+            yield data[i : i + chunk_size]
+
+    async def __read_by_chunks(self, file_path: str | Path, chunk_size: int) -> AsyncIterator[bytes]:
+        async with aiofiles.open(file_path, mode="rb") as f:
+            while True:
+                chunk = await f.read(chunk_size)
+                if not chunk:
+                    break
+                yield chunk
 
     async def __feed_process(self, process: Process, iterator: AsyncIterator[bytes]) -> None:
         if not process.stdin:
