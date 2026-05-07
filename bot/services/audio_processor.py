@@ -109,10 +109,13 @@ class AudioProcessor:
                     await process.wait()
             raise ProcessError(err) from err
 
-        if process.returncode != 0 and process.stderr:
+        if process.stderr:
             raw_stderr = await process.stderr.read()
-            msg_stderr = raw_stderr.decode().strip()
-            msg_raise = f"AudioProcessor failed with code {process.returncode}: {msg_stderr}"
+            lines_stderr = raw_stderr.decode().strip().splitlines()
+            [logger.debug(line) for line in lines_stderr]
+
+        if process.returncode != 0:
+            msg_raise = "AudioProcessor execute failed (see debug log)"
             raise ProcessError(msg_raise)
 
         return processed_audio
