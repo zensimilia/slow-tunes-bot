@@ -25,6 +25,6 @@ class Match(BaseModel, table=True):
 class MatchNew(SQLModel):
     user_pk: int
     original_id: str
-    slowed_id: str
+    slowed_id: str = "PENDING"
     is_private: bool = True
     is_forbidden: bool = False

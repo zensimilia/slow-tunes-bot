@@ -12,8 +12,13 @@ class MatchStore:
     def __init__(self, storage: StorageProtocol[Match]) -> None:
         self.storage = storage
 
+    async def get_or_create(self, match_new: MatchNew) -> Match:
+        if match_exist := await self.get_by_original_id(match_new.original_id):
+            return match_exist
+        return await self.create(match_new)
+
     async def create(self, match_new: MatchNew) -> Match:
-        match = self.model.model_validate(match_new)
+        match = self.model.model_validate(match_new.model_dump())
         return await self.storage.create(match)
 
     async def count(self, *, public_only: bool = False) -> int:
