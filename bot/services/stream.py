@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from redis.exceptions import ResponseError
 
-from .logger import logger
+from bot.core.logger import logger
 
 if TYPE_CHECKING:
     from aiogram import Bot

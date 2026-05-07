@@ -8,8 +8,7 @@ from bot.handlers.tasks import send_match_if_exist, slowing_down_task
 from bot.keyboards.cbd import MatchAction, MatchCbd
 
 if TYPE_CHECKING:
-    from core.queue import TaskQueue
-
+    from bot.services.queue import TaskQueue
     from db.models.user import User
     from db.repository.match import MatchStore
 
