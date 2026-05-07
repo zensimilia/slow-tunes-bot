@@ -60,7 +60,7 @@ class SoxCommandBuilder:
         self.format = input_format
         self.supported_formats = supported_formats or get_sox_supported_formats()
 
-        self.args = ["-V1"]
+        self.args = ["-V1", "--multi-threaded"]
         self.effects = []
         self.io = ["-t", input_format, "-", "-t", "mp3", "-C", output_quality, "-"]
 
