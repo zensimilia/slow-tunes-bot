@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Any
 
 from aiogram import BaseMiddleware
 from aiogram.dispatcher.flags import get_flag
+from aiogram.types import Message
 from loguru import logger
 
 from bot import messages as txt
@@ -10,7 +11,7 @@ from bot.utils.tg import answer_from_update
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
-    from aiogram.types import CallbackQuery, Message, TelegramObject
+    from aiogram.types import CallbackQuery, TelegramObject
     from redis.asyncio import Redis
 
 
@@ -74,6 +75,11 @@ class RateLimitMiddleware(BaseMiddleware):
         rate_limit: dict = get_flag(data, "rate_limit")
         if not rate_limit:
             return await handler(event, data)
+
+        if isinstance(event, Message) and event.media_group_id:
+            group_key = f"media_group:{event.media_group_id}"
+            if not await self._cache.set(name=group_key, value="1", nx=True, ex=10):
+                return await handler(event, data)
 
         rate = int(rate_limit.get("rate", self._rate))
         rate_key = rate_limit.get("key", self._rate_key)
