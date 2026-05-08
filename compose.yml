@@ -41,6 +41,8 @@ services:
     cap_add:
       - SETGID
       - SETUID
+      - CHOWN
+      - FOWNER
     read_only: true
     tmpfs:
       - /tmp
