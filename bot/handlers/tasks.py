@@ -8,34 +8,26 @@ from bot import messages as txt
 from bot.core.exceptions import UploadError
 from bot.keyboards.cbd import MatchAction, MatchCbd
 from bot.services.audio_processor import AudioProcessor
-from bot.services.sox import SoxCommandBuilder
+from bot.services.ffmpeg import FFmpegCommandBuilder
 from bot.utils import tg
 from db.models.match import MatchNew
 
 if TYPE_CHECKING:
     from db.repository.match import MatchStore
 
-OUTPUT_MP3_QUALITY = "320"  # best CBR
+OUTPUT_MP3_QUALITY = 320
+SAMPLE_RATE = 48000
 CHUNK_SIZE = 64 * 1024  # 64 kb
 PIPE_ERROR_MSG = "Process was created without stdin or stderr PIPE"
 
 
 async def proceed_audio(file_url: str) -> bytes:
-    fmt = tg.get_file_fmt_from_url(file_url)
-    sox_command = (
-        SoxCommandBuilder(input_format=fmt, output_quality=OUTPUT_MP3_QUALITY)
-        .gain(-3)
+    ffmpeg_command = (
+        FFmpegCommandBuilder(bitrate=OUTPUT_MP3_QUALITY, sample_rate=SAMPLE_RATE)
         .speed(33 / 45)
-        .filters(highpass_freq=100, lowpass_freq=15000)
-        .padding(0, 2)
-        .reverb(reverberance=70, hf_damping=50, scale=100, stereo_depth=100)
-        .bass(3)
-        .normalize(-1)
-        .dither()
+        .reverb(intensity=0.5, extrastereo=False)
     )
-
-    audio_processor = AudioProcessor(sox_command)
-
+    audio_processor = AudioProcessor(ffmpeg_command)
     return await audio_processor.process_url(file_url)
 
 
@@ -43,16 +35,15 @@ async def slowing_down_task(message: types.Message, match_store: MatchStore, use
     audio = tg.get_audio(message)
     bot = tg.get_bot(message)
 
-    file_obj = await bot.get_file(audio.file_id)
-    file_url = tg.get_file_download_url(file_obj)
-
     async with tg.temp_message(txt.START_SLOWING_DOWN, message):
+        file_obj = await bot.get_file(audio.file_id)
+        file_url = tg.get_file_download_url(file_obj)
+
         async with ChatActionSender.record_voice(bot=bot, chat_id=message.chat.id):
             slowed_audio = await proceed_audio(file_url)
 
         new_match = MatchNew(
             original_id=audio.file_id,
-            slowed_id=str(0),
             user_pk=user_pk,
             is_private=True,
             is_forbidden=False,

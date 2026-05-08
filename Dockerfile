@@ -11,12 +11,10 @@ ENV UV_NO_CACHE=1
 RUN groupadd --system --gid 999 nonroot \
     && useradd --system --gid 999 --uid 999 --create-home nonroot
 
-# Copy the uv binary from the official image
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-
-# Install dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends sox libsox-fmt-all \
-    && apt-get purge -y --auto-remove && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Copy required binary from third-party images
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+COPY --from=mwader/static-ffmpeg:latest /ffmpeg /usr/local/bin/
+COPY --from=mwader/static-ffmpeg:latest /ffprobe /usr/local/bin/
 
 # Create directories
 WORKDIR /app

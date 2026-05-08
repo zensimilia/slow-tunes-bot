@@ -32,7 +32,7 @@ async def audio_handler(
 
     if saved_match := await match_store.get_by_original_id(audio.file_id):
         reply_markup = MatchCbd(action=MatchAction.NONE).get_keyboard(
-            match_pk=saved_match.pk,
+            match_pk=saved_match.pk or 0,
             is_private=saved_match.is_private,
             is_owner=user.pk == saved_match.user_pk,
             is_random=False,

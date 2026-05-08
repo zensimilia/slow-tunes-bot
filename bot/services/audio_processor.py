@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 CHUNK_SIZE = 64 * 1024  # 64 kb
-PROCESS_TIMEOUT = 60  # 1 min
+PROCESS_TIMEOUT = 60 * 3  # 3 min
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +35,6 @@ class ProcessorBuilderProtocol(Protocol):
     def __str__(self) -> str: ...
     def build_list(self) -> list[str]: ...
     def build_string(self) -> str: ...
-    def get_suported_formats(self) -> list[str]: ...
-    def is_format_supported(self, fmt: str) -> bool: ...
-    def get_format(self) -> str: ...
 
 
 class AudioProcessor:
@@ -113,10 +110,6 @@ class AudioProcessor:
         return await process.stdout.read()
 
     async def __execute(self, process: Process, iterator: AsyncIterator[bytes]) -> bytes:
-        fmt = self.command_builder.get_format()
-        if not self.is_supported_format(fmt):
-            process.terminate()
-            raise UnsupportedFormatError(fmt)
         tasks = [self.__feed_process(process, iterator), self.__read_process(process)]
         try:
             _, processed_audio = await asyncio.wait_for(
@@ -143,10 +136,3 @@ class AudioProcessor:
             raise ProcessError(msg_raise)
 
         return processed_audio
-
-    @property
-    def formats(self) -> list[str]:
-        return self.command_builder.get_suported_formats()
-
-    def is_supported_format(self, fmt: str) -> bool:
-        return self.command_builder.is_format_supported(fmt)
