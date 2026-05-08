@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 import aiofiles
 import aiohttp
@@ -10,8 +10,11 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator
     from pathlib import Path
 
+T = TypeVar("T")
+
 CHUNK_SIZE = 64 * 1024  # 64 kb
 PROCESS_TIMEOUT = 60 * 3  # 3 min
+KILL_TIMEOUT = 5  # 5 sec
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +28,15 @@ class DownloadError(AudioProcessorError): ...
 class ProcessError(AudioProcessorError): ...
 
 
-class ProcessorBuilderProtocol(Protocol):
+class ProcessorBuilderProtocol[T](Protocol):
     def __str__(self) -> str: ...
     def build(self) -> list[str]: ...
+    def speed(self, *args: Any, **kwargs: Any) -> T: ...
+    def reverb(self, *args: Any, **kwargs: Any) -> T: ...
 
 
-class AudioProcessor:
-    def __init__(self, command_builder: ProcessorBuilderProtocol) -> None:
+class AudioProcessor[T]:
+    def __init__(self, command_builder: ProcessorBuilderProtocol[T]) -> None:
         self.command_builder = command_builder
         self.chunk_size: int = CHUNK_SIZE
         self.process_timeout: float = PROCESS_TIMEOUT
@@ -47,10 +52,10 @@ class AudioProcessor:
 
     async def process(
         self,
-        stream: AsyncIterator[bytes],
+        data: AsyncIterator[bytes],
     ) -> bytes:
         process = await self._create_process()
-        return await self._execute(process, stream)
+        return await self._execute(process, data)
 
     async def process_file(self, file_path: str | Path) -> bytes:
         return await self.process(self._read_by_chunks(file_path, self.chunk_size))
@@ -131,7 +136,7 @@ class AudioProcessor:
         else:
             process.terminate()
         try:
-            await asyncio.wait_for(process.wait(), timeout=5)
+            await asyncio.wait_for(process.wait(), timeout=KILL_TIMEOUT)
         except TimeoutError:
             process.kill()
             await process.wait()
@@ -140,13 +145,10 @@ class AudioProcessor:
         returncode: int
 
         try:
-            stdout, stderr = await asyncio.wait_for(
-                self._run_tasks(process, data),
-                timeout=self.process_timeout,
-            )
+            stdout, stderr = await asyncio.wait_for(self._run_tasks(process, data), timeout=self.process_timeout)
             stderr = stderr.decode(errors="replace").strip()
             logger.debug("Process stderr:\n%s", stderr)
-            returncode = await asyncio.wait_for(process.wait(), timeout=5)
+            returncode = await asyncio.wait_for(process.wait(), timeout=KILL_TIMEOUT)
         except* TimeoutError as eg:
             await self._stop_process(process, kill=True)
             raise ProcessError("Processing timeout") from eg

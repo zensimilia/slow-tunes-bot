@@ -25,12 +25,11 @@ class MatchAction(IntEnum):
 
 class MatchCbd(CallbackData, prefix="match"):
     action: MatchAction
-    pk: int | None = 0
+    pk: int
 
     def get_keyboard(
         self,
         *,
-        match_pk: int,
         is_owner: bool,
         is_private: bool,
         is_liked: bool = False,
@@ -43,55 +42,55 @@ class MatchCbd(CallbackData, prefix="match"):
                 keyboard.row(
                     InlineKeyboardButton(
                         text="🤙 Publish" if is_private else "🔒 Unpublish",
-                        callback_data=MatchCbd(action=MatchAction.SHARE, pk=match_pk).pack(),
+                        callback_data=MatchCbd(action=MatchAction.SHARE, pk=self.pk).pack(),
                     ),
                 )
             else:
                 keyboard.row(
                     InlineKeyboardButton(
                         text="💔 Dislike!" if is_liked else "❤ Like!",
-                        callback_data=MatchCbd(action=MatchAction.LIKE_TOGGLE, pk=match_pk).pack(),
+                        callback_data=MatchCbd(action=MatchAction.LIKE_TOGGLE, pk=self.pk).pack(),
                     ),
                     InlineKeyboardButton(
                         text="💩 Report!",
-                        callback_data=MatchCbd(action=MatchAction.REPORT, pk=match_pk).pack(),
+                        callback_data=MatchCbd(action=MatchAction.REPORT, pk=self.pk).pack(),
                     ),
                 )
         if self.action == MatchAction.SHARE:
             keyboard.row(
                 InlineKeyboardButton(
                     text="YES",
-                    callback_data=MatchCbd(action=MatchAction.SHARE_YES, pk=match_pk).pack(),
+                    callback_data=MatchCbd(action=MatchAction.SHARE_YES, pk=self.pk).pack(),
                 ),
                 InlineKeyboardButton(
                     text="HELP",
-                    callback_data=MatchCbd(action=MatchAction.SHARE_HELP).pack(),
+                    callback_data=MatchCbd(action=MatchAction.SHARE_HELP, pk=self.pk).pack(),
                 ),
                 InlineKeyboardButton(
                     text="NO",
-                    callback_data=MatchCbd(action=MatchAction.SHARE_NO, pk=match_pk).pack(),
+                    callback_data=MatchCbd(action=MatchAction.SHARE_NO, pk=self.pk).pack(),
                 ),
             )
         if self.action == MatchAction.REPORT:
             keyboard.row(
                 InlineKeyboardButton(
                     text="YES",
-                    callback_data=MatchCbd(action=MatchAction.REPORT_YES, pk=match_pk).pack(),
+                    callback_data=MatchCbd(action=MatchAction.REPORT_YES, pk=self.pk).pack(),
                 ),
                 InlineKeyboardButton(
                     text="HELP",
-                    callback_data=MatchCbd(action=MatchAction.REPORT_HELP).pack(),
+                    callback_data=MatchCbd(action=MatchAction.REPORT_HELP, pk=self.pk).pack(),
                 ),
                 InlineKeyboardButton(
                     text="NO",
-                    callback_data=MatchCbd(action=MatchAction.REPORT_NO, pk=match_pk).pack(),
+                    callback_data=MatchCbd(action=MatchAction.REPORT_NO, pk=self.pk).pack(),
                 ),
             )
         if is_random:
             keyboard.row(
                 InlineKeyboardButton(
                     text="🎲 Next",
-                    callback_data=MatchCbd(action=MatchAction.NEXT).pack(),
+                    callback_data=MatchCbd(action=MatchAction.NEXT, pk=self.pk).pack(),
                 ),
             )
 

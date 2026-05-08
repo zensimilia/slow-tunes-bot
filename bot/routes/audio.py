@@ -9,9 +9,13 @@ from bot.keyboards.cbd import MatchAction, MatchCbd
 from bot.utils import tg
 
 if TYPE_CHECKING:
+    from aiohttp import ClientSession
+
     from bot.services.queue import TaskQueue
+    from db.engine import Database
     from db.models.user import User
     from db.repository.match import MatchStore
+
 
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 Mb
 
@@ -20,26 +24,27 @@ audio_router = Router()
 
 @audio_router.message(F.audio.as_("audio"))
 @flags.rate_limit(rate=3, key="audio_handler")
-async def audio_handler(
+async def audio_handler(  # noqa: PLR0913
     message: types.Message,
     queue: TaskQueue,
     user: User,
     match_store: MatchStore,
     audio: types.Audio,
+    db: Database,
+    client: ClientSession,
 ) -> None:
     if audio.file_size and audio.file_size >= MAX_FILE_SIZE:
-        raise FileIsTooBigError
+        raise FileIsTooBigError(audio.file_size)
 
     if saved_match := await match_store.get_by_original_id(audio.file_id):
-        reply_markup = MatchCbd(action=MatchAction.NONE).get_keyboard(
-            match_pk=saved_match.pk or 0,
+        reply_markup = MatchCbd(action=MatchAction.NONE, pk=saved_match.pk).get_keyboard(
             is_private=saved_match.is_private,
             is_owner=user.pk == saved_match.user_pk,
             is_random=False,
         )
         await tg.reply_audio(saved_match.slowed_id, message, reply_markup=reply_markup)
     else:
-        queue.enqueue(slowing_down_task, message, match_store, user.pk)
+        queue.enqueue(slowing_down_task, message, db, client, user.pk)
         if (position := queue.total_pending) > 1:
             text = txt.QUEUE_POSITION_TEXT.format(position=position)
             await message.reply(text, disable_notification=True)
@@ -49,7 +54,7 @@ async def audio_handler(
 @flags.rate_limit(rate=3, key="share_handler")
 async def share_handler(callback: types.CallbackQuery, callback_data: MatchCbd) -> None:
     if isinstance(callback.message, types.Message):
-        reply_markup = callback_data.get_keyboard(match_pk=0, is_owner=True, is_private=True, is_liked=False)
+        reply_markup = callback_data.get_keyboard(is_owner=True, is_private=True, is_liked=False)
         await callback.message.edit_reply_markup(reply_markup=reply_markup)
     else:
         callback.answer("Something went wrong!", show_alert=True)
