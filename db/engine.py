@@ -91,6 +91,7 @@ class Database:
         async with self._session_factory() as session:
             try:
                 yield session
+                await session.commit()
             except IntegrityError as err:
                 await session.rollback()
                 logger.warning(err.orig)
@@ -172,11 +173,11 @@ class DbStorage:
         Returns:
             The saved and refreshed model instance with updated server-side state.
         """
-        async with self.session as s:
-            s.add(obj)
-            await s.commit()
-            await s.refresh(obj)
-            return obj
+        s = self.session
+        s.add(obj)
+        await s.flush()
+        await s.refresh(obj)
+        return obj
 
     async def create(self, obj: M) -> M:
         """
@@ -198,9 +199,8 @@ class DbStorage:
             model: The SQLAlchemy model class to delete from.
             **filters: Filter criteria for the delete query (e.g., id=1).
         """
-        async with self.session as s:
-            query = delete(model).filter_by(**filters)
-            await s.exec(query)
+        query = delete(model).filter_by(**filters)
+        await self.session.exec(query)
 
     async def get(self, model: type[M], pk: int) -> M | None:
         """
@@ -213,8 +213,7 @@ class DbStorage:
         Returns:
             The model instance if found, otherwise None.
         """
-        async with self.session as s:
-            return await s.get(model, pk)
+        return await self.session.get(model, pk)
 
     async def get_by(self, model: type[M], **filters: Any) -> M | None:
         """
@@ -227,9 +226,8 @@ class DbStorage:
         Returns:
             The first matching model instance or None.
         """
-        async with self.session as s:
-            query = select(model).filter_by(**filters).limit(1)
-            return await s.scalar(query)
+        query = select(model).filter_by(**filters).limit(1)
+        return await self.session.scalar(query)
 
     async def get_many(self, model: type[M], *, limit: int, offset: int, order: str = "asc", **filters: Any) -> list[M]:
         """
@@ -247,9 +245,8 @@ class DbStorage:
         """
         pk = inspect(model).primary_key[0]
         order_expr = pk.desc() if order.lower() == "desc" else pk.asc()
-        async with self.session as s:
-            query = select(model).offset(offset).limit(limit).filter_by(**filters).order_by(order_expr)
-            return list(await s.scalars(query))
+        query = select(model).offset(offset).limit(limit).filter_by(**filters).order_by(order_expr)
+        return list(await self.session.scalars(query))
 
     async def patch(self, model: type[M], pk: int, data: dict[str, Any]) -> M:
         """Updates specific fields of an existing record.
@@ -265,16 +262,16 @@ class DbStorage:
         Raises:
             DoesNotExistError: If no record is found with the given primary key.
         """
-        async with self.session as s:
-            obj = await s.get(model, pk)
-            if not obj:
-                raise DoesNotExistError
-            for key, value in data.items():
-                setattr(obj, key, value)
-            s.add(obj)
-            await s.commit()
-            await s.refresh(obj)
-            return obj
+        s = self.session
+        obj = await s.get(model, pk)
+        if not obj:
+            raise DoesNotExistError
+        for key, value in data.items():
+            setattr(obj, key, value)
+        s.add(obj)
+        await s.flush()
+        await s.refresh(obj)
+        return obj
 
     async def count(self, model: type[M], **filters: Any) -> int:
         """
@@ -287,6 +284,5 @@ class DbStorage:
         Returns:
             The total count of matching records.
         """
-        async with self.session as s:
-            query = select(func.count()).select_from(model).filter_by(**filters)
-            return await s.scalar(query) or 0
+        query = select(func.count()).select_from(model).filter_by(**filters)
+        return await self.session.scalar(query) or 0
