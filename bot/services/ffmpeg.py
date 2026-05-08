@@ -10,32 +10,21 @@ class FFmpegCommandBuilder:
         self.input = ["-i", "pipe:0"]
         self.output = [
             "-vn",
-            "-map_metadata",
-            "0",
-            "-disposition:v:0",
-            "attached_pic",
-            "-c:a",
-            "libmp3lame",
-            "-b:a",
-            f"{max(bitrate, 128)}k",
-            "-ar",
-            str(self.sample_rate),
-            "-ac",
-            "2",
-            "-write_xing",
-            "0",
-            "-id3v2_version",
-            "3",
-            "-write_id3v1",
-            "1",
-            "-f",
-            "mp3",
-            "pipe:1",
+            *["-map_metadata", "0"],
+            *["-disposition:v:0", "attached_pic"],
+            *["-c:a", "libmp3lame"],
+            *["-b:a", f"{max(bitrate, 128)}k"],
+            *["-ar", str(self.sample_rate)],
+            *["-ac", "2"],
+            *["-write_xing", "0"],
+            *["-id3v2_version", "3"],
+            *["-write_id3v1", "1"],
+            *["-f", "mp3", "pipe:1"],
         ]
 
     def __str__(self) -> str:
         """Return the shell-escaped command string."""
-        return self.build_string()
+        return shlex.join(self.build())
 
     def speed(self, ratio: float) -> Self:
         speed_rate = int(self.sample_rate * ratio)
@@ -51,24 +40,10 @@ class FFmpegCommandBuilder:
         self.effects.append(chain)
         return self
 
-    def build_list(self) -> list[str]:
-        """
-        Compile all components into a flat list of arguments for subprocess.
-
-        Returns:
-            List of arguments.
-        """
+    def build(self) -> list[str]:
+        """Compile all components into a flat list of arguments for subprocess."""
         cmd = ["/usr/local/bin/ffmpeg", *self.args, *self.input]
         if self.effects:
             cmd += ["-af", ",".join(self.effects) + ",asoftclip,volume=1.5,alimiter"]
         cmd += self.output
         return cmd
-
-    def build_string(self) -> str:
-        """
-        Compile the command into a shell-ready string with proper escaping.
-
-        Returns:
-            Shell-ready string with arguments for subprocess.
-        """
-        return shlex.join(self.build_list())

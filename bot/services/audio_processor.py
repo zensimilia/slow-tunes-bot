@@ -1,5 +1,4 @@
 import asyncio
-import contextlib
 import logging
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -26,60 +25,70 @@ class DownloadError(AudioProcessorError): ...
 class ProcessError(AudioProcessorError): ...
 
 
-class UnsupportedFormatError(AudioProcessorError):
-    def __init__(self, fmt: str) -> None:
-        super().__init__(f"Format {fmt} is unsupported")
-
-
 class ProcessorBuilderProtocol(Protocol):
     def __str__(self) -> str: ...
-    def build_list(self) -> list[str]: ...
-    def build_string(self) -> str: ...
+    def build(self) -> list[str]: ...
 
 
 class AudioProcessor:
     def __init__(self, command_builder: ProcessorBuilderProtocol) -> None:
         self.command_builder = command_builder
-        self.__chunk_size = CHUNK_SIZE
-        self.__process_timeout = PROCESS_TIMEOUT
+        self.chunk_size: int = CHUNK_SIZE
+        self.process_timeout: float = PROCESS_TIMEOUT
 
-    async def create_process(self) -> Process:
+    async def _create_process(self) -> Process:
+        logger.debug("Start process command: %s", self.command_builder)
         return await asyncio.create_subprocess_exec(
-            *self.command_builder.build_list(),
+            *self.command_builder.build(),
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
 
+    async def process(
+        self,
+        stream: AsyncIterator[bytes],
+    ) -> bytes:
+        process = await self._create_process()
+        return await self._execute(process, stream)
+
     async def process_file(self, file_path: str | Path) -> bytes:
-        file_iterator = self.__read_by_chunks(file_path, self.__chunk_size)
-        return await self.__execute(await self.create_process(), file_iterator)
+        return await self.process(self._read_by_chunks(file_path, self.chunk_size))
 
     async def process_bytes(self, data: bytes) -> bytes:
-        bytes_iterator = self.__cut_by_chunks(data, self.__chunk_size)
-        return await self.__execute(await self.create_process(), bytes_iterator)
+        return await self.process(self._cut_by_chunks(data, self.chunk_size))
 
-    async def process_url(self, input_url: str, **kwargs: Any) -> bytes:
-        download_iterator = self.__download_by_chunks(input_url, **kwargs)
-        return await self.__execute(await self.create_process(), download_iterator)
+    async def process_url(
+        self,
+        url: str,
+        *,
+        method: str = "GET",
+        session: aiohttp.ClientSession,
+        **request_kwargs: Any,
+    ) -> bytes:
+        return await self.process(self._download_by_chunks(url, method=method, session=session, **request_kwargs))
 
-    async def __download_by_chunks(self, url: str, **kwargs: Any) -> AsyncIterator[bytes]:
+    async def _download_by_chunks(
+        self,
+        url: str,
+        *,
+        method: str,
+        session: aiohttp.ClientSession,
+        **request_kwargs: Any,
+    ) -> AsyncIterator[bytes]:
         try:
-            async with (
-                aiohttp.ClientSession() as session,
-                session.request(kwargs.pop("method", "GET"), url, **kwargs) as resp,
-            ):
+            async with session.request(method, url, **request_kwargs) as resp:
                 resp.raise_for_status()
-                async for chunk in resp.content.iter_chunked(self.__chunk_size):
+                async for chunk in resp.content.iter_chunked(self.chunk_size):
                     yield chunk
-        except aiohttp.ClientResponseError as err:
-            raise DownloadError(err.message) from err
+        except aiohttp.ClientError as err:
+            raise DownloadError(err) from err
 
-    async def __cut_by_chunks(self, data: bytes, chunk_size: int) -> AsyncIterator[bytes]:
+    async def _cut_by_chunks(self, data: bytes, chunk_size: int) -> AsyncIterator[bytes]:
         for i in range(0, len(data), chunk_size):
             yield data[i : i + chunk_size]
 
-    async def __read_by_chunks(self, file_path: str | Path, chunk_size: int) -> AsyncIterator[bytes]:
+    async def _read_by_chunks(self, file_path: str | Path, chunk_size: int) -> AsyncIterator[bytes]:
         async with aiofiles.open(file_path, mode="rb") as f:
             while True:
                 chunk = await f.read(chunk_size)
@@ -87,12 +96,12 @@ class AudioProcessor:
                     break
                 yield chunk
 
-    async def __feed_process(self, process: Process, iterator: AsyncIterator[bytes]) -> None:
+    async def _feed_process(self, process: Process, data: AsyncIterator[bytes]) -> None:
         if not process.stdin:
-            return
+            raise RuntimeError("Process stdin is not available")
 
         try:
-            async for chunk in iterator:
+            async for chunk in data:
                 process.stdin.write(chunk)
                 await process.stdin.drain()
         except BrokenPipeError, ConnectionResetError:
@@ -103,36 +112,52 @@ class AudioProcessor:
             process.stdin.close()
             await process.stdin.wait_closed()
 
-    async def __read_process(self, process: Process) -> bytes:
-        if not process.stdout:
-            raise RuntimeError
+    async def _run_tasks(self, process: Process, data: AsyncIterator[bytes]) -> tuple[bytes, bytes]:
+        if not process.stdout or not process.stderr:
+            raise RuntimeError("Process stdout/stderr is not available")
 
-        return await process.stdout.read()
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(self._feed_process(process, data))
+            stdout = tg.create_task(process.stdout.read())
+            stderr = tg.create_task(process.stderr.read())
 
-    async def __execute(self, process: Process, iterator: AsyncIterator[bytes]) -> bytes:
-        tasks = [self.__feed_process(process, iterator), self.__read_process(process)]
+        return stdout.result(), stderr.result()
+
+    async def _stop_process(self, process: Process, *, kill: bool = False) -> None:
+        if process.returncode is not None:
+            return
+        if kill:
+            process.kill()
+        else:
+            process.terminate()
         try:
-            _, processed_audio = await asyncio.wait_for(
-                asyncio.gather(*tasks),
-                timeout=self.__process_timeout,
-            )
+            await asyncio.wait_for(process.wait(), timeout=5)
+        except TimeoutError:
+            process.kill()
             await process.wait()
 
-        except Exception as err:
-            logger.exception("Error while processing")
-            if process.returncode is None:
-                with contextlib.suppress(BaseException):
-                    process.kill()
-                    await process.wait()
-            raise ProcessError(err) from err
+    async def _execute(self, process: Process, data: AsyncIterator[bytes]) -> bytes:
+        returncode: int
 
-        if process.stderr:
-            raw_stderr = await process.stderr.read()
-            lines_stderr = raw_stderr.decode().strip().splitlines()
-            [logger.debug(line) for line in lines_stderr]
+        try:
+            stdout, stderr = await asyncio.wait_for(
+                self._run_tasks(process, data),
+                timeout=self.process_timeout,
+            )
+            stderr = stderr.decode(errors="replace").strip()
+            logger.debug("Process stderr:\n%s", stderr)
+            returncode = await asyncio.wait_for(process.wait(), timeout=5)
+        except* TimeoutError as eg:
+            await self._stop_process(process, kill=True)
+            raise ProcessError("Processing timeout") from eg
+        except* asyncio.CancelledError:
+            await self._stop_process(process, kill=True)
+            raise
+        except* Exception as eg:
+            await self._stop_process(process, kill=True)
+            raise ProcessError(eg.exceptions) from eg
 
-        if process.returncode != 0:
-            msg_raise = "AudioProcessor execute failed (see debug log)"
-            raise ProcessError(msg_raise)
+        if returncode != 0:
+            raise ProcessError(f"Process failed ({returncode}): {stderr}")
 
-        return processed_audio
+        return stdout

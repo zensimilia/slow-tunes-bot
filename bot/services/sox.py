@@ -66,7 +66,7 @@ class SoxCommandBuilder:
 
     def __str__(self) -> str:
         """Return the shell-escaped command string."""
-        return self.build_string()
+        return shlex.join(self.build())
 
     def get_format(self) -> str:
         """Return the format attribute."""
@@ -220,7 +220,7 @@ class SoxCommandBuilder:
         self.effects.extend(["dither"])
         return self
 
-    def build_list(self) -> list[str]:
+    def build(self) -> list[str]:
         """
         Compile all components into a flat list of arguments for subprocess.
 
@@ -228,15 +228,6 @@ class SoxCommandBuilder:
             List of arguments.
         """
         return ["sox", *self.args, *self.io, *self.effects]
-
-    def build_string(self) -> str:
-        """
-        Compile the command into a shell-ready string with proper escaping.
-
-        Returns:
-            Shell-ready string with arguments for subprocess.
-        """
-        return shlex.join(self.build_list())
 
     @classmethod
     def _db(cls, value: float) -> str:

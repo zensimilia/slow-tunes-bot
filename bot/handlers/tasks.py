@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+import aiohttp
 from aiogram import types
 from aiogram.exceptions import TelegramAPIError
 from aiogram.utils.chat_action import ChatActionSender
@@ -18,7 +19,6 @@ if TYPE_CHECKING:
 OUTPUT_MP3_QUALITY = 320
 SAMPLE_RATE = 48000
 CHUNK_SIZE = 64 * 1024  # 64 kb
-PIPE_ERROR_MSG = "Process was created without stdin or stderr PIPE"
 
 
 async def proceed_audio(file_url: str) -> bytes:
@@ -28,7 +28,8 @@ async def proceed_audio(file_url: str) -> bytes:
         .reverb(intensity=0.5, extrastereo=False)
     )
     audio_processor = AudioProcessor(ffmpeg_command)
-    return await audio_processor.process_url(file_url)
+    async with aiohttp.ClientSession() as session:
+        return await audio_processor.process_url(file_url, session=session)
 
 
 async def slowing_down_task(message: types.Message, match_store: MatchStore, user_pk: int) -> None:
