@@ -1,5 +1,6 @@
 import asyncio
 
+import aiohttp
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
@@ -53,6 +54,9 @@ async def on_startup(bot: Bot, dispatcher: Dispatcher) -> None:
     background_tasks.add(stream_task)
     dispatcher["stream"] = stream  # inject streams
 
+    session = aiohttp.ClientSession()
+    dispatcher["client"] = session  # inject client session
+
     setup_routes(dispatcher)
     setup_middlewares(dispatcher)
 
@@ -66,6 +70,7 @@ async def on_shutdown(bot: Bot, dispatcher: Dispatcher) -> None:
 
     dispatcher["queue"].stop()
     await dispatcher["stream"].stop()
+    await dispatcher["client"].close()
 
     await bot.send_message(config.BOT_ADMIN_ID, "🔴 I'M OFFLINE!")
 
