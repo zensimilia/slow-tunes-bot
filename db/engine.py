@@ -252,6 +252,19 @@ class DbStorage:
             return list(await s.scalars(query))
 
     async def patch(self, model: type[M], pk: int, data: dict[str, Any]) -> M:
+        """Updates specific fields of an existing record.
+
+        Args:
+            model: The model class to be updated.
+            pk: The primary key of the record to fetch.
+            data: A dictionary containing field names as keys and their new values.
+
+        Returns:
+            The updated model instance after being refreshed from the database.
+
+        Raises:
+            DoesNotExistError: If no record is found with the given primary key.
+        """
         async with self.session as s:
             obj = await s.get(model, pk)
             if not obj:
