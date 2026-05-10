@@ -109,8 +109,8 @@ class AudioProcessor[T]:
             async for chunk in data:
                 process.stdin.write(chunk)
                 await process.stdin.drain()
-        except BrokenPipeError, ConnectionResetError:
-            logger.warning("AudioProcessor closed stdin prematurely")
+        except ConnectionError:
+            logger.warning("Process closed stdin prematurely")
         finally:
             if process.stdin.can_write_eof():
                 process.stdin.write_eof()
