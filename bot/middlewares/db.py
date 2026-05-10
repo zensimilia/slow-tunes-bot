@@ -18,7 +18,7 @@ class DbSessionMiddleware(BaseMiddleware):
     """A middleware component for managing database sessions in a aiogram bot application."""
 
     def __init__(self, db: AsyncDatabaseProtocol) -> None:
-        self.__db = db
+        self._db = db
 
     async def __call__(
         self,
@@ -26,9 +26,9 @@ class DbSessionMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: dict[str, Any],
     ) -> Any:
-        async with self.__db.get_session() as session:
+        data["db"] = self._db
+        async with self._db.get_session() as session:
             storage = DbStorage(session)
             data["user_store"] = UserStore(storage)
             data["match_store"] = MatchStore(storage)
-
             return await handler(event, data)

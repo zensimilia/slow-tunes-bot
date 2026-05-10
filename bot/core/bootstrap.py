@@ -40,9 +40,7 @@ async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -
 async def on_startup(bot: Bot, dispatcher: Dispatcher) -> None:
     await bot.delete_webhook(drop_pending_updates=True)  # drop pending updates workaround
     await set_bot_commands(bot)  # register bot commands
-
     await db.create_tables()  # create tables if not exist
-    dispatcher["db"] = db  # inject database
 
     queue = TaskQueue(maxsize=config.QUEUE_MAXSIZE)
     queue_task = asyncio.create_task(queue.start())  # start task queue worker

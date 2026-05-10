@@ -1,6 +1,6 @@
 import logging
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from typing import TYPE_CHECKING, Any, Protocol, TypeVar
+from typing import TYPE_CHECKING, Any, Concatenate, ParamSpec, Protocol, TypeVar
 
 from sqlalchemy import event
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -25,11 +25,17 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 M = TypeVar("M", bound=SQLModel)
+P = ParamSpec("P")
 
 
 class AsyncDatabaseProtocol(Protocol):
     def get_session(self) -> AbstractAsyncContextManager[AsyncSession, Any]: ...
-    async def execute(self, func: Callable[..., Awaitable[T]], *args: Any, **kwargs: Any) -> T: ...
+    async def execute(
+        self,
+        func: Callable[Concatenate[AsyncSession, P], Awaitable[T]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> T: ...
 
 
 class Database:
@@ -68,13 +74,15 @@ class Database:
         )
 
         # SQLite PRAGMA fix
-        @event.listens_for(self.engine.sync_engine, "connect")
-        def set_sqlite_pragma(connection: Connection, _record: Any) -> None:
-            sql = "PRAGMA foreign_keys=ON"
-            cursor = connection.cursor()
-            cursor.execute(sql)
-            cursor.close()
-            logger.info(sql)
+        if "sqlite" in self.engine.url.drivername:
+
+            @event.listens_for(self.engine.sync_engine, "connect")
+            def set_sqlite_pragma(connection: Connection, _record: Any) -> None:
+                sql = "PRAGMA foreign_keys=ON"
+                cursor = connection.cursor()
+                cursor.execute(sql)
+                cursor.close()
+                logger.info(sql)
 
     @asynccontextmanager
     async def get_session(self) -> AsyncGenerator[AsyncSession, Any]:
@@ -101,7 +109,12 @@ class Database:
                 logger.exception("Database error")
                 raise OperationalError(err._message) from err
 
-    async def execute(self, func: Callable[..., Awaitable[T]], *args: Any, **kwargs: Any) -> T:
+    async def execute(
+        self,
+        func: Callable[Concatenate[AsyncSession, P], Awaitable[T]],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> T:
         """
         Execute a function within a managed session context.
 
