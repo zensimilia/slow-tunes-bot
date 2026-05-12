@@ -13,7 +13,7 @@ DEFAULT_USERNAME = "Private Person"
 
 class UserNew(SQLModel):
     tg_id: int = Field(unique=True, index=True, nullable=False)
-    username: str = Field(default=DEFAULT_USERNAME, nullable=True)
+    username: str | None = Field(default=DEFAULT_USERNAME, nullable=True)
 
 
 class User(UserNew, Timestamped, BaseModel, table=True):

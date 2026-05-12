@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
     from redis.asyncio import Redis
 
-    from db.repository.user import UserStore
+    from db.repository.master import MasterStorage
 
 
 USER_KEY = "user_cache"
@@ -56,10 +56,10 @@ class UserMiddleware(BaseMiddleware):
             user_data = json.loads(cached_user)
             user_obj = User.model_validate(user_data)
         else:
-            user_store: UserStore | None = data.get("user_store")
-            if not user_store:
+            store: MasterStorage | None = data.get("storage")
+            if not store:
                 raise MissingRequiredError
-            user_obj = await user_store.get_by(tg_id=user_tg_id)
+            user_obj = await store.user.get_by(tg_id=user_tg_id)
             if not user_obj:
                 return await answer_from_update(event_obj, txt.PLS_SEND_START_CMD, is_reply=True)
 

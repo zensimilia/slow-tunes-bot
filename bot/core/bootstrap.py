@@ -1,6 +1,5 @@
 import asyncio
 
-import aiohttp
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
@@ -51,9 +50,6 @@ async def on_startup(bot: Bot, dispatcher: Dispatcher) -> None:
     stream_task = asyncio.create_task(stream.listen(STREAM_CONSUMER_NAME))  # listen streams
     background_tasks.add(stream_task)
     dispatcher["stream"] = stream  # inject streams
-
-    session = aiohttp.ClientSession()
-    dispatcher["client"] = session  # inject client session
 
     setup_routes(dispatcher)
     setup_middlewares(dispatcher)

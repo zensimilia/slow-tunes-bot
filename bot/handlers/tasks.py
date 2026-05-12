@@ -1,11 +1,10 @@
-from typing import TYPE_CHECKING
-
 from aiogram import types
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.exceptions import TelegramAPIError
 from aiogram.utils.chat_action import ChatActionSender
 
 from bot import messages as txt
-from bot.core.exceptions import UploadError
+from bot.core.exceptions import MissingRequiredError, UploadError
 from bot.keyboards.cbd import MatchAction, MatchCbd
 from bot.services.audio_processor import AudioProcessor
 from bot.services.ffmpeg import FFmpegCommandBuilder
@@ -14,34 +13,35 @@ from db.engine import Database, DbStorage
 from db.models.match import MatchNew
 from db.repository.match import MatchStore
 
-if TYPE_CHECKING:
-    from aiohttp import ClientSession
-
 OUTPUT_MP3_QUALITY = 320
 SAMPLE_RATE = 48000
 CHUNK_SIZE = 64 * 1024  # 64 kb
 
 
-async def proceed_audio(file_url: str, *, session: ClientSession) -> bytes:
+async def proceed_audio(file_url: str, *, session: AiohttpSession) -> bytes:
     ffmpeg_command = (
         FFmpegCommandBuilder(bitrate=OUTPUT_MP3_QUALITY, sample_rate=SAMPLE_RATE)
         .speed(33 / 45)
         .reverb(intensity=0.2, extrastereo=False)
     )
+    client = await session.create_session()
     audio_processor = AudioProcessor(ffmpeg_command)
-    return await audio_processor.process_url(file_url, session=session)
+    return await audio_processor.process_url(file_url, session=client)
 
 
-async def slowing_down_task(message: types.Message, db: Database, client: ClientSession, user_pk: int) -> None:
+async def slowing_down_task(message: types.Message, db: Database, user_pk: int) -> None:
     audio = tg.get_audio(message)
     bot = tg.get_bot(message)
+
+    if not isinstance(bot.session, AiohttpSession):
+        raise MissingRequiredError
 
     async with tg.temp_message(txt.START_SLOWING_DOWN, message):
         file_obj = await bot.get_file(audio.file_id)
         file_url = tg.get_file_download_url(file_obj)
 
         async with ChatActionSender.record_voice(bot=bot, chat_id=message.chat.id):
-            slowed_audio = await proceed_audio(file_url, session=client)
+            slowed_audio = await proceed_audio(file_url, session=bot.session)
 
         new_match = MatchNew(
             original_id=audio.file_id,
@@ -67,7 +67,7 @@ async def slowing_down_task(message: types.Message, db: Database, client: Client
 
     if upload_message.audio:  # save the match to the database
         new_match.slowed_id = upload_message.audio.file_id
-        async with db.get_session() as session:
-            storage = DbStorage(session)
+        async with db.get_session() as db_session:
+            storage = DbStorage(db_session)
             match_store = MatchStore(storage)
-            await match_store.create(new_match)
+            # await match_store.create(new_match)

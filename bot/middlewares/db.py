@@ -10,8 +10,7 @@ if TYPE_CHECKING:
     from db.engine import AsyncDatabaseProtocol
 
 from db.engine import DbStorage
-from db.repository.match import MatchStore
-from db.repository.user import UserStore
+from db.repository.master import MasterStorage
 
 
 class DbSessionMiddleware(BaseMiddleware):
@@ -29,6 +28,5 @@ class DbSessionMiddleware(BaseMiddleware):
         data["db"] = self._db
         async with self._db.get_session() as session:
             storage = DbStorage(session)
-            data["user_store"] = UserStore(storage)
-            data["match_store"] = MatchStore(storage)
+            data["storage"] = MasterStorage(storage)
             return await handler(event, data)

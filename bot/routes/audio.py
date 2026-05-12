@@ -9,13 +9,10 @@ from bot.keyboards.cbd import MatchAction, MatchCbd
 from bot.utils import tg
 
 if TYPE_CHECKING:
-    from aiohttp import ClientSession
-
     from bot.services.queue import TaskQueue
     from db.engine import Database
     from db.models.user import User
-    from db.repository.match import MatchStore
-
+    from db.repository.master import MasterStorage
 
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 Mb
 
@@ -28,15 +25,17 @@ async def audio_handler(  # noqa: PLR0913
     message: types.Message,
     queue: TaskQueue,
     user: User,
-    match_store: MatchStore,
+    storage: MasterStorage,
     audio: types.Audio,
     db: Database,
-    client: ClientSession,
 ) -> None:
+    if not message.bot:
+        return
+
     if audio.file_size and audio.file_size >= MAX_FILE_SIZE:
         raise FileIsTooBigError(audio.file_size)
 
-    if saved_match := await match_store.get_by_original_id(audio.file_id):
+    if saved_match := await storage.match.get_by_original_id(audio.file_id):
         reply_markup = MatchCbd(action=MatchAction.NONE, pk=saved_match.pk).get_keyboard(
             is_private=saved_match.is_private,
             is_owner=user.pk == saved_match.user_pk,
@@ -44,7 +43,7 @@ async def audio_handler(  # noqa: PLR0913
         )
         await tg.reply_audio(saved_match.slowed_id, message, reply_markup=reply_markup)
     else:
-        queue.enqueue(slowing_down_task, message, db, client, user.pk)
+        queue.enqueue(slowing_down_task, message, db, user.pk)
         if (position := queue.total_pending) > 1:
             text = txt.QUEUE_POSITION_TEXT.format(position=position)
             await message.reply(text, disable_notification=True)
