@@ -64,7 +64,6 @@ async def on_shutdown(bot: Bot, dispatcher: Dispatcher) -> None:
 
     dispatcher["queue"].stop()
     await dispatcher["stream"].stop()
-    await dispatcher["client"].close()
 
     await bot.send_message(config.BOT_ADMIN_ID, "🔴 I'M OFFLINE!")
 
