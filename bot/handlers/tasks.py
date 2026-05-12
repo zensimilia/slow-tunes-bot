@@ -20,9 +20,8 @@ CHUNK_SIZE = 64 * 1024  # 64 kb
 
 async def proceed_audio(file_url: str, *, session: AiohttpSession) -> bytes:
     ffmpeg_command = (
-        FFmpegCommandBuilder(bitrate=OUTPUT_MP3_QUALITY, sample_rate=SAMPLE_RATE)
-        .speed(33 / 45)
-        .reverb(intensity=0.2, extrastereo=False)
+        FFmpegCommandBuilder(bitrate=OUTPUT_MP3_QUALITY, sample_rate=SAMPLE_RATE).speed(33 / 45)
+        # .reverb(intensity=0.2, extrastereo=False)
     )
     client = await session.create_session()
     audio_processor = AudioProcessor(ffmpeg_command)
@@ -70,4 +69,4 @@ async def slowing_down_task(message: types.Message, db: Database, user_pk: int) 
         async with db.get_session() as db_session:
             storage = DbStorage(db_session)
             match_store = MatchStore(storage)
-            # await match_store.create(new_match)
+            await match_store.create(new_match)

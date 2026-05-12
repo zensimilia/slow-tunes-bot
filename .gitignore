@@ -15,6 +15,7 @@ build/
 
 # Окружение
 .env
-data/
+data/*
+!data/*.mp3
 .vscode/
 compose.*.yml

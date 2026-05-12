@@ -44,6 +44,17 @@ class FFmpegCommandBuilder:
         """Compile all components into a flat list of arguments for subprocess."""
         cmd = ["/usr/local/bin/ffmpeg", *self.args, *self.input]
         if self.effects:
-            cmd += ["-af", ",".join(self.effects) + ",asoftclip,volume=1.5,alimiter"]
+            # cmd += ["-af", ",".join(self.effects) + ",asoftclip,volume=1.5,alimiter"]
+            cmd += [
+                "-filter_complex",
+                (
+                    "amovie=/app/data/110210.mp3:loop=0,asetpts=N/SR/TB[noise];"
+                    "amovie=/app/data/220752.mp3,aresample=48000[ir];"
+                    f"[0:a]{','.join(self.effects)},highpass=f=300,lowpass=f=3000,asplit=2[in][dry];"
+                    "[dry][ir]afir=dry=10:wet=10:irnorm=1,highpass=f=1000,lowpass=f=5000[reverb];"
+                    "[in][reverb][noise]amix=inputs=3:duration=first:normalize=0:weights='1 0.4 0.2'"
+                    ",asoftclip,volume=1.25,alimiter,vibrato=f=1.5:d=0.2"
+                ),
+            ]
         cmd += self.output
         return cmd
