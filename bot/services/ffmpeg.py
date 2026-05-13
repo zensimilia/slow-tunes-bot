@@ -8,10 +8,19 @@ MAX_BITRATE = 320
 DATA_DIR = Path(__file__).parent.parent.parent / "data" / "fx"
 
 
-class AnalogFX(StrEnum):
+class FxAnalog(StrEnum):
     VINYL = auto()
     TAPE = auto()
     HISS = auto()
+
+    @property
+    def emoji(self) -> str:
+        mapping = {
+            FxAnalog.VINYL: "📀",
+            FxAnalog.TAPE: "📽️",
+            FxAnalog.HISS: "📼",
+        }
+        return mapping.get(self, "🔵")
 
 
 class FFmpegCommandBuilder:
@@ -19,7 +28,7 @@ class FFmpegCommandBuilder:
         if not (MIN_BITRATE <= bitrate <= MAX_BITRATE):
             raise ValueError(f"Output bitrate should be in range {MIN_BITRATE}-{MAX_BITRATE}")
 
-        self.executable = executable or "/usr/local/bin/ffmpeg"
+        self.executable = self._escape_path(Path(executable or "/usr/local/bin/ffmpeg"))
         self.bitrate = bitrate
         self.sample_rate = sample_rate
         self.args = ["-hide_banner", "-loglevel", "error", "-fflags", "+genpts"]
@@ -28,10 +37,7 @@ class FFmpegCommandBuilder:
         self.input_effects = ["adelay=1000|1000"]
         self.mix_steps = []
         self.master_effects = []
-        self.output_effects = [
-            "acompressor=threshold=-20dB:ratio=6:attack=5:release=100",
-            "alimiter",
-        ]
+        self.output_effects = ["alimiter"]
 
     def __str__(self) -> str:
         return shlex.join(self.build())
@@ -69,13 +75,26 @@ class FFmpegCommandBuilder:
         fx_list = self.master_effects if master else self.input_effects
         fx_list.append(f"vibrato=f={freq}:d={depth}")
         if pulsator:
-            phi = 1.61803398875
+            phi = 1.61803398875  # golden ratio magic
             fx_list.append(f"apulsator=hz={freq / phi}:amount={depth / phi}")
         return self
 
     def softclip(self, *, master: bool = False) -> Self:
         fx_list = self.master_effects if master else self.input_effects
         fx_list.append("volume=1.1,asoftclip=type=tanh")
+        return self
+
+    def compressor(
+        self,
+        *,
+        threshold: str = "-20dB",
+        ratio: int = 5,
+        attack: int = 5,
+        release: int = 100,
+        master: bool = False,
+    ) -> Self:
+        fx_list = self.master_effects if master else self.input_effects
+        fx_list.append(f"acompressor=threshold={threshold}:ratio={ratio}:attack={attack}:release={release}")
         return self
 
     def bandpass(self, *, freq: float = 1500, width: float = 800, master: bool = False) -> Self:
@@ -97,7 +116,7 @@ class FFmpegCommandBuilder:
         self.mix_steps.append(step)
         return self
 
-    def analog(self, fx: AnalogFX, *, weight: float = 1) -> Self:
+    def analog(self, fx: FxAnalog, *, weight: float = 1) -> Self:
         def step(inp: str, out: str, idx: int) -> tuple[str, str]:
             path = self._escape_path(DATA_DIR / f"{fx}.wav")
             loop_val = "0,asetpts=N/SR/TB"

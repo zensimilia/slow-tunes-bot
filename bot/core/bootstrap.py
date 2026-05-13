@@ -13,7 +13,7 @@ from bot.middlewares.auth import UserMiddleware
 from bot.middlewares.db import DbSessionMiddleware
 from bot.middlewares.retry import RetryRequestMiddleware
 from bot.middlewares.throttling import RateLimitMiddleware
-from bot.routes import admin_router, audio_router, common_router
+from bot.routes import admin_router, audio_router, common_router, fx_router
 from bot.services.queue import TaskQueue
 from bot.services.stream import TaskStream
 from db.engine import Database
@@ -74,6 +74,7 @@ def setup_routes(dispatcher: Dispatcher) -> None:
     dispatcher.include_router(admin_router)
     dispatcher.include_router(audio_router)
     dispatcher.include_router(common_router)
+    dispatcher.include_router(fx_router)
 
 
 def setup_middlewares(dispatcher: Dispatcher) -> None:

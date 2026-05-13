@@ -7,7 +7,7 @@ from bot import messages as txt
 from bot.core.exceptions import MissingRequiredError, UploadError
 from bot.keyboards.cbd import MatchAction, MatchCbd
 from bot.services.audio_processor import AudioProcessor
-from bot.services.ffmpeg import AnalogFX, FFmpegCommandBuilder
+from bot.services.ffmpeg import FFmpegCommandBuilder, FxAnalog
 from bot.utils import tg
 from db.engine import Database, DbStorage
 from db.models.match import MatchNew
@@ -23,10 +23,10 @@ async def proceed_audio(file_url: str, *, session: AiohttpSession) -> bytes:
         FFmpegCommandBuilder(bitrate=OUTPUT_MP3_QUALITY, sample_rate=SAMPLE_RATE)
         .filters(lowpass_freq=10000, highpass_freq=200)
         .speed(33.3 / 45)
-        .reverb(intensity=0.2)
-        .softclip()
-        .analog(AnalogFX.HISS)
-        .flutter(master=True, depth=0.2, freq=60 / 33.3 / 2)
+        .reverb(intensity=0.1)
+        .compressor()
+        .analog(FxAnalog.TAPE, weight=0.5)
+        .flutter(master=True, depth=0.25, freq=60 / 33.3 / 2)
         .softclip(master=True)
     )
     client = await session.create_session()
