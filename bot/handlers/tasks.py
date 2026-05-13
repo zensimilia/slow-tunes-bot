@@ -14,19 +14,20 @@ from db.models.match import MatchNew
 from db.repository.match import MatchStore
 
 OUTPUT_MP3_QUALITY = 320
-SAMPLE_RATE = 48000
+SAMPLE_RATE = 44100
 CHUNK_SIZE = 64 * 1024  # 64 kb
 
 
 async def proceed_audio(file_url: str, *, session: AiohttpSession) -> bytes:
     ffmpeg_command = (
         FFmpegCommandBuilder(bitrate=OUTPUT_MP3_QUALITY, sample_rate=SAMPLE_RATE)
-        .filters(lowpass_freq=5000, highpass_freq=100)
-        .speed(33 / 45)
+        .filters(lowpass_freq=10000, highpass_freq=200)
+        .speed(33.3 / 45)
         .reverb(intensity=0.2)
         .softclip()
         .analog(AnalogFX.HISS)
-        .flutter(master=True)
+        .flutter(master=True, depth=0.2, freq=60 / 33.3 / 2)
+        .softclip(master=True)
     )
     client = await session.create_session()
     audio_processor = AudioProcessor(ffmpeg_command)
