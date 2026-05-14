@@ -2,11 +2,11 @@ from typing import TYPE_CHECKING
 
 from sqlmodel import JSON, Field, Relationship, SQLModel
 
+from bot.services.ffmpeg import FxAnalog  # noqa: TC001
+
 from .base import BaseModel, Timestamped
 
 if TYPE_CHECKING:
-    from bot.services.ffmpeg import FxAnalog
-
     from .like import Like
     from .match import Match
 

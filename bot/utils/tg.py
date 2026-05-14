@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 from aiogram import Bot, types
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.exceptions import TelegramAPIError
 from loguru import logger
 
@@ -239,14 +240,23 @@ async def answer_from_update(obj: types.TelegramObject, text: str, *, is_reply: 
 
 
 def get_file_download_url(file: types.File) -> str:
+    """
+    Take a `File` object as input and returns the download URL for the file using the Telegram API.
+
+    Args:
+      file: An object that contains information about a file.
+
+    Returns:
+      A formatted URL string.
+    """
     if not file.bot or not file.file_path:
-        raise ValueError
+        raise MissingRequiredError
     return f"https://api.telegram.org/file/bot{file.bot.token}/{file.file_path}"
 
 
 def get_audio(message: types.Message) -> types.Audio:
     """
-    Take a message as input and returns the audio from the message if it exists, otherwise raises a ValueError.
+    Take a message as input and returns the audio from the message if it exists, otherwise raises exception.
 
     Args:
       message: Represents a message object in the Bot.
@@ -255,13 +265,13 @@ def get_audio(message: types.Message) -> types.Audio:
       Audio: The audio object from the message.
     """
     if not message.audio:
-        raise ValueError
+        raise MissingRequiredError
     return message.audio
 
 
 def get_bot(message: types.Message) -> Bot:
     """
-    Take a message as input and returns the Bot object if it exists, otherwise raises a ValueError.
+    Take a message as input and returns the Bot object if it exists, otherwise raises exception.
 
     Args:
       message: Represents a message object in the Bot.
@@ -270,8 +280,24 @@ def get_bot(message: types.Message) -> Bot:
       Bot: The Bot object from the message.
     """
     if not message.bot:
-        raise ValueError
+        raise MissingRequiredError
     return message.bot
+
+
+def get_session(message: types.Message) -> AiohttpSession:
+    """
+    Take a message as input and returns the AiohttpSession object if it exists, otherwise raises exception.
+
+    Args:
+      message: Represents a message object in the Bot.
+
+    Returns:
+      AiohttpSession: The AiohttpSession object.
+    """
+    bot = get_bot(message)
+    if not isinstance(bot.session, AiohttpSession):
+        raise MissingRequiredError
+    return bot.session
 
 
 def get_file_fmt_from_url(url: str) -> str:

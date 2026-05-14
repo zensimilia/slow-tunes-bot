@@ -11,7 +11,6 @@ from bot.utils import tg
 if TYPE_CHECKING:
     from bot.services.queue import TaskQueue
     from db.engine import Database
-    from db.models.user import User
     from db.repository.master import MasterStorage
 
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 Mb
@@ -21,10 +20,9 @@ audio_router = Router()
 
 @audio_router.message(F.audio.as_("audio"))
 @flags.rate_limit(rate=3, key="audio_handler")
-async def audio_handler(  # noqa: PLR0913
+async def audio_handler(
     message: types.Message,
     queue: TaskQueue,
-    user: User,
     storage: MasterStorage,
     audio: types.Audio,
     db: Database,
@@ -38,12 +36,12 @@ async def audio_handler(  # noqa: PLR0913
     if saved_match := await storage.match.get_by_original_id(audio.file_id):
         reply_markup = MatchCbd(action=MatchAction.NONE, pk=saved_match.pk).get_keyboard(
             is_private=saved_match.is_private,
-            is_owner=user.pk == saved_match.user_pk,
+            is_owner=message.chat.id == saved_match.user_id,
             is_random=False,
         )
         await tg.reply_audio(saved_match.slowed_id, message, reply_markup=reply_markup)
     else:
-        queue.enqueue(slowing_down_task, message, db, user.pk)
+        queue.enqueue(slowing_down_task, message, db)
         if (position := queue.total_pending) > 1:
             text = txt.QUEUE_POSITION_TEXT.format(position=position)
             await message.reply(text, disable_notification=True)

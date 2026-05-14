@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 from .base import BaseModel, Timestamped
 
@@ -11,14 +11,15 @@ if TYPE_CHECKING:
 
 class MatchNew(SQLModel):
     original_id: str = Field(nullable=False, index=True)
-    slowed_id: str = Field(default="PENDING", nullable=False)
+    slowed_id: str = Field(nullable=False)
     is_private: bool = Field(default=True)
     is_forbidden: bool = Field(default=False)
-    user_pk: int = Field(foreign_key="users.pk", ondelete="CASCADE")
+    user_id: int = Field(foreign_key="users.tg_id", ondelete="CASCADE")
 
 
 class Match(MatchNew, BaseModel, Timestamped, table=True):
     __tablename__: str = "matches"
+    __table_args__ = (UniqueConstraint("user_id", "original_id", name="unique_user_match_like"),)
 
     pk: int = Field(default=None, primary_key=True)
 
