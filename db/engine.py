@@ -1,3 +1,4 @@
+import json
 import logging
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import TYPE_CHECKING, Any, Concatenate, ParamSpec, Protocol, TypeVar
@@ -26,6 +27,15 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 M = TypeVar("M", bound=SQLModel)
 P = ParamSpec("P")
+
+
+def universal_json_serializer(obj: Any) -> str:
+    def default_encoder(item: Any) -> Any:
+        if isinstance(item, BaseModel):
+            return item.model_dump()
+        raise TypeError(f"Object of type {type(item).__name__} is not JSON serializable")
+
+    return json.dumps(obj, default=default_encoder, ensure_ascii=False)
 
 
 class AsyncDatabaseProtocol(Protocol):
@@ -62,7 +72,7 @@ class Database:
             `expire_on_commit` is set to False by default.
         """
         self._url = url
-        self.engine = create_async_engine(url=self._url)
+        self.engine = create_async_engine(url=self._url, json_serializer=universal_json_serializer)
 
         session_opts: dict[str, Any] = {"expire_on_commit": False}
         session_opts.update(**kwargs)

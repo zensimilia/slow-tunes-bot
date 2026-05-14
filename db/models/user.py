@@ -1,19 +1,26 @@
 from typing import TYPE_CHECKING
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import JSON, Field, Relationship, SQLModel
 
 from .base import BaseModel, Timestamped
 
 if TYPE_CHECKING:
+    from bot.services.ffmpeg import FxAnalog
+
     from .like import Like
     from .match import Match
 
 DEFAULT_USERNAME = "Private Person"
 
 
+class UserOptions(BaseModel):
+    fx_analog: FxAnalog | None = None
+
+
 class UserNew(SQLModel):
     tg_id: int = Field(unique=True, index=True, nullable=False)
     username: str | None = Field(default=DEFAULT_USERNAME, nullable=True)
+    options: UserOptions = Field(default_factory=UserOptions, sa_type=JSON)
 
 
 class User(UserNew, Timestamped, BaseModel, table=True):
@@ -27,3 +34,4 @@ class User(UserNew, Timestamped, BaseModel, table=True):
 
 class UserUpdate(SQLModel):
     username: str
+    options: UserOptions = Field(default_factory=UserOptions, sa_type=JSON)

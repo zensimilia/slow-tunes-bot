@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any
 
-from db.models.user import User, UserNew
+from db.models.user import User, UserNew, UserOptions
 
 if TYPE_CHECKING:
     from db.storage import StorageProtocol
@@ -30,3 +30,15 @@ class UserStore:
 
     async def count(self) -> int:
         return await self.storage.count(self.model) or 0
+
+    async def update_options(self, pk: int, options_update: UserOptions) -> User | None:
+        user = await self.get(pk)
+        if not user:
+            return None
+
+        current_options = UserOptions.model_validate(user.options)
+        update_data = options_update.model_dump(exclude_unset=True)
+        updated_data = current_options.model_dump() | update_data
+        user.options = UserOptions.model_validate(updated_data)
+
+        return await self.storage.save(user)
