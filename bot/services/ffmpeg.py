@@ -13,15 +13,6 @@ class FxAnalog(StrEnum):
     TAPE = auto()
     HISS = auto()
 
-    @property
-    def emoji(self) -> str:
-        mapping = {
-            FxAnalog.VINYL: "📀",
-            FxAnalog.TAPE: "📽️",
-            FxAnalog.HISS: "📼",
-        }
-        return mapping.get(self, "🔵")
-
 
 class FFmpegCommandBuilder:
     def __init__(self, *, bitrate: int = 320, sample_rate: int = 48000, executable: str | None = None) -> None:
