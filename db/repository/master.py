@@ -5,11 +5,11 @@ from .match import MatchStore
 from .user import UserStore
 
 if TYPE_CHECKING:
-    from db.storage import StorageProtocol
+    from bot.core.storage import AsyncStorageProtocol
 
 
 class MasterStorage:
-    def __init__(self, storage: StorageProtocol) -> None:
+    def __init__(self, storage: AsyncStorageProtocol) -> None:
         self.user = UserStore(storage)
         self.match = MatchStore(storage)
         self.like = LikeStore(storage)

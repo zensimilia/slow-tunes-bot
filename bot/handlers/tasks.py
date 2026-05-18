@@ -17,7 +17,7 @@ from db.sqlite import SqliteStorage
 if TYPE_CHECKING:
     from aiogram.client.session.aiohttp import AiohttpSession
 
-    from db.abc import AsyncDatabaseProtocol
+    from bot.core.database import AsyncDatabaseProtocol
 
 OUTPUT_MP3_QUALITY = 320
 SAMPLE_RATE = 44100

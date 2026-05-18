@@ -9,8 +9,8 @@ from bot.keyboards.cbd import MatchAction, MatchCbd
 from bot.utils import tg
 
 if TYPE_CHECKING:
+    from bot.core.database import AsyncDatabaseProtocol
     from bot.services.queue import TaskQueue
-    from db.abc import AsyncDatabaseProtocol
     from db.repository.master import MasterStorage
 
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 Mb

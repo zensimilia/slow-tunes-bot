@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
     from aiogram.types import TelegramObject
 
-    from db.abc import AsyncDatabaseProtocol
+    from bot.core.database import AsyncDatabaseProtocol
 
 from db.repository.master import MasterStorage
 from db.sqlite import SqliteStorage

@@ -1,18 +1,9 @@
-from typing import TYPE_CHECKING, Any, Protocol, TypeVar
-
-if TYPE_CHECKING:
-    from contextlib import AbstractAsyncContextManager
-
+from typing import Any, Protocol, TypeVar
 
 ModelT = TypeVar("ModelT")
-SessionT = TypeVar("SessionT")
 
 
-class AsyncDatabaseProtocol[SessionT](Protocol):
-    def get_session(self) -> AbstractAsyncContextManager[SessionT]: ...
-
-
-class StorageProtocol[ModelT](Protocol):
+class AsyncStorageProtocol[ModelT](Protocol):
     async def save(self, obj: ModelT) -> ModelT: ...
     async def create(self, obj: ModelT) -> ModelT: ...
     async def delete(self, model: type[ModelT], **filters: Any) -> None: ...

@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING, Any
 from db.models.match import Match, MatchNew
 
 if TYPE_CHECKING:
-    from db.storage import StorageProtocol
+    from bot.core.storage import AsyncStorageProtocol
 
 
 class MatchStore:
     model: type[Match] = Match
 
-    def __init__(self, storage: StorageProtocol[Match]) -> None:
+    def __init__(self, storage: AsyncStorageProtocol[Match]) -> None:
         self.storage = storage
 
     async def get_or_create(self, match_new: MatchNew) -> Match:

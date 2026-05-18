@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING, Any
 from db.models.like import Like, LikeNew
 
 if TYPE_CHECKING:
-    from db.storage import StorageProtocol
+    from bot.core.storage import AsyncStorageProtocol
 
 
 class LikeStore:
     model: type[Like] = Like
 
-    def __init__(self, storage: StorageProtocol[Like]) -> None:
+    def __init__(self, storage: AsyncStorageProtocol[Like]) -> None:
         self.storage = storage
 
     async def create(self, like_new: LikeNew) -> Like:

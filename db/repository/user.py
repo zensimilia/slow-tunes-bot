@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 from db.models.user import User, UserNew, UserOptions
 
 if TYPE_CHECKING:
-    from db.storage import StorageProtocol
+    from bot.core.storage import AsyncStorageProtocol
 
 DEFAULT_USERNAME = "Private Person"
 
@@ -11,7 +11,7 @@ DEFAULT_USERNAME = "Private Person"
 class UserStore:
     model: type[User] = User
 
-    def __init__(self, storage: StorageProtocol[User]) -> None:
+    def __init__(self, storage: AsyncStorageProtocol[User]) -> None:
         self.storage = storage
 
     async def create(self, user_new: UserNew) -> User:
