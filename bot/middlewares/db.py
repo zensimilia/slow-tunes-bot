@@ -7,10 +7,10 @@ if TYPE_CHECKING:
 
     from aiogram.types import TelegramObject
 
-    from db.engine import AsyncDatabaseProtocol
+    from db.abc import AsyncDatabaseProtocol
 
-from db.engine import DbStorage
 from db.repository.master import MasterStorage
+from db.sqlite import SqliteStorage
 
 
 class DbSessionMiddleware(BaseMiddleware):
@@ -27,6 +27,6 @@ class DbSessionMiddleware(BaseMiddleware):
     ) -> Any:
         data["db"] = self._db
         async with self._db.get_session() as session:
-            storage = DbStorage(session)
+            storage = SqliteStorage(session)
             data["storage"] = MasterStorage(storage)
             return await handler(event, data)

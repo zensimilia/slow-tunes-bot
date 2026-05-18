@@ -10,12 +10,14 @@ from bot.keyboards.cbd import MatchAction, MatchCbd
 from bot.services.audio_processor import AudioProcessor
 from bot.services.ffmpeg import FFmpegCommandBuilder, FxAnalog
 from bot.utils import tg
-from db.engine import Database, DbStorage
 from db.models.match import Match, MatchNew
 from db.repository.match import MatchStore
+from db.sqlite import SqliteStorage
 
 if TYPE_CHECKING:
     from aiogram.client.session.aiohttp import AiohttpSession
+
+    from db.abc import AsyncDatabaseProtocol
 
 OUTPUT_MP3_QUALITY = 320
 SAMPLE_RATE = 44100
@@ -45,7 +47,12 @@ async def upload_audio(data: bytes, filename: str, message: types.Message) -> ty
         raise UploadError from err
 
 
-async def save_audio_to_db(db: Database, original_id: str, slowed_id: str, message: types.Message) -> Match:
+async def save_audio_to_db(
+    db: AsyncDatabaseProtocol,
+    original_id: str,
+    slowed_id: str,
+    message: types.Message,
+) -> Match:
     new_match = MatchNew(
         original_id=original_id,
         slowed_id=slowed_id,
@@ -54,12 +61,12 @@ async def save_audio_to_db(db: Database, original_id: str, slowed_id: str, messa
         is_forbidden=False,
     )
     async with db.get_session() as db_session:
-        storage = DbStorage(db_session)
+        storage = SqliteStorage(db_session)
         match_store = MatchStore(storage)
         return await match_store.create(new_match)
 
 
-async def slowing_down_task(message: types.Message, db: Database) -> None:
+async def slowing_down_task(message: types.Message, db: AsyncDatabaseProtocol) -> None:
     audio = tg.get_audio(message)
     bot = tg.get_bot(message)
     session = tg.get_session(message)

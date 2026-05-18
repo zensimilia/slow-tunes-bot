@@ -16,12 +16,12 @@ from bot.middlewares.throttling import RateLimitMiddleware
 from bot.routes import admin_router, audio_router, common_router, fx_router
 from bot.services.queue import TaskQueue
 from bot.services.stream import TaskStream
-from db.engine import Database
+from db.sqlite import Sqlite
 
 DB_URL = f"sqlite+aiosqlite:///{config.DB_FILE.as_posix()}"
 STREAM_CONSUMER_NAME = "main"
 
-db = Database(DB_URL)
+db = Sqlite(DB_URL)
 redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=0, decode_responses=True)
 background_tasks = set()
 

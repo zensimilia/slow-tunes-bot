@@ -1,14 +1,11 @@
 import json
 import logging
-from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from typing import TYPE_CHECKING, Any, Concatenate, ParamSpec, Protocol, TypeVar
+from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from sqlalchemy import event
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.ext.asyncio import (
-    async_sessionmaker,
-    create_async_engine,
-)
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel, delete, func, inspect, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -18,7 +15,7 @@ from db.models.base import BaseModel
 from .exceptions import DataError, OperationalError
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, Awaitable, Callable
+    from collections.abc import AsyncGenerator
     from sqlite3 import Connection
 
 
@@ -26,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 M = TypeVar("M", bound=SQLModel)
-P = ParamSpec("P")
 
 
 def universal_json_serializer(obj: Any) -> str:
@@ -38,17 +34,7 @@ def universal_json_serializer(obj: Any) -> str:
     return json.dumps(obj, default=default_encoder, ensure_ascii=False)
 
 
-class AsyncDatabaseProtocol(Protocol):
-    def get_session(self) -> AbstractAsyncContextManager[AsyncSession, Any]: ...
-    async def execute(
-        self,
-        func: Callable[Concatenate[AsyncSession, P], Awaitable[T]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> T: ...
-
-
-class Database:
+class Sqlite:
     """
     Async database manager for SQLAlchemy with session lifecycle control.
 
@@ -119,36 +105,6 @@ class Database:
                 logger.exception("Database error")
                 raise OperationalError(err._message) from err
 
-    async def execute(
-        self,
-        func: Callable[Concatenate[AsyncSession, P], Awaitable[T]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> T:
-        """
-        Execute a function within a managed session context.
-
-        The provided function must accept a `session` as its first argument.
-
-        Args:
-            func: An awaitable function to execute.
-            *args: Positional arguments for the function.
-            **kwargs: Keyword arguments for the function.
-
-        Returns:
-            The result of the executed function.
-
-        Examples:
-            ```python
-            async def get_user(session, user_id):
-                return await session.get(User, user_id)
-
-            user = await db.execute(get_user, user_id=1)
-            ```
-        """
-        async with self.get_session() as session:
-            return await func(session, *args, **kwargs)
-
     async def close_all(self) -> None:
         """Dispose of the engine and close all active connections."""
         await self.engine.dispose()
@@ -165,7 +121,7 @@ class Database:
             logger.info("Tables for BaseModel created")
 
 
-class DbStorage:
+class SqliteStorage:
     """
     Generic database storage repository implementing common CRUD operations.
 

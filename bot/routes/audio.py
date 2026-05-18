@@ -10,7 +10,7 @@ from bot.utils import tg
 
 if TYPE_CHECKING:
     from bot.services.queue import TaskQueue
-    from db.engine import Database
+    from db.abc import AsyncDatabaseProtocol
     from db.repository.master import MasterStorage
 
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 Mb
@@ -25,7 +25,7 @@ async def audio_handler(
     queue: TaskQueue,
     storage: MasterStorage,
     audio: types.Audio,
-    db: Database,
+    db: AsyncDatabaseProtocol,
 ) -> None:
     if not message.bot:
         return
