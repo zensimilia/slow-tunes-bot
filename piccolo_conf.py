@@ -3,7 +3,5 @@ from piccolo.engine.sqlite import SQLiteEngine
 
 from bot.config import config
 
-config.DATA_DIR.mkdir(exist_ok=True)
-
 DB = SQLiteEngine(path=config.DB_FILE.as_posix(), timeout=60)
 APP_REGISTRY = AppRegistry(apps=["piccolo_app"])

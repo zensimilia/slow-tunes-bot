@@ -1,8 +1,9 @@
 import sys
 from pathlib import Path
+from typing import Self
 
 from loguru import logger
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -44,6 +45,11 @@ class Settings(BaseSettings):
     # redis
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
+
+    @model_validator(mode="after")
+    def create_data_dir(self) -> Self:
+        self.DATA_DIR.mkdir(parents=True, exist_ok=True)
+        return self
 
 
 try:
