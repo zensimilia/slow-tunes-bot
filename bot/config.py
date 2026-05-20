@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     DB_FILE: Path = DATA_DIR / "db.sqlite"
 
     # defaults
+    APP_NAME: str = "slow-tunes-bot"
     DEBUG: bool = False
     QUEUE_MAXSIZE: int = 2
     LICENSE_URL: str = "https://github.com/zensimilia/slow-tunes-bot/blob/master/LICENSE"

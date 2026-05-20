@@ -5,16 +5,14 @@ from aiogram import BaseMiddleware, Dispatcher
 from aiogram.types import CallbackQuery, Message, TelegramObject, Update
 
 from bot import messages as txt
-from bot.core.exceptions import MissingRequiredError
+from bot.utils.json import dict_to_json
 from bot.utils.tg import answer_from_update
-from db.models.user import User
+from models import User
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
     from redis.asyncio import Redis
-
-    from db.repository.master import MasterStorage
 
 
 USER_KEY = "user_cache"
@@ -50,13 +48,10 @@ class UserMiddleware(BaseMiddleware):
 
         user_tg_id = event_obj.from_user.id
         self._user_key = self.get_user_key(user_tg_id)
-
         user_obj = await self.get_cache()
+
         if not user_obj:
-            store: MasterStorage | None = data.get("storage")
-            if not store:
-                raise MissingRequiredError
-            user_obj = await store.user.get_by(tg_id=user_tg_id)
+            user_obj = await User.objects().get(User.tg_id == user_tg_id)
             if not user_obj:
                 return await answer_from_update(event_obj, txt.PLS_SEND_START_CMD, is_reply=True)
 
@@ -65,12 +60,12 @@ class UserMiddleware(BaseMiddleware):
         return await handler(event, data)
 
     async def set_cache(self, user: User) -> None:
-        await self._redis.set(self._user_key, user.model_dump_json(), ex=self._expire)
+        await self._redis.set(self._user_key, dict_to_json(user.to_dict()), ex=self._expire)
 
     async def get_cache(self) -> User | None:
         if cached_user := await self._redis.get(self._user_key):
             user_data = json.loads(cached_user)
-            return User.model_validate(user_data)
+            return User(**user_data)
         return None
 
     async def invalidate_cache(self) -> None:
@@ -91,7 +86,6 @@ class UserMiddleware(BaseMiddleware):
 
 
 async def invalidate_user_cache(dispatcher: Dispatcher) -> None:
-
     if user_middleware := next(
         (m for m in dispatcher.update.outer_middleware if isinstance(m, UserMiddleware)),
         None,

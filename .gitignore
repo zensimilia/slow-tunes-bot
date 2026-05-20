@@ -6,18 +6,19 @@ dist/
 build/
 tests/assets/
 
-# Виртуальное окружение uv
+# Virtual Env
 .venv/
 
-# Кэш инструментов
+# Cache
 .ruff_cache/
 .mypy_cache/
 .pytest_cache/
 
-# Окружение
+# Envoronment
 .env
 data/*
 !data/*.mp3
 !data/fx/
+migrations/
 .vscode/
 compose.*.yml

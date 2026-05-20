@@ -7,11 +7,10 @@ from bot.core.exceptions import FileIsTooBigError
 from bot.handlers.tasks import slowing_down_task
 from bot.keyboards.cbd import MatchAction, MatchCbd
 from bot.utils import tg
+from models import Match
 
 if TYPE_CHECKING:
-    from bot.core.database import AsyncDatabaseProtocol
     from bot.services.queue import TaskQueue
-    from db.repository.master import MasterStorage
 
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 Mb
 
@@ -23,9 +22,7 @@ audio_router = Router()
 async def audio_handler(
     message: types.Message,
     queue: TaskQueue,
-    storage: MasterStorage,
     audio: types.Audio,
-    db: AsyncDatabaseProtocol,
 ) -> None:
     if not message.bot:
         return
@@ -33,15 +30,15 @@ async def audio_handler(
     if audio.file_size and audio.file_size >= MAX_FILE_SIZE:
         raise FileIsTooBigError(audio.file_size)
 
-    if saved_match := await storage.match.get_by_original_id(audio.file_id):
+    if saved_match := await Match.objects().get(Match.original_id == audio.file_id):
         reply_markup = MatchCbd(action=MatchAction.NONE, pk=saved_match.pk).get_keyboard(
             is_private=saved_match.is_private,
-            is_owner=message.chat.id == saved_match.user_id,
+            is_owner=message.chat.id == saved_match.tg_user_id,
             is_random=False,
         )
         await tg.reply_audio(saved_match.slowed_id, message, reply_markup=reply_markup)
     else:
-        queue.enqueue(slowing_down_task, message, db)
+        queue.enqueue(slowing_down_task, message)
         if (position := queue.total_pending) > 1:
             text = txt.QUEUE_POSITION_TEXT.format(position=position)
             await message.reply(text, disable_notification=True)

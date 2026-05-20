@@ -10,14 +10,11 @@ from bot.keyboards.cbd import MatchAction, MatchCbd
 from bot.services.audio_processor import AudioProcessor
 from bot.services.ffmpeg import FFmpegCommandBuilder, FxAnalog
 from bot.utils import tg
-from db.models.match import Match, MatchNew
-from db.repository.match import MatchStore
-from db.sqlite import SqliteStorage
+from models import Match
 
 if TYPE_CHECKING:
     from aiogram.client.session.aiohttp import AiohttpSession
 
-    from bot.core.database import AsyncDatabaseProtocol
 
 OUTPUT_MP3_QUALITY = 320
 SAMPLE_RATE = 44100
@@ -47,26 +44,19 @@ async def upload_audio(data: bytes, filename: str, message: types.Message) -> ty
         raise UploadError from err
 
 
-async def save_audio_to_db(
-    db: AsyncDatabaseProtocol,
-    original_id: str,
-    slowed_id: str,
-    message: types.Message,
-) -> Match:
-    new_match = MatchNew(
+async def save_audio_to_db(original_id: str, slowed_id: str, message: types.Message) -> Match:
+    new_match = Match(
         original_id=original_id,
         slowed_id=slowed_id,
-        user_id=message.chat.id,
+        tg_user_id=message.chat.id,
         is_private=True,
         is_forbidden=False,
     )
-    async with db.get_session() as db_session:
-        storage = SqliteStorage(db_session)
-        match_store = MatchStore(storage)
-        return await match_store.create(new_match)
+    await new_match.save()
+    return new_match
 
 
-async def slowing_down_task(message: types.Message, db: AsyncDatabaseProtocol) -> None:
+async def slowing_down_task(message: types.Message) -> None:
     audio = tg.get_audio(message)
     bot = tg.get_bot(message)
     session = tg.get_session(message)
@@ -82,7 +72,7 @@ async def slowing_down_task(message: types.Message, db: AsyncDatabaseProtocol) -
             upload_message = await upload_audio(slowed_audio, slowed_filename, message)
 
     if upload_message.audio:
-        match = await save_audio_to_db(db, audio.file_id, upload_message.audio.file_id, message)
+        match = await save_audio_to_db(audio.file_id, upload_message.audio.file_id, message)
         reply_markup = MatchCbd(action=MatchAction.NONE, pk=match.pk).get_keyboard(
             is_private=match.is_private,
             is_owner=True,

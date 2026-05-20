@@ -6,24 +6,26 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import BotCommand
+from piccolo.apps.migrations.commands.forwards import run_forwards
+from piccolo.engine import engine_finder
 from redis.asyncio import Redis
 
 from bot.config import config
 from bot.middlewares.auth import UserMiddleware
-from bot.middlewares.db import DbSessionMiddleware
 from bot.middlewares.retry import RetryRequestMiddleware
 from bot.middlewares.throttling import RateLimitMiddleware
 from bot.routes import admin_router, audio_router, common_router, fx_router
 from bot.services.queue import TaskQueue
 from bot.services.stream import TaskStream
-from db.sqlite import Sqlite
 
-DB_URL = f"sqlite+aiosqlite:///{config.DB_FILE.as_posix()}"
 STREAM_CONSUMER_NAME = "main"
 
-db = Sqlite(DB_URL)
 redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=0, decode_responses=True)
 background_tasks = set()
+
+
+async def run_migrations() -> None:
+    await run_forwards(app_name="all")
 
 
 async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -> None:
@@ -39,7 +41,10 @@ async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -
 async def on_startup(bot: Bot, dispatcher: Dispatcher) -> None:
     await bot.delete_webhook(drop_pending_updates=True)  # drop pending updates workaround
     await set_bot_commands(bot)  # register bot commands
-    await db.create_tables()  # create tables if not exist
+
+    if db_engine := engine_finder():
+        await db_engine.start_connection_pool()
+        await run_migrations()
 
     queue = TaskQueue(maxsize=config.QUEUE_MAXSIZE)
     queue_task = asyncio.create_task(queue.start())  # start task queue worker
@@ -59,11 +64,13 @@ async def on_startup(bot: Bot, dispatcher: Dispatcher) -> None:
 
 async def on_shutdown(bot: Bot, dispatcher: Dispatcher) -> None:
     await dispatcher.storage.close()  # close storage
-    await db.close_all()  # close all db sessions
     await set_bot_commands(bot, [])  # clear bot commands
 
     dispatcher["queue"].stop()
     await dispatcher["stream"].stop()
+
+    if db_engine := engine_finder():
+        await db_engine.start_connection_pool()
 
     await bot.send_message(config.BOT_ADMIN_ID, "🔴 I'M OFFLINE!")
 
@@ -80,7 +87,6 @@ def setup_routes(dispatcher: Dispatcher) -> None:
 def setup_middlewares(dispatcher: Dispatcher) -> None:
     dispatcher.message.middleware(RateLimitMiddleware(redis))
     dispatcher.callback_query.middleware(RateLimitMiddleware(redis))
-    dispatcher.update.outer_middleware(DbSessionMiddleware(db))
     dispatcher.update.outer_middleware(UserMiddleware(redis))
 
 

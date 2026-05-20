@@ -9,6 +9,7 @@ dependencies = [
     "aiogram>=3.27.0",
     "aiosqlite>=0.22.1",
     "loguru>=0.7.3",
+    "piccolo[sqlite]>=1.34.0",
     "pydantic-settings>=2.13.1",
     "redis>=7.4.0",
     "sqlmodel>=0.0.38",
