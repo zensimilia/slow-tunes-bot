@@ -11,6 +11,7 @@ from piccolo.engine import engine_finder
 from redis.asyncio import Redis
 
 from bot.config import config
+from bot.core.logger import logger
 from bot.middlewares.auth import UserMiddleware
 from bot.middlewares.retry import RetryRequestMiddleware
 from bot.middlewares.throttling import RateLimitMiddleware
@@ -19,13 +20,15 @@ from bot.services.queue import TaskQueue
 from bot.services.stream import TaskStream
 
 STREAM_CONSUMER_NAME = "main"
+MIGRATIONS_APP_NAME = "all"
 
 redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=0, decode_responses=True)
 background_tasks = set()
 
 
 async def run_migrations() -> None:
-    await run_forwards(app_name="all")
+    logger.warning(f"Start '{MIGRATIONS_APP_NAME}' migrations...")
+    await run_forwards(app_name=MIGRATIONS_APP_NAME)
 
 
 async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -> None:
@@ -35,6 +38,7 @@ async def set_bot_commands(bot: Bot, commands: list[BotCommand] | None = None) -
             BotCommand(command="help", description="if you stuck"),
             BotCommand(command="start", description="say hello"),
         ]
+    logger.info(f"Setting up {len(commands)} bot commands")
     await bot.set_my_commands(commands)
 
 
@@ -78,6 +82,7 @@ async def on_shutdown(bot: Bot, dispatcher: Dispatcher) -> None:
 
 
 def setup_routes(dispatcher: Dispatcher) -> None:
+    logger.info("Setting up routes")
     dispatcher.include_router(admin_router)
     dispatcher.include_router(audio_router)
     dispatcher.include_router(common_router)
@@ -85,12 +90,14 @@ def setup_routes(dispatcher: Dispatcher) -> None:
 
 
 def setup_middlewares(dispatcher: Dispatcher) -> None:
+    logger.info("Setting up middlewares")
     dispatcher.message.middleware(RateLimitMiddleware(redis))
     dispatcher.callback_query.middleware(RateLimitMiddleware(redis))
     dispatcher.update.outer_middleware(UserMiddleware(redis))
 
 
 def setup_dispatcher() -> Dispatcher:
+    logger.info("Setting up Dispatcher")
     dispatcher = Dispatcher(storage=RedisStorage(redis))
     dispatcher.startup.register(on_startup)
     dispatcher.shutdown.register(on_shutdown)
@@ -98,6 +105,7 @@ def setup_dispatcher() -> Dispatcher:
 
 
 def setup_bot() -> Bot:
+    logger.info("Setting up Bot")
     session = AiohttpSession(proxy=config.TELEGRAM_PROXY_URL)
     session.middleware.register(RetryRequestMiddleware())
     properties = DefaultBotProperties(parse_mode=ParseMode.HTML, link_preview_is_disabled=True)
