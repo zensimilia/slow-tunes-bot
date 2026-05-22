@@ -17,3 +17,10 @@ class FxReverb(StrEnum):
     NONE = auto()
     NORMAL = auto()
     EXTREME = auto()
+
+
+class FxFilter(StrEnum):
+    NONE = auto()
+    LOFI = auto()
+    RADIO = auto()
+    TELEPHONE = auto()

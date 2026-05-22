@@ -7,7 +7,7 @@ from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.utils.emoji import get_btn_txt
-from bot.utils.enums import Btn, FxAnalog, FxReverb
+from bot.utils.enums import Btn, FxAnalog, FxFilter, FxReverb
 
 if TYPE_CHECKING:
     from aiogram.types import InlineKeyboardMarkup
@@ -71,7 +71,40 @@ class FxReverbCbd(CallbackData, prefix="reverb"):
         keyboard.row(
             InlineKeyboardButton(
                 text=get_btn_txt(Btn.BACK),
-                callback_data=FxAnalogCbd(action=FxAnalogAction.BACK).pack(),
+                callback_data=FxReverbCbd(action=FxReverbAction.BACK).pack(),
+                style=ButtonStyle.PRIMARY,
+            ),
+        )
+
+        return keyboard.as_markup()
+
+
+class FxFilterAction(IntEnum):
+    LIST = auto()
+    SELECT = auto()
+    BACK = auto()
+
+
+class FxFilterCbd(CallbackData, prefix="filter"):
+    action: FxFilterAction
+    value: FxFilter | None = None
+
+    def get_keyboard(self, current: FxFilter | None = None) -> InlineKeyboardMarkup:
+        keyboard = InlineKeyboardBuilder()
+
+        for item in FxFilter:
+            keyboard.row(
+                InlineKeyboardButton(
+                    text=get_btn_txt(item),
+                    callback_data=FxFilterCbd(action=FxFilterAction.SELECT, value=item).pack(),
+                    style=ButtonStyle.SUCCESS if item == current else None,
+                ),
+            )
+
+        keyboard.row(
+            InlineKeyboardButton(
+                text=get_btn_txt(Btn.BACK),
+                callback_data=FxFilterCbd(action=FxFilterAction.BACK).pack(),
                 style=ButtonStyle.PRIMARY,
             ),
         )

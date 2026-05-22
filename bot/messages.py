@@ -57,7 +57,7 @@ ADMIN_LIST = "Hello, Master! There will be a list of all admin commands..."
 
 ADMIN_RIGHTS_REQUIRED = "⛔ Nice try! You need admin rights to use this command."
 
-FX_LIST = "🎛 List of available effects:\n\n/analog - vintage noise\n/reverb - space acoustics"
+FX_LIST = "🎛 List of available effects:\n\n/analog - vintage noise\n/reverb - space acoustics\n/filter - retro tone"
 
 FX_ANALOG = (
     "📻 This effect recreates the iconic crackle of vinyl records, "
@@ -66,7 +66,12 @@ FX_ANALOG = (
 )
 
 FX_REVERB = (
-    "🏠 This effect adds an incredible depth and space accoustic scale "
+    "📣 This effect adds an incredible depth and space accoustic scale "
     "that instantly turns flat digital sound "
     "into an immersive cinematic landscape."
+)
+
+FX_FILTER = (
+    "🔊 This effect recreates the nostalgic warmth of a vintage speaker. "
+    "It narrows the frequency range to instantly wrap your track in a cozy, dust-filtered retro vibe."
 )

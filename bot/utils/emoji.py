@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from bot.utils.enums import Btn, FxAnalog, FxReverb
+from bot.utils.enums import Btn, FxAnalog, FxFilter, FxReverb
 
 if TYPE_CHECKING:
     from enum import Enum
@@ -11,7 +11,10 @@ EMOJIS = {
     FxAnalog.TAPE: "📽️",
     FxAnalog.HISS: "📼",
     FxReverb.NORMAL: "🏠",
-    FxReverb.EXTREME: "⛪",
+    FxReverb.EXTREME: "🏟",
+    FxFilter.LOFI: "🎧",
+    FxFilter.RADIO: "📻",
+    FxFilter.TELEPHONE: "☎",
     Btn.BACK: "⏮",
     Btn.NONE: "❌",
 }

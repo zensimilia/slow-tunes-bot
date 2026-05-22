@@ -2,7 +2,7 @@ from piccolo.columns import JSON, BigInt, Serial, Varchar
 from piccolo.table import Table
 from pydantic import BaseModel
 
-from bot.utils.enums import FxAnalog, FxReverb
+from bot.utils.enums import FxAnalog, FxFilter, FxReverb
 
 from .mixins import TimestampedMixin
 
@@ -12,6 +12,7 @@ DEFAULT_USERNAME = "Private Person"
 class UserOptions(BaseModel):
     fx_analog: FxAnalog = FxAnalog.NONE
     fx_reverb: FxReverb = FxReverb.NONE
+    fx_filter: FxFilter = FxFilter.NONE
 
 
 class User(Table, TimestampedMixin, tablename="users"):
