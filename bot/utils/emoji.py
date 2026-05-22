@@ -1,26 +1,25 @@
 from typing import TYPE_CHECKING
 
-from bot.utils.enums import Btn, FxAnalog
+from bot.utils.enums import Btn, FxAnalog, FxReverb
 
 if TYPE_CHECKING:
     from enum import Enum
 
 
-def get_emoji(obj: Enum) -> str:
-    match obj:
-        case FxAnalog.VINYL:
-            return "📀"
-        case FxAnalog.TAPE:
-            return "📽️"
-        case FxAnalog.HISS:
-            return "📼"
-        case Btn.BACK:
-            return "⏮"
-        case Btn.NONE:
-            return "❌"
-        case _:
-            return "🔵"
+EMOJIS = {
+    FxAnalog.VINYL: "📀",
+    FxAnalog.TAPE: "📽️",
+    FxAnalog.HISS: "📼",
+    FxReverb.NORMAL: "🏠",
+    FxReverb.EXTREME: "⛪",
+    Btn.BACK: "⏮",
+    Btn.NONE: "❌",
+}
 
 
-def get_btn_txt(obj: Enum) -> str:
-    return f"{get_emoji(obj)} {str(obj).capitalize()}"
+def get_emoji(enum: Enum) -> str:
+    return EMOJIS.get(enum, "🔵")
+
+
+def get_btn_txt(enum: Enum) -> str:
+    return f"{get_emoji(enum)} {str(enum).capitalize()}"
