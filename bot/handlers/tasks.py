@@ -8,8 +8,9 @@ from bot import messages as txt
 from bot.core.exceptions import UploadError
 from bot.keyboards.cbd import MatchAction, MatchCbd
 from bot.services.audio_processor import AudioProcessor
-from bot.services.ffmpeg import FFmpegCommandBuilder, FxAnalog
+from bot.services.ffmpeg import FFmpegCommandBuilder
 from bot.utils import tg
+from bot.utils.enums import FxAnalog
 from models import Match
 
 if TYPE_CHECKING:

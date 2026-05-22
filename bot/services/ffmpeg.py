@@ -1,17 +1,13 @@
 import shlex
-from enum import StrEnum, auto
 from pathlib import Path
-from typing import Self
+from typing import TYPE_CHECKING, Self
+
+if TYPE_CHECKING:
+    from bot.utils.enums import FxAnalog
 
 MIN_BITRATE = 96
 MAX_BITRATE = 320
 DATA_DIR = Path(__file__).parent.parent.parent / "data" / "fx"
-
-
-class FxAnalog(StrEnum):
-    VINYL = auto()
-    TAPE = auto()
-    HISS = auto()
 
 
 class FFmpegCommandBuilder:

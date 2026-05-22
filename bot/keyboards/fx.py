@@ -6,9 +6,8 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from bot.services.ffmpeg import FxAnalog
 from bot.utils.emoji import get_btn_txt
-from bot.utils.enums import Btn
+from bot.utils.enums import Btn, FxAnalog
 
 if TYPE_CHECKING:
     from aiogram.types import InlineKeyboardMarkup
@@ -33,7 +32,7 @@ class FxAnalogCbd(CallbackData, prefix="analog"):
                 InlineKeyboardButton(
                     text=get_btn_txt(fx),
                     callback_data=FxAnalogCbd(action=FxAnalogAction.SELECT, fx=fx).pack(),
-                    style=ButtonStyle.PRIMARY if fx == current else None,
+                    style=ButtonStyle.SUCCESS if fx == current else None,
                 ),
             )
 
@@ -41,11 +40,7 @@ class FxAnalogCbd(CallbackData, prefix="analog"):
             InlineKeyboardButton(
                 text=get_btn_txt(Btn.BACK),
                 callback_data=FxAnalogCbd(action=FxAnalogAction.BACK).pack(),
-            ),
-            InlineKeyboardButton(
-                text=get_btn_txt(Btn.NONE),
-                callback_data=FxAnalogCbd(action=FxAnalogAction.CLEAR).pack(),
-                style=ButtonStyle.PRIMARY if not current else None,
+                style=ButtonStyle.PRIMARY,
             ),
         )
 

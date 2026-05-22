@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
-from bot.services.ffmpeg import FxAnalog
-from bot.utils.enums import Btn
+from bot.utils.enums import Btn, FxAnalog
 
 if TYPE_CHECKING:
     from enum import Enum

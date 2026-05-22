@@ -1,12 +1,10 @@
-import json
-
 from aiogram import Dispatcher, F, Router, flags, types
 from aiogram.filters import Command
 
 from bot.core.exceptions import MissingRequiredError
 from bot.keyboards.fx import FxAnalogAction, FxAnalogCbd
 from bot.middlewares.auth import invalidate_user_cache
-from bot.services.ffmpeg import FxAnalog
+from bot.utils.enums import FxAnalog
 from models.user import User, UserOptions
 
 fx_router = Router()
@@ -22,8 +20,8 @@ async def command_fx(message: types.Message) -> None:
 @flags.rate_limit(rate=3, key="fx_analog")
 async def command_analog(message: types.Message, user: User) -> None:
     cbd = FxAnalogCbd(action=FxAnalogAction.LIST)
-    opts = UserOptions(**json.loads(user.options))
-    fx = FxAnalog(opts.fx_analog)
+    options = user.get_options()
+    fx = FxAnalog(options.fx_analog)
     await message.answer(
         "This is analog effects. Choose one:",  # TODO @me: text
         reply_markup=cbd.get_keyboard(current=fx),
@@ -40,8 +38,9 @@ async def fx_analog_select(
 ) -> None:
     if not isinstance(callback.message, types.Message):
         raise MissingRequiredError
-    opts = UserOptions(fx_analog=callback_data.fx)
-    await User.update({User.options: opts}).where(User.pk == user.pk)
+    options = user.get_options()
+    options.fx_analog = callback_data.fx
+    await User.update({User.options: options.as_dict()}).where(User.pk == user.pk)
     await invalidate_user_cache(dispatcher)
     await callback.message.edit_reply_markup(reply_markup=callback_data.get_keyboard(callback_data.fx))
     await callback.answer(f"Analog fx {callback_data.fx} selected", show_alert=False)
@@ -57,7 +56,7 @@ async def fx_analog_clear(
 ) -> None:
     if not isinstance(callback.message, types.Message):
         raise MissingRequiredError
-    await User.update({User.options: UserOptions(fx_analog=None)}).where(User.pk == user.pk)
+    await User.update({User.options: UserOptions(fx_analog=None).as_dict()}).where(User.pk == user.pk)
     await invalidate_user_cache(dispatcher)
     await callback.message.edit_reply_markup(reply_markup=callback_data.get_keyboard())
 
