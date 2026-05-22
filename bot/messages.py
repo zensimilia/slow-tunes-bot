@@ -57,10 +57,16 @@ ADMIN_LIST = "Hello, Master! There will be a list of all admin commands..."
 
 ADMIN_RIGHTS_REQUIRED = "⛔ Nice try! You need admin rights to use this command."
 
-FX_LIST = "🎛 List of available effects:\n\n/analog - vintage noise simulation"
+FX_LIST = "🎛 List of available effects:\n\n/analog - vintage noise\n/reverb - space acoustics"
 
 FX_ANALOG = (
     "📻 This effect recreates the iconic crackle of vinyl records, "
     "the hiss of magnetic tape, or a soft analog hum, "
     "instantly turning sterile digital sound into a cozy Lo-Fi track."
+)
+
+FX_REVERB = (
+    "🏠 This effect adds an incredible depth and space accoustic scale "
+    "that instantly turns flat digital sound "
+    "into an immersive cinematic landscape."
 )

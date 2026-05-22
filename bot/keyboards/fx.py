@@ -7,7 +7,7 @@ from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.utils.emoji import get_btn_txt
-from bot.utils.enums import Btn, FxAnalog
+from bot.utils.enums import Btn, FxAnalog, FxReverb
 
 if TYPE_CHECKING:
     from aiogram.types import InlineKeyboardMarkup
@@ -16,23 +16,55 @@ if TYPE_CHECKING:
 class FxAnalogAction(IntEnum):
     LIST = auto()
     SELECT = auto()
-    CLEAR = auto()
     BACK = auto()
 
 
 class FxAnalogCbd(CallbackData, prefix="analog"):
     action: FxAnalogAction
-    fx: FxAnalog | None = None
+    value: FxAnalog | None = None
 
     def get_keyboard(self, current: FxAnalog | None = None) -> InlineKeyboardMarkup:
         keyboard = InlineKeyboardBuilder()
 
-        for fx in FxAnalog:
+        for item in FxAnalog:
             keyboard.row(
                 InlineKeyboardButton(
-                    text=get_btn_txt(fx),
-                    callback_data=FxAnalogCbd(action=FxAnalogAction.SELECT, fx=fx).pack(),
-                    style=ButtonStyle.SUCCESS if fx == current else None,
+                    text=get_btn_txt(item),
+                    callback_data=FxAnalogCbd(action=FxAnalogAction.SELECT, value=item).pack(),
+                    style=ButtonStyle.SUCCESS if item == current else None,
+                ),
+            )
+
+        keyboard.row(
+            InlineKeyboardButton(
+                text=get_btn_txt(Btn.BACK),
+                callback_data=FxAnalogCbd(action=FxAnalogAction.BACK).pack(),
+                style=ButtonStyle.PRIMARY,
+            ),
+        )
+
+        return keyboard.as_markup()
+
+
+class FxReverbAction(IntEnum):
+    LIST = auto()
+    SELECT = auto()
+    BACK = auto()
+
+
+class FxReverbCbd(CallbackData, prefix="reverb"):
+    action: FxReverbAction
+    value: FxReverb | None = None
+
+    def get_keyboard(self, current: FxReverb | None = None) -> InlineKeyboardMarkup:
+        keyboard = InlineKeyboardBuilder()
+
+        for item in FxReverb:
+            keyboard.row(
+                InlineKeyboardButton(
+                    text=get_btn_txt(item),
+                    callback_data=FxReverbCbd(action=FxReverbAction.SELECT, value=item).pack(),
+                    style=ButtonStyle.SUCCESS if item == current else None,
                 ),
             )
 

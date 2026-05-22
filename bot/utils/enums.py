@@ -11,3 +11,9 @@ class FxAnalog(StrEnum):
     VINYL = auto()
     TAPE = auto()
     HISS = auto()
+
+
+class FxReverb(StrEnum):
+    NONE = auto()
+    NORMAL = auto()
+    EXTREME = auto()
