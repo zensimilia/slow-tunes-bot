@@ -16,8 +16,7 @@ async def cmd_admin(message: types.Message, bot: Bot) -> None:
     if not await is_admin(message):
         keyboard = await support_keyboard(bot)
         await message.answer(txt.ADMIN_RIGHTS_REQUIRED, reply_markup=keyboard)
-    # TODO @me: add admin message
-    await message.answer("Hello, Master! There will be a list of all admin commands...")
+    await message.answer(txt.ADMIN_LIST)
 
 
 @admin_router.message(Command("all"))
