@@ -53,7 +53,7 @@ async def fx_analog_back(callback: types.CallbackQuery) -> None:
 
 
 @fx_router.message(Command("reverb"))
-@flags.rate_limit(rate=3, key="fx_analog")
+@flags.rate_limit(rate=3, key="fx_reverb")
 async def command_reverb(message: types.Message, user: User) -> None:
     cbd = FxReverbCbd(action=FxReverbAction.LIST)
     options = user.get_options()
@@ -64,7 +64,7 @@ async def command_reverb(message: types.Message, user: User) -> None:
 
 
 @fx_router.callback_query(FxReverbCbd.filter(F.action == FxReverbAction.SELECT))
-@flags.rate_limit(rate=1, key="fx_analog_select")
+@flags.rate_limit(rate=1, key="fx_reverb_select")
 async def fx_reverb_select(
     callback: types.CallbackQuery,
     callback_data: FxReverbCbd,
@@ -80,16 +80,16 @@ async def fx_reverb_select(
     await callback.answer(f"Reverb fx {callback_data.value} selected", show_alert=False)
 
 
-@fx_router.callback_query(FxFilterCbd.filter(F.action == FxFilterAction.BACK))
-@flags.rate_limit(rate=1, key="fx_analog_back")
-async def fx_filters_back(callback: types.CallbackQuery) -> None:
+@fx_router.callback_query(FxReverbCbd.filter(F.action == FxReverbAction.BACK))
+@flags.rate_limit(rate=1, key="fx_reverb_back")
+async def fx_reverb_back(callback: types.CallbackQuery) -> None:
     if not isinstance(callback.message, types.Message):
         raise MissingRequiredError
     await callback.message.delete()
 
 
 @fx_router.message(Command("filter"))
-@flags.rate_limit(rate=3, key="fx_analog")
+@flags.rate_limit(rate=3, key="fx_filter")
 async def command_filter(message: types.Message, user: User) -> None:
     cbd = FxFilterCbd(action=FxFilterAction.LIST)
     options = user.get_options()
@@ -100,7 +100,7 @@ async def command_filter(message: types.Message, user: User) -> None:
 
 
 @fx_router.callback_query(FxFilterCbd.filter(F.action == FxFilterAction.SELECT))
-@flags.rate_limit(rate=1, key="fx_analog_select")
+@flags.rate_limit(rate=1, key="fx_filter_select")
 async def fx_filter_select(
     callback: types.CallbackQuery,
     callback_data: FxFilterCbd,
@@ -114,3 +114,11 @@ async def fx_filter_select(
     await invalidate_user_cache(dispatcher)
     await callback.message.edit_reply_markup(reply_markup=callback_data.get_keyboard(callback_data.value))
     await callback.answer(f"Reverb fx {callback_data.value} selected", show_alert=False)
+
+
+@fx_router.callback_query(FxFilterCbd.filter(F.action == FxFilterAction.BACK))
+@flags.rate_limit(rate=1, key="fx_filter_back")
+async def fx_filter_back(callback: types.CallbackQuery) -> None:
+    if not isinstance(callback.message, types.Message):
+        raise MissingRequiredError
+    await callback.message.delete()
