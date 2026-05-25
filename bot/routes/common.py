@@ -14,11 +14,14 @@ async def cmd_start(message: types.Message) -> None:
     if not message.from_user:
         return
 
-    user = await User.objects().get(User.tg_id == message.from_user.id)
-
-    if not user:
-        user = User(tg_id=message.from_user.id, username=message.from_user.username)
-        await user.save()
+    if user := await User.objects().get(User.tg_id == message.from_user.id):
+        user.username = message.from_user.username
+    else:
+        user = User(
+            tg_id=message.from_user.id,
+            username=message.from_user.username,
+        )
+    await user.save()
 
     text = txt.START_TEXT.format(username=user.username)
     await message.answer(text, disable_notification=True)
