@@ -11,6 +11,7 @@ from models import Match
 
 if TYPE_CHECKING:
     from bot.services.queue import TaskQueue
+    from models.user import User
 
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 Mb
 
@@ -23,6 +24,7 @@ async def audio_handler(
     message: types.Message,
     queue: TaskQueue,
     audio: types.Audio,
+    user: User,
 ) -> None:
     if not message.bot:
         return
@@ -38,7 +40,7 @@ async def audio_handler(
         )
         await tg.reply_audio(saved_match.slowed_id, message, reply_markup=reply_markup)
     else:
-        queue.enqueue(slowing_down_task, message)
+        queue.enqueue(slowing_down_task, message, user.get_options())
         if (position := queue.total_pending) > 1:
             text = txt.QUEUE_POSITION_TEXT.format(position=position)
             await message.reply(text, disable_notification=True)
