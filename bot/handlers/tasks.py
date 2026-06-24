@@ -28,9 +28,9 @@ async def proceed_audio(file_url: str, *, session: AiohttpSession, options: User
     ffmpeg_command = FFmpegCommandBuilder(bitrate=OUTPUT_MP3_QUALITY, sample_rate=SAMPLE_RATE).speed(33.3 / 45)
     match options.fx_reverb:
         case FxReverb.NORMAL:
-            ffmpeg_command = ffmpeg_command.reverb(intensity=0.1)
+            ffmpeg_command = ffmpeg_command.reverb(intensity=0.2)
         case FxReverb.EXTREME:
-            ffmpeg_command = ffmpeg_command.reverb(intensity=0.7)
+            ffmpeg_command = ffmpeg_command.reverb(intensity=0.6)
     match options.fx_filter:
         case FxFilter.LOFI:
             ffmpeg_command = ffmpeg_command.filters(lowpass_freq=6000, highpass_freq=300, master=True)
@@ -39,7 +39,7 @@ async def proceed_audio(file_url: str, *, session: AiohttpSession, options: User
         case FxFilter.TELEPHONE:
             ffmpeg_command = ffmpeg_command.filters(lowpass_freq=3000, highpass_freq=800, master=True)
     if options.fx_analog is not FxAnalog.NONE:
-        ffmpeg_command = ffmpeg_command.analog(options.fx_analog, weight=0.5)
+        ffmpeg_command = ffmpeg_command.analog(options.fx_analog)
         ffmpeg_command = ffmpeg_command.flutter(depth=0.20, freq=60 / 33.3)
         ffmpeg_command = ffmpeg_command.softclip()
     client = await session.create_session()
